@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- Always follow the relevant best design patterns and tech stack.
+- All packages should be the latest stable versions.
