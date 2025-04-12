@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import { connectDB } from "./config/database";
-import v1Routes from "./routes/v1";
+import v1Routes from "./api/v1";
 
 // Load environment variables
 dotenv.config();
