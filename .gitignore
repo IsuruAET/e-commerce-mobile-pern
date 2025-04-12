@@ -57,4 +57,9 @@ Thumbs.db
 
 # Build tools
 .eslintcache
-.stylelintcache 
+.stylelintcache
+
+# Postman
+postman/
+*.postman_collection.json
+*.postman_environment.json 

@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import morgan from "morgan";
 import { connectDB } from "./config/database";
 import v1Routes from "./api/v1";
+import { errorHandler } from "./middleware/errorHandler";
+import { AuthService } from "./api/v1/services/authService";
 
 // Load environment variables
 dotenv.config();
@@ -14,10 +16,18 @@ const port = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(morgan("dev")); // Logging middleware
+app.use(express.urlencoded({ extended: true }));
+
+// Logging middleware
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
 
 // API Routes
 app.use("/api/v1", v1Routes);
+
+// Error handling middleware
+app.use(errorHandler);
 
 // Root route
 app.get("/", (req: Request, res: Response) => {
@@ -31,6 +41,10 @@ app.get("/", (req: Request, res: Response) => {
 const startServer = async () => {
   try {
     await connectDB();
+
+    // Start the refresh token cleanup scheduler
+    AuthService.startCleanupScheduler();
+
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
       console.log(`API v1 available at: http://localhost:${port}/api/v1`);
