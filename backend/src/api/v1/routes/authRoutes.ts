@@ -5,6 +5,8 @@ import {
   refreshTokenSchema,
   logoutSchema,
   registerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
 
@@ -29,5 +31,17 @@ router.post("/logout", validateRequest(logoutSchema), AuthController.logout);
 // Google OAuth routes
 router.get("/google", AuthController.googleAuth);
 router.get("/google/callback", AuthController.googleCallback);
+
+router.post(
+  "/forgot-password",
+  validateRequest(forgotPasswordSchema),
+  AuthController.forgotPassword
+);
+
+router.post(
+  "/reset-password",
+  validateRequest(resetPasswordSchema),
+  AuthController.resetPassword
+);
 
 export default router;
