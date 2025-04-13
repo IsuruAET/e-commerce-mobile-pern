@@ -26,4 +26,8 @@ router.post(
 
 router.post("/logout", validateRequest(logoutSchema), AuthController.logout);
 
+// Google OAuth routes
+router.get("/google", AuthController.googleAuth);
+router.get("/google/callback", AuthController.googleCallback);
+
 export default router;

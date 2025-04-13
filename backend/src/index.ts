@@ -6,6 +6,8 @@ import { connectDB } from "./config/database";
 import v1Routes from "./api/v1";
 import { errorHandler } from "./middleware/errorHandler";
 import { AuthService } from "./api/v1/services/authService";
+import passport from "passport";
+import "./config/passport";
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +19,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
 
 // Logging middleware
 if (process.env.NODE_ENV === "development") {

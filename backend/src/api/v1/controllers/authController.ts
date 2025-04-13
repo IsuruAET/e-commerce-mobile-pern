@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../services/authService";
+import passport from "passport";
 
 export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
@@ -40,5 +41,30 @@ export class AuthController {
     } catch (error) {
       next(error);
     }
+  }
+
+  static googleAuth(req: Request, res: Response, next: NextFunction) {
+    passport.authenticate("google", {
+      scope: ["profile", "email"],
+    })(req, res, next);
+  }
+
+  static googleCallback(req: Request, res: Response, next: NextFunction) {
+    passport.authenticate(
+      "google",
+      { session: false },
+      async (err: any, data: any) => {
+        try {
+          const result = await AuthService.handleGoogleCallback(
+            data?.user,
+            data?.tokens,
+            err
+          );
+          res.status(200).json(result);
+        } catch (error) {
+          next(error);
+        }
+      }
+    )(req, res, next);
   }
 }

@@ -12,7 +12,7 @@ interface TokenPayload {
 }
 
 export class AuthService {
-  private static generateTokens(payload: TokenPayload) {
+  static generateTokens(payload: TokenPayload) {
     const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET!, {
       expiresIn: "15m",
     });
@@ -22,6 +22,16 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  static async storeRefreshToken(token: string, userId: string) {
+    await prisma.refreshToken.create({
+      data: {
+        token,
+        userId,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      },
+    });
   }
 
   static async login(email: string, password: string) {
@@ -47,13 +57,7 @@ export class AuthService {
     });
 
     // Store refresh token in database
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
-    });
+    await this.storeRefreshToken(refreshToken, user.id);
 
     return {
       accessToken,
@@ -169,17 +173,41 @@ export class AuthService {
     });
 
     // Store refresh token in database
-    await prisma.refreshToken.create({
-      data: {
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
-    });
+    await this.storeRefreshToken(refreshToken, user.id);
 
     return {
       accessToken,
       refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+    };
+  }
+
+  static async handleGoogleCallback(
+    user: any,
+    tokens: any,
+    passportError?: any
+  ) {
+    if (passportError) {
+      throw new AppError(
+        401,
+        "Authentication failed: " + passportError.message
+      );
+    }
+
+    if (!user || !tokens) {
+      throw new AppError(401, "Authentication failed: Invalid user data");
+    }
+
+    // Store refresh token in database
+    await this.storeRefreshToken(tokens.refreshToken, user.id);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user: {
         id: user.id,
         email: user.email,
