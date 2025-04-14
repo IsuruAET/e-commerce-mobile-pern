@@ -87,10 +87,32 @@ export class CategoryService {
 
   static async deleteCategory(id: string) {
     try {
+      // First check if category exists and has any services
+      const category = await prisma.category.findUnique({
+        where: { id },
+        include: {
+          services: true,
+        },
+      });
+
+      if (!category) {
+        throw new AppError(404, "Category not found");
+      }
+
+      if (category.services.length > 0) {
+        throw new AppError(
+          400,
+          "Cannot delete category that has associated services. Please delete or reassign the services first."
+        );
+      }
+
       await prisma.category.delete({
         where: { id },
       });
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === "P2025") {
           throw new AppError(404, "Category not found");
