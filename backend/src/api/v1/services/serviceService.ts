@@ -1,5 +1,6 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { AppError } from "../../../middleware/errorHandler";
+import { paginate, PaginationOptions } from "../../../utils/pagination";
 
 const prisma = new PrismaClient();
 
@@ -77,27 +78,40 @@ export class ServiceService {
     }
   }
 
-  static async listActiveServices() {
+  static async listActiveServices(page: number = 1, limit: number = 10) {
     try {
-      return await prisma.service.findMany({
-        where: { isActive: true },
-        include: {
+      const options: PaginationOptions = {
+        page,
+        limit,
+        orderBy: { createdAt: "desc" },
+      };
+
+      return await paginate(
+        prisma,
+        "service",
+        options,
+        { isActive: true },
+        {
           images: true,
           category: true,
-        },
-      });
+        }
+      );
     } catch (error) {
       throw new AppError(500, "Failed to retrieve active services");
     }
   }
 
-  static async listAllServices() {
+  static async listAllServices(page: number = 1, limit: number = 10) {
     try {
-      return await prisma.service.findMany({
-        include: {
-          images: true,
-          category: true,
-        },
+      const options: PaginationOptions = {
+        page,
+        limit,
+        orderBy: { createdAt: "desc" },
+      };
+
+      return await paginate(prisma, "service", options, undefined, {
+        images: true,
+        category: true,
       });
     } catch (error) {
       throw new AppError(500, "Failed to retrieve all services");

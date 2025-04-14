@@ -104,6 +104,14 @@ export const serviceIdSchema = z.object({
   }),
 });
 
+export const paginationSchema = z.object({
+  query: z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(10),
+  }),
+});
+
 export type Service = z.infer<typeof serviceSchema>;
 export type CreateServiceInput = z.infer<typeof createServiceSchema>["body"];
 export type UpdateServiceInput = z.infer<typeof updateServiceSchema>["body"];
+export type PaginationInput = z.infer<typeof paginationSchema>["query"];

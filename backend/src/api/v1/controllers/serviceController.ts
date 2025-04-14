@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ServiceService } from "../services/serviceService";
+import { PaginationInput } from "../schemas/serviceSchema";
 
 export class ServiceController {
   static async addService(req: Request, res: Response, next: NextFunction) {
@@ -34,10 +35,11 @@ export class ServiceController {
     next: NextFunction
   ) {
     try {
-      const services = await ServiceService.listActiveServices();
+      const { page, limit } = req.query as unknown as PaginationInput;
+      const result = await ServiceService.listActiveServices(page, limit);
       res.status(200).json({
         success: true,
-        data: services,
+        ...result,
       });
     } catch (error) {
       next(error);
@@ -50,10 +52,11 @@ export class ServiceController {
     next: NextFunction
   ) {
     try {
-      const services = await ServiceService.listAllServices();
+      const { page, limit } = req.query as unknown as PaginationInput;
+      const result = await ServiceService.listAllServices(page, limit);
       res.status(200).json({
         success: true,
-        data: services,
+        ...result,
       });
     } catch (error) {
       next(error);

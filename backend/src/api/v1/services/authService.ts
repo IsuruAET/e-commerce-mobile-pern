@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppError } from "../../../middleware/errorHandler";
 import { setInterval } from "timers";
-import { sendEmail } from "../../../utils/emailUtils";
+import { sendEmail } from "../../../utils/email";
 
 const prisma = new PrismaClient();
 

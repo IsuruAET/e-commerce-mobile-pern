@@ -5,6 +5,7 @@ import {
   createServiceSchema,
   updateServiceSchema,
   serviceIdSchema,
+  paginationSchema,
 } from "../schemas/serviceSchema";
 
 const router = Router();
@@ -16,6 +17,13 @@ router.post(
   ServiceController.addService
 );
 
+// List active services
+router.get(
+  "/active",
+  validateRequest(paginationSchema),
+  ServiceController.listActiveServices
+);
+
 // Get service by id
 router.get(
   "/:id",
@@ -23,11 +31,12 @@ router.get(
   ServiceController.getServiceById
 );
 
-// List active services
-router.get("/active", ServiceController.listActiveServices);
-
 // List all services
-router.get("/", ServiceController.listAllServices);
+router.get(
+  "/",
+  validateRequest(paginationSchema),
+  ServiceController.listAllServices
+);
 
 // Update service
 router.put(
