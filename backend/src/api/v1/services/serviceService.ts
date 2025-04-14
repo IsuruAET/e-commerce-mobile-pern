@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma, Service } from "@prisma/client";
 import { AppError } from "../../../middleware/errorHandler";
 import { paginate, PaginationOptions } from "../../../utils/pagination";
 
@@ -86,12 +86,25 @@ export class ServiceService {
         orderBy: { createdAt: "desc" },
       };
 
-      return await paginate(
+      return await paginate<
+        Service,
+        Prisma.ServiceWhereInput,
+        Prisma.ServiceSelect
+      >(
         prisma,
         "service",
         options,
         { isActive: true },
         {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          duration: true,
+          categoryId: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
           images: true,
           category: true,
         }
@@ -109,7 +122,20 @@ export class ServiceService {
         orderBy: { createdAt: "desc" },
       };
 
-      return await paginate(prisma, "service", options, undefined, {
+      return await paginate<
+        Service,
+        Prisma.ServiceWhereInput,
+        Prisma.ServiceSelect
+      >(prisma, "service", options, undefined, {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        duration: true,
+        categoryId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
         images: true,
         category: true,
       });

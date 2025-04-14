@@ -1,9 +1,9 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AppError } from "../../../middleware/errorHandler";
 import { setInterval } from "timers";
 import { sendEmail } from "../../../utils/email";
+import { PasswordUtils } from "../../../utils/passwordUtils";
 
 const prisma = new PrismaClient();
 
@@ -47,7 +47,10 @@ export class AuthService {
     // Clean up expired tokens for this user before creating new ones
     await this.cleanupExpiredTokens(user.id);
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await PasswordUtils.comparePassword(
+      password,
+      user.password
+    );
     if (!isPasswordValid) {
       throw new AppError(401, "Invalid credentials");
     }
@@ -163,8 +166,8 @@ export class AuthService {
       throw new AppError(400, "Email already exists");
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash password using PasswordUtils
+    const hashedPassword = await PasswordUtils.hashPassword(password);
 
     // Create user
     const user = await prisma.user.create({
@@ -320,8 +323,8 @@ export class AuthService {
         throw new AppError(400, "Invalid or expired reset token");
       }
 
-      // Hash new password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      // Hash new password using PasswordUtils
+      const hashedPassword = await PasswordUtils.hashPassword(newPassword);
 
       // Update password and delete all reset tokens for this user
       await prisma.$transaction([
