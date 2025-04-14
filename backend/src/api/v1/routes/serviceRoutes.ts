@@ -23,8 +23,11 @@ router.get(
   ServiceController.getServiceById
 );
 
-// List services
-router.get("/", ServiceController.listServices);
+// List active services
+router.get("/active", ServiceController.listActiveServices);
+
+// List all services
+router.get("/", ServiceController.listAllServices);
 
 // Update service
 router.put(

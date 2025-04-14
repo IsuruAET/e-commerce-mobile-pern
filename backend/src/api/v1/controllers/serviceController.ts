@@ -28,9 +28,29 @@ export class ServiceController {
     }
   }
 
-  static async listServices(req: Request, res: Response, next: NextFunction) {
+  static async listActiveServices(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
-      const services = await ServiceService.listServices();
+      const services = await ServiceService.listActiveServices();
+      res.status(200).json({
+        success: true,
+        data: services,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async listAllServices(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const services = await ServiceService.listAllServices();
       res.status(200).json({
         success: true,
         data: services,

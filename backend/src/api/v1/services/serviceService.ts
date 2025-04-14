@@ -77,7 +77,7 @@ export class ServiceService {
     }
   }
 
-  static async listServices() {
+  static async listActiveServices() {
     try {
       return await prisma.service.findMany({
         where: { isActive: true },
@@ -87,7 +87,20 @@ export class ServiceService {
         },
       });
     } catch (error) {
-      throw new AppError(500, "Failed to retrieve services");
+      throw new AppError(500, "Failed to retrieve active services");
+    }
+  }
+
+  static async listAllServices() {
+    try {
+      return await prisma.service.findMany({
+        include: {
+          images: true,
+          category: true,
+        },
+      });
+    } catch (error) {
+      throw new AppError(500, "Failed to retrieve all services");
     }
   }
 
