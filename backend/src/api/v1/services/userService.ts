@@ -1,8 +1,9 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { AppError } from "../../../middleware/errorHandler";
-import { paginate, PaginationOptions } from "../../../utils/pagination";
 import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
 import { PasswordUtils } from "../../../utils/passwordUtils";
+import { Request } from "express";
+import { formatPaginationResponse } from "../../../middleware/paginationHandler";
 
 const prisma = new PrismaClient();
 
@@ -66,26 +67,31 @@ export class UserService {
     }
   }
 
-  static async listUsers(page: number = 1, limit: number = 10) {
+  static async listUsers(req: Request) {
     try {
-      const options: PaginationOptions = {
-        page,
-        limit,
-        orderBy: { createdAt: "desc" },
-      };
+      const { skip, limit } = req.pagination;
 
-      const select = {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      };
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+        prisma.user.count(),
+      ]);
 
-      return await paginate(prisma, "user", options, undefined, select);
+      return {
+        data: users,
+        pagination: formatPaginationResponse(req, total),
+      };
     } catch (error) {
-      console.error("Error in listUsers:", error);
       throw new AppError(500, "Failed to retrieve users");
     }
   }

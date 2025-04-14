@@ -1,6 +1,7 @@
 import { PrismaClient, Prisma, Service } from "@prisma/client";
 import { AppError } from "../../../middleware/errorHandler";
-import { paginate, PaginationOptions } from "../../../utils/pagination";
+import { Request } from "express";
+import { formatPaginationResponse } from "../../../middleware/paginationHandler";
 
 const prisma = new PrismaClient();
 
@@ -78,67 +79,70 @@ export class ServiceService {
     }
   }
 
-  static async listActiveServices(page: number = 1, limit: number = 10) {
+  static async listActiveServices(req: Request) {
     try {
-      const options: PaginationOptions = {
-        page,
-        limit,
-        orderBy: { createdAt: "desc" },
-      };
+      const { skip, limit } = req.pagination;
 
-      return await paginate<
-        Service,
-        Prisma.ServiceWhereInput,
-        Prisma.ServiceSelect
-      >(
-        prisma,
-        "service",
-        options,
-        { isActive: true },
-        {
-          id: true,
-          name: true,
-          description: true,
-          price: true,
-          duration: true,
-          categoryId: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-          images: true,
-          category: true,
-        }
-      );
+      const [services, total] = await Promise.all([
+        prisma.service.findMany({
+          where: {
+            isActive: true,
+          },
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            price: true,
+            duration: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+        prisma.service.count({
+          where: {
+            isActive: true,
+          },
+        }),
+      ]);
+
+      return {
+        data: services,
+        pagination: formatPaginationResponse(req, total),
+      };
     } catch (error) {
       throw new AppError(500, "Failed to retrieve active services");
     }
   }
 
-  static async listAllServices(page: number = 1, limit: number = 10) {
+  static async listAllServices(req: Request) {
     try {
-      const options: PaginationOptions = {
-        page,
-        limit,
-        orderBy: { createdAt: "desc" },
-      };
+      const { skip, limit } = req.pagination;
 
-      return await paginate<
-        Service,
-        Prisma.ServiceWhereInput,
-        Prisma.ServiceSelect
-      >(prisma, "service", options, undefined, {
-        id: true,
-        name: true,
-        description: true,
-        price: true,
-        duration: true,
-        categoryId: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        images: true,
-        category: true,
-      });
+      const [services, total] = await Promise.all([
+        prisma.service.findMany({
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            price: true,
+            duration: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+        prisma.service.count(),
+      ]);
+
+      return {
+        data: services,
+        pagination: formatPaginationResponse(req, total),
+      };
     } catch (error) {
       throw new AppError(500, "Failed to retrieve all services");
     }

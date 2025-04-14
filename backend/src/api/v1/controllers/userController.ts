@@ -31,8 +31,7 @@ export class UserController {
 
   static async listUsers(req: Request, res: Response, next: NextFunction) {
     try {
-      const { page, limit } = req.query as unknown as PaginationInput;
-      const result = await UserService.listUsers(page, limit);
+      const result = await UserService.listUsers(req);
       res.status(200).json({
         success: true,
         ...result,

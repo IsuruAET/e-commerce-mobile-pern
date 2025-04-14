@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { UserController } from "../controllers/userController";
 import { validateRequest } from "../../../middleware/validateRequest";
+import { paginationHandler } from "../../../middleware/paginationHandler";
 import {
   createUserSchema,
   updateUserSchema,
   userIdSchema,
-  paginationSchema,
 } from "../schemas/userSchema";
 
 const router = Router();
@@ -16,8 +16,8 @@ router.post("/", validateRequest(createUserSchema), UserController.createUser);
 // Get user by id
 router.get("/:id", validateRequest(userIdSchema), UserController.getUserById);
 
-// List all users
-router.get("/", validateRequest(paginationSchema), UserController.listUsers);
+// List all users with pagination
+router.get("/", paginationHandler, UserController.listUsers);
 
 // Update user
 router.put(

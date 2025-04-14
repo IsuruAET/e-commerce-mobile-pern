@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ServiceController } from "../controllers/serviceController";
 import { validateRequest } from "../../../middleware/validateRequest";
+import { paginationHandler } from "../../../middleware/paginationHandler";
 import {
   createServiceSchema,
   updateServiceSchema,
@@ -21,6 +22,7 @@ router.post(
 router.get(
   "/active",
   validateRequest(paginationSchema),
+  paginationHandler,
   ServiceController.listActiveServices
 );
 
@@ -35,6 +37,7 @@ router.get(
 router.get(
   "/",
   validateRequest(paginationSchema),
+  paginationHandler,
   ServiceController.listAllServices
 );
 
