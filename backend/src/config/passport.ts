@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { PrismaClient } from "@prisma/client";
 
-import { AuthService } from "../api/v1/services/authService";
+import { JwtUtils } from "../utils/jwt";
 
 const prisma = new PrismaClient();
 
@@ -38,7 +38,7 @@ passport.use(
         }
 
         // Generate tokens
-        const tokens = AuthService.generateTokens({
+        const tokens = JwtUtils.generateTokens({
           userId: user.id,
           email: user.email || "",
           role: user.role || "USER",

@@ -1,10 +1,10 @@
 import { PrismaClient } from "@prisma/client";
-import jwt from "jsonwebtoken";
 import { setInterval } from "timers";
 
 import { AppError } from "middleware/errorHandler";
 import { sendEmail } from "utils/email";
 import { PasswordUtils } from "utils/passwordUtils";
+import { JwtUtils } from "utils/jwt";
 
 const prisma = new PrismaClient();
 
@@ -15,18 +15,6 @@ interface TokenPayload {
 }
 
 export class AuthService {
-  static generateTokens(payload: TokenPayload) {
-    const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET!, {
-      expiresIn: "15m",
-    });
-
-    const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
-      expiresIn: "7d",
-    });
-
-    return { accessToken, refreshToken };
-  }
-
   static async storeRefreshToken(token: string, userId: string) {
     await prisma.refreshToken.create({
       data: {
@@ -57,7 +45,7 @@ export class AuthService {
       throw new AppError(401, "Invalid credentials");
     }
 
-    const { accessToken, refreshToken } = this.generateTokens({
+    const { accessToken, refreshToken } = JwtUtils.generateTokens({
       userId: user.id,
       email: user.email || "",
       role: user.role || "",
@@ -112,10 +100,7 @@ export class AuthService {
 
   static async refreshToken(refreshToken: string) {
     try {
-      const decoded = jwt.verify(
-        refreshToken,
-        process.env.JWT_REFRESH_SECRET!
-      ) as TokenPayload;
+      const decoded = JwtUtils.verifyRefreshToken(refreshToken);
 
       const storedToken = await prisma.refreshToken.findFirst({
         where: {
@@ -130,7 +115,7 @@ export class AuthService {
       }
 
       const { accessToken, refreshToken: newRefreshToken } =
-        this.generateTokens({
+        JwtUtils.generateTokens({
           userId: decoded.userId,
           email: decoded.email,
           role: decoded.role,
@@ -182,7 +167,7 @@ export class AuthService {
       },
     });
 
-    const { accessToken, refreshToken } = this.generateTokens({
+    const { accessToken, refreshToken } = JwtUtils.generateTokens({
       userId: user.id,
       email: user.email || "",
       role: user.role || "USER",
@@ -263,11 +248,7 @@ export class AuthService {
     }
 
     // Generate reset token
-    const resetToken = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: "1h" }
-    );
+    const resetToken = JwtUtils.generatePasswordResetToken(user.id);
 
     // Store reset token in database
     await prisma.passwordResetToken.create({
@@ -311,15 +292,13 @@ export class AuthService {
   static async resetPassword(token: string, newPassword: string) {
     try {
       // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as {
-        userId: string;
-      };
+      const { userId } = JwtUtils.verifyPasswordResetToken(token);
 
       // Find the reset token in database
       const resetToken = await prisma.passwordResetToken.findFirst({
         where: {
           token: token,
-          userId: decoded.userId,
+          userId: userId,
           expiresAt: { gt: new Date() },
         },
       });
@@ -334,12 +313,12 @@ export class AuthService {
       // Update password and delete all reset tokens for this user
       await prisma.$transaction([
         prisma.user.update({
-          where: { id: decoded.userId },
+          where: { id: userId },
           data: { password: hashedPassword },
         }),
         // Delete all reset tokens for this user
         prisma.passwordResetToken.deleteMany({
-          where: { userId: decoded.userId },
+          where: { userId: userId },
         }),
       ]);
 
