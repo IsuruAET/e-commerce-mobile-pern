@@ -1,9 +1,10 @@
-import { PrismaClient, Prisma } from "@prisma/client";
-import { AppError } from "../../../middleware/errorHandler";
-import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
-import { PasswordUtils } from "../../../utils/passwordUtils";
 import { Request } from "express";
-import { formatPaginationResponse } from "../../../middleware/paginationHandler";
+import { PrismaClient, Prisma } from "@prisma/client";
+
+import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
+import { AppError } from "middleware/errorHandler";
+import { formatPaginationResponse } from "middleware/paginationHandler";
+import { PasswordUtils } from "utils/passwordUtils";
 
 const prisma = new PrismaClient();
 

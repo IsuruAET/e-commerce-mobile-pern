@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { validateRequest } from "../../../middleware/validateRequest";
+
 import {
   loginSchema,
   refreshTokenSchema,
@@ -9,7 +9,8 @@ import {
   resetPasswordSchema,
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
-import { requireAuth } from "../../../middleware/authHandler";
+import { requireAuth } from "middleware/authHandler";
+import { validateRequest } from "middleware/validateRequest";
 
 const router = Router();
 

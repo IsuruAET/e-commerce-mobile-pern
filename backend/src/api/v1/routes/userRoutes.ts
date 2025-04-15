@@ -1,13 +1,14 @@
 import { Router } from "express";
-import { UserController } from "../controllers/userController";
-import { validateRequest } from "../../../middleware/validateRequest";
-import { paginationHandler } from "../../../middleware/paginationHandler";
+
 import {
   createUserSchema,
   updateUserSchema,
   userIdSchema,
 } from "../schemas/userSchema";
-import { requireAuth, requireRole } from "../../../middleware/authHandler";
+import { UserController } from "../controllers/userController";
+import { requireAuth, requireRole } from "middleware/authHandler";
+import { validateRequest } from "middleware/validateRequest";
+import { paginationHandler } from "middleware/paginationHandler";
 
 const router = Router();
 

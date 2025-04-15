@@ -2,11 +2,12 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
-import { connectDB } from "./config/database";
-import v1Routes from "./api/v1";
-import { errorHandler } from "./middleware/errorHandler";
-import { AuthService } from "./api/v1/services/authService";
 import passport from "passport";
+
+import { connectDB } from "./config/database";
+import v1Routes from "./api/v1/index";
+import { AuthService } from "./api/v1/services/authService";
+import { errorHandler } from "middleware/errorHandler";
 import "./config/passport";
 
 // Load environment variables

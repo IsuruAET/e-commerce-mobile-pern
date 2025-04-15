@@ -1,12 +1,13 @@
 import { Router } from "express";
-import { CategoryController } from "../controllers/categoryController";
-import { validateRequest } from "../../../middleware/validateRequest";
+
 import {
   createCategorySchema,
   updateCategorySchema,
   categoryIdSchema,
 } from "../schemas/categorySchema";
-import { requireAuth, requireRole } from "../../../middleware/authHandler";
+import { CategoryController } from "../controllers/categoryController";
+import { requireAuth, requireRole } from "middleware/authHandler";
+import { validateRequest } from "middleware/validateRequest";
 
 const router = Router();
 

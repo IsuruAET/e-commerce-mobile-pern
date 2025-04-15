@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+
 import { CategoryService } from "../services/categoryService";
 
 export class CategoryController {

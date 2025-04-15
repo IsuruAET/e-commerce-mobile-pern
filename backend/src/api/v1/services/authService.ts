@@ -1,9 +1,10 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-import { AppError } from "../../../middleware/errorHandler";
 import { setInterval } from "timers";
-import { sendEmail } from "../../../utils/email";
-import { PasswordUtils } from "../../../utils/passwordUtils";
+
+import { AppError } from "middleware/errorHandler";
+import { sendEmail } from "utils/email";
+import { PasswordUtils } from "utils/passwordUtils";
 
 const prisma = new PrismaClient();
 

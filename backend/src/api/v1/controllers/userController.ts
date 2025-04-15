@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+
 import { UserService } from "../services/userService";
-import { PaginationInput } from "../schemas/userSchema";
 
 export class UserController {
   static async createUser(req: Request, res: Response, next: NextFunction) {

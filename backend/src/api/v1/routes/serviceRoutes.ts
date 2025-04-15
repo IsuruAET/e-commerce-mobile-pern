@@ -1,16 +1,17 @@
 import { Router } from "express";
-import { ServiceController } from "../controllers/serviceController";
-import { validateRequest } from "../../../middleware/validateRequest";
-import { paginationHandler } from "../../../middleware/paginationHandler";
-import { filterHandler } from "../../../middleware/filterHandler";
-import { sortHandler } from "../../../middleware/sortHandler";
+
 import {
   createServiceSchema,
   updateServiceSchema,
   serviceIdSchema,
   paginationSchema,
 } from "../schemas/serviceSchema";
-import { requireAuth, requireRole } from "../../../middleware/authHandler";
+import { ServiceController } from "../controllers/serviceController";
+import { requireAuth, requireRole } from "middleware/authHandler";
+import { validateRequest } from "middleware/validateRequest";
+import { paginationHandler } from "middleware/paginationHandler";
+import { filterHandler } from "middleware/filterHandler";
+import { sortHandler } from "middleware/sortHandler";
 
 const router = Router();
 
