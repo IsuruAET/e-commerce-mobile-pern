@@ -82,11 +82,13 @@ export class ServiceService {
   static async listActiveServices(req: Request) {
     try {
       const { skip, limit } = req.pagination;
+      const filters = req.filters || {};
 
       const [services, total] = await Promise.all([
         prisma.service.findMany({
           where: {
             isActive: true,
+            ...filters,
           },
           skip,
           take: limit,
@@ -104,6 +106,7 @@ export class ServiceService {
         prisma.service.count({
           where: {
             isActive: true,
+            ...filters,
           },
         }),
       ]);
@@ -120,9 +123,11 @@ export class ServiceService {
   static async listAllServices(req: Request) {
     try {
       const { skip, limit } = req.pagination;
+      const filters = req.filters || {};
 
       const [services, total] = await Promise.all([
         prisma.service.findMany({
+          where: filters,
           skip,
           take: limit,
           select: {
@@ -134,9 +139,12 @@ export class ServiceService {
             isActive: true,
             createdAt: true,
             updatedAt: true,
+            category: true,
           },
         }),
-        prisma.service.count(),
+        prisma.service.count({
+          where: filters,
+        }),
       ]);
 
       return {

@@ -2,6 +2,8 @@ import { Router } from "express";
 import { ServiceController } from "../controllers/serviceController";
 import { validateRequest } from "../../../middleware/validateRequest";
 import { paginationHandler } from "../../../middleware/paginationHandler";
+import { filterHandler } from "../../../middleware/filterHandler";
+import { sortHandler } from "../../../middleware/sortHandler";
 import {
   createServiceSchema,
   updateServiceSchema,
@@ -22,6 +24,7 @@ router.post(
 router.get(
   "/active",
   validateRequest(paginationSchema),
+  filterHandler(["categoryId"]),
   paginationHandler,
   ServiceController.listActiveServices
 );
@@ -37,6 +40,8 @@ router.get(
 router.get(
   "/",
   validateRequest(paginationSchema),
+  filterHandler(["categoryId", "isActive"]),
+  sortHandler(["name"]),
   paginationHandler,
   ServiceController.listAllServices
 );
