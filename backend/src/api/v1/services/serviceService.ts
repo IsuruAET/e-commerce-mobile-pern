@@ -83,6 +83,9 @@ export class ServiceService {
     try {
       const { skip, limit } = req.pagination;
       const filters = req.filters || {};
+      const sortOptions = req.sortOptions || [
+        { field: "createdAt", order: "desc" },
+      ];
 
       const [services, total] = await Promise.all([
         prisma.service.findMany({
@@ -92,6 +95,9 @@ export class ServiceService {
           },
           skip,
           take: limit,
+          orderBy: sortOptions.map((option) => ({
+            [option.field]: option.order,
+          })),
           select: {
             id: true,
             name: true,
@@ -124,12 +130,18 @@ export class ServiceService {
     try {
       const { skip, limit } = req.pagination;
       const filters = req.filters || {};
+      const sortOptions = req.sortOptions || [
+        { field: "createdAt", order: "desc" },
+      ];
 
       const [services, total] = await Promise.all([
         prisma.service.findMany({
           where: filters,
           skip,
           take: limit,
+          orderBy: sortOptions.map((option) => ({
+            [option.field]: option.order,
+          })),
           select: {
             id: true,
             name: true,

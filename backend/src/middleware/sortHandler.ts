@@ -7,7 +7,7 @@ declare global {
       sortOptions: {
         field: string;
         order: "asc" | "desc";
-      };
+      }[];
     }
   }
 }
@@ -16,6 +16,7 @@ declare global {
 const ERROR_MESSAGES = {
   INVALID_SORT: "Invalid sort parameter",
   UNAUTHORIZED_FIELD: "Unauthorized field access",
+  MISMATCHED_ARRAYS: "Sort fields and orders must have the same length",
 };
 
 export const sortHandler = (
@@ -27,21 +28,62 @@ export const sortHandler = (
 ) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      let sortOptions = {
-        field: defaultSort.field,
-        order: defaultSort.order,
-      };
+      let sortOptions: { field: string; order: "asc" | "desc" }[] = [];
 
-      // Handle sort field
-      const sortBy = req.query.sortBy as string;
-      if (sortBy && allowedSortFields.includes(sortBy)) {
-        sortOptions.field = sortBy;
+      // Handle array-based sorting
+      const sortByArray = req.query.sortBy as string | string[];
+      const sortOrderArray = req.query.sortOrder as string | string[];
+
+      if (Array.isArray(sortByArray) && Array.isArray(sortOrderArray)) {
+        if (sortByArray.length !== sortOrderArray.length) {
+          throw new Error(ERROR_MESSAGES.MISMATCHED_ARRAYS);
+        }
+
+        for (let i = 0; i < sortByArray.length; i++) {
+          const field = sortByArray[i];
+          const order = sortOrderArray[i];
+
+          if (
+            allowedSortFields.includes(field) &&
+            ["asc", "desc"].includes(order.toLowerCase())
+          ) {
+            sortOptions.push({
+              field,
+              order: order.toLowerCase() as "asc" | "desc",
+            });
+          }
+        }
+      } else if (
+        typeof sortByArray === "string" &&
+        typeof sortOrderArray === "string"
+      ) {
+        // Handle comma-separated strings
+        const fields = sortByArray.split(",");
+        const orders = sortOrderArray.split(",");
+
+        if (fields.length !== orders.length) {
+          throw new Error(ERROR_MESSAGES.MISMATCHED_ARRAYS);
+        }
+
+        for (let i = 0; i < fields.length; i++) {
+          const field = fields[i].trim();
+          const order = orders[i].trim().toLowerCase();
+
+          if (
+            allowedSortFields.includes(field) &&
+            ["asc", "desc"].includes(order)
+          ) {
+            sortOptions.push({
+              field,
+              order: order as "asc" | "desc",
+            });
+          }
+        }
       }
 
-      // Handle sort order
-      const sortOrder = req.query.sortOrder as string;
-      if (sortOrder && ["asc", "desc"].includes(sortOrder.toLowerCase())) {
-        sortOptions.order = sortOrder.toLowerCase() as "asc" | "desc";
+      // If no valid sort options were found, use default
+      if (sortOptions.length === 0) {
+        sortOptions = [defaultSort];
       }
 
       // Attach sort options to request object
