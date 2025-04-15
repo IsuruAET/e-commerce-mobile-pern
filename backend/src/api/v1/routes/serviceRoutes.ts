@@ -10,12 +10,15 @@ import {
   serviceIdSchema,
   paginationSchema,
 } from "../schemas/serviceSchema";
+import { requireAuth, requireRole } from "../../../middleware/authHandler";
 
 const router = Router();
 
 // Add service
 router.post(
   "/",
+  requireAuth,
+  requireRole(["ADMIN"]),
   validateRequest(createServiceSchema),
   ServiceController.addService
 );
@@ -23,6 +26,7 @@ router.post(
 // List active services
 router.get(
   "/active",
+  requireAuth,
   validateRequest(paginationSchema),
   filterHandler(["categoryId"]),
   paginationHandler,
@@ -39,6 +43,8 @@ router.get(
 // List all services
 router.get(
   "/",
+  requireAuth,
+  requireRole(["ADMIN"]),
   validateRequest(paginationSchema),
   filterHandler(["categoryId", "isActive"]),
   sortHandler(["name"]),
@@ -49,6 +55,8 @@ router.get(
 // Update service
 router.put(
   "/:id",
+  requireAuth,
+  requireRole(["ADMIN"]),
   validateRequest(updateServiceSchema),
   validateRequest(serviceIdSchema),
   ServiceController.updateService
@@ -57,6 +65,8 @@ router.put(
 // Delete service
 router.delete(
   "/:id",
+  requireAuth,
+  requireRole(["ADMIN"]),
   validateRequest(serviceIdSchema),
   ServiceController.deleteService
 );

@@ -40,6 +40,7 @@ passport.use(
         const tokens = AuthService.generateTokens({
           userId: user.id,
           email: user.email || "",
+          role: user.role || "USER",
         });
 
         return done(null, { user, tokens });

@@ -10,6 +10,7 @@ const prisma = new PrismaClient();
 interface TokenPayload {
   userId: string;
   email: string;
+  role: string;
 }
 
 export class AuthService {
@@ -58,6 +59,7 @@ export class AuthService {
     const { accessToken, refreshToken } = this.generateTokens({
       userId: user.id,
       email: user.email || "",
+      role: user.role || "",
     });
 
     // Store refresh token in database
@@ -130,6 +132,7 @@ export class AuthService {
         this.generateTokens({
           userId: decoded.userId,
           email: decoded.email,
+          role: decoded.role,
         });
 
       // Update refresh token in database
@@ -181,6 +184,7 @@ export class AuthService {
     const { accessToken, refreshToken } = this.generateTokens({
       userId: user.id,
       email: user.email || "",
+      role: user.role || "USER",
     });
 
     // Store refresh token in database
