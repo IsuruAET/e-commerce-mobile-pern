@@ -7,8 +7,22 @@ export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password, name } = req.body;
-      const result = await AuthService.register(email, password, name);
-      res.status(201).json(result);
+      const { refreshToken, ...rest } = await AuthService.register(
+        email,
+        password,
+        name
+      );
+
+      // Set refresh token in HTTP-only cookie
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: "/api/v1/auth/refresh-token",
+      });
+
+      res.status(201).json(rest);
     } catch (error) {
       next(error);
     }
@@ -17,8 +31,21 @@ export class AuthController {
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
-      const result = await AuthService.login(email, password);
-      res.status(200).json(result);
+      const { refreshToken, ...rest } = await AuthService.login(
+        email,
+        password
+      );
+
+      // Set refresh token in HTTP-only cookie
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: "/api/v1/auth/refresh-token",
+      });
+
+      res.status(200).json(rest);
     } catch (error) {
       next(error);
     }
@@ -26,9 +53,22 @@ export class AuthController {
 
   static async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
-      const { refreshToken } = req.body;
-      const result = await AuthService.refreshToken(refreshToken);
-      res.status(200).json(result);
+      const refreshToken = req.cookies.refreshToken;
+
+      const { refreshToken: newRefreshToken, ...rest } =
+        await AuthService.refreshToken(refreshToken);
+
+      // Set new refresh token in HTTP-only cookie
+      res.cookie("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: "/api/v1/auth/refresh-token",
+      });
+
+      // Return only the access token to the client
+      res.status(200).json(rest);
     } catch (error) {
       next(error);
     }
@@ -36,8 +76,17 @@ export class AuthController {
 
   static async logout(req: Request, res: Response, next: NextFunction) {
     try {
-      const { refreshToken } = req.body;
+      const refreshToken = req.cookies.refreshToken;
       await AuthService.logout(refreshToken);
+
+      // Clear the refresh token cookie
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/api/v1/auth/refresh-token",
+      });
+
       res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
       next(error);
@@ -56,12 +105,23 @@ export class AuthController {
       { session: false },
       async (err: any, data: any) => {
         try {
-          const result = await AuthService.handleGoogleCallback(
-            data?.user,
-            data?.tokens,
-            err
-          );
-          res.status(200).json(result);
+          const { refreshToken, ...rest } =
+            await AuthService.handleGoogleCallback(
+              data?.user,
+              data?.tokens,
+              err
+            );
+
+          // Set refresh token in HTTP-only cookie
+          res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            path: "/api/v1/auth/refresh-token",
+          });
+
+          res.status(200).json(rest);
         } catch (error) {
           next(error);
         }

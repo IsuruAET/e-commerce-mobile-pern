@@ -8,12 +8,6 @@ import { JwtUtils } from "utils/jwt";
 
 const prisma = new PrismaClient();
 
-interface TokenPayload {
-  userId: string;
-  email: string;
-  role: string;
-}
-
 export class AuthService {
   static async storeRefreshToken(token: string, userId: string) {
     await prisma.refreshToken.create({
@@ -100,6 +94,10 @@ export class AuthService {
 
   static async refreshToken(refreshToken: string) {
     try {
+      if (!refreshToken) {
+        throw new AppError(401, "Refresh token not found");
+      }
+
       const decoded = JwtUtils.verifyRefreshToken(refreshToken);
 
       const storedToken = await prisma.refreshToken.findFirst({
