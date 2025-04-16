@@ -18,6 +18,20 @@ export const requireAuth = (
   res: Response,
   next: NextFunction
 ) => {
+  // Skip authentication for specific auth routes
+  const publicAuthRoutes = [
+    "/auth/register",
+    "/auth/login",
+    "/auth/google",
+    "/auth/google/callback",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+  ];
+
+  if (publicAuthRoutes.includes(req.path)) {
+    return next();
+  }
+
   expressjwt({
     secret: process.env.JWT_ACCESS_SECRET!,
     algorithms: ["HS256"],

@@ -9,6 +9,7 @@ import { connectDB } from "./config/database";
 import v1Routes from "./api/v1/index";
 import { AuthService } from "./api/v1/services/authService";
 import { errorHandler } from "middleware/errorHandler";
+import { requireAuth } from "middleware/authHandler";
 import "./config/passport";
 
 // Load environment variables
@@ -31,7 +32,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // API Routes
-app.use("/api/v1", v1Routes);
+app.use("/api/v1", requireAuth, v1Routes);
 
 // Error handling middleware
 app.use(errorHandler);

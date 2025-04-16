@@ -138,9 +138,17 @@ export class AuthService {
   }
 
   static async logout(refreshToken: string) {
-    await prisma.refreshToken.deleteMany({
-      where: { token: refreshToken },
-    });
+    try {
+      if (!refreshToken) {
+        throw new AppError(401, "Refresh token not found");
+      }
+
+      await prisma.refreshToken.deleteMany({
+        where: { token: refreshToken },
+      });
+    } catch (error) {
+      throw new AppError(401, "Invalid refresh token");
+    }
   }
 
   static async register(email: string, password: string, name: string) {

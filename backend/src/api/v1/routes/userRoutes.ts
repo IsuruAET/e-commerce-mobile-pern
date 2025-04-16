@@ -6,7 +6,7 @@ import {
   userIdSchema,
 } from "../schemas/userSchema";
 import { UserController } from "../controllers/userController";
-import { requireAuth, requireRole } from "middleware/authHandler";
+import { requireRole } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 import { paginationHandler } from "middleware/paginationHandler";
 
@@ -15,7 +15,6 @@ const router = Router();
 // Create user
 router.post(
   "/",
-  requireAuth,
   requireRole(["ADMIN"]),
   validateRequest(createUserSchema),
   UserController.createUser
@@ -24,7 +23,6 @@ router.post(
 // Get user by id
 router.get(
   "/:id",
-  requireAuth,
   requireRole(["ADMIN"]),
   validateRequest(userIdSchema),
   UserController.getUserById
@@ -33,7 +31,6 @@ router.get(
 // List all users with pagination
 router.get(
   "/",
-  requireAuth,
   requireRole(["ADMIN"]),
   paginationHandler,
   UserController.listUsers
@@ -42,7 +39,6 @@ router.get(
 // Update user
 router.put(
   "/:id",
-  requireAuth,
   requireRole(["ADMIN"]),
   validateRequest(updateUserSchema),
   validateRequest(userIdSchema),
@@ -52,7 +48,6 @@ router.put(
 // Delete user
 router.delete(
   "/:id",
-  requireAuth,
   requireRole(["ADMIN"]),
   validateRequest(userIdSchema),
   UserController.deleteUser

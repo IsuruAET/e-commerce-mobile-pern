@@ -6,7 +6,7 @@ import {
   categoryIdSchema,
 } from "../schemas/categorySchema";
 import { CategoryController } from "../controllers/categoryController";
-import { requireAuth, requireRole } from "middleware/authHandler";
+import { requireRole } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 
 const router = Router();
@@ -14,7 +14,6 @@ const router = Router();
 // Add category
 router.post(
   "/",
-  requireAuth,
   requireRole(["ADMIN"]),
   validateRequest(createCategorySchema),
   CategoryController.addCategory
@@ -33,7 +32,6 @@ router.get("/", CategoryController.listCategories);
 // Update category
 router.put(
   "/:id",
-  requireAuth,
   requireRole(["ADMIN"]),
   validateRequest(updateCategorySchema),
   validateRequest(categoryIdSchema),
@@ -43,7 +41,6 @@ router.put(
 // Delete category
 router.delete(
   "/:id",
-  requireAuth,
   requireRole(["ADMIN"]),
   validateRequest(categoryIdSchema),
   CategoryController.deleteCategory

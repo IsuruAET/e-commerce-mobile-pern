@@ -2,13 +2,11 @@ import { Router } from "express";
 
 import {
   loginSchema,
-  logoutSchema,
   registerSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
-import { requireAuth } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 
 const router = Router();
@@ -23,12 +21,7 @@ router.post("/login", validateRequest(loginSchema), AuthController.login);
 
 router.post("/refresh-token", AuthController.refreshToken);
 
-router.post(
-  "/logout",
-  requireAuth,
-  validateRequest(logoutSchema),
-  AuthController.logout
-);
+router.post("/logout", AuthController.logout);
 
 // Google OAuth routes
 router.get("/google", AuthController.googleAuth);
