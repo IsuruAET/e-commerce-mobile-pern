@@ -4,7 +4,8 @@ import { Request, Response, NextFunction } from "express";
 import { AppError } from "./errorHandler";
 
 // Extend Express Request type to include auth property
-export interface AuthRequest extends Request {
+export interface AuthRequest<P = {}, ResBody = {}, ReqBody = {}, ReqQuery = {}>
+  extends Request<P, ResBody, ReqBody, ReqQuery> {
   auth?: {
     userId: string;
     email: string;
@@ -24,6 +25,7 @@ export const requireAuth = (
     "/auth/login",
     "/auth/google",
     "/auth/google/callback",
+    "/auth/refresh-token",
     "/auth/forgot-password",
     "/auth/reset-password",
   ];

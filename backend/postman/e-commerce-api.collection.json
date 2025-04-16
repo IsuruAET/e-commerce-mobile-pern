@@ -281,7 +281,27 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "categories"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Parse the response body",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Set category_id environment variable",
+                  "pm.environment.set('category_id', jsonData.id);",
+                  "",
+                  "// Test response status",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get Category by ID",
@@ -387,7 +407,27 @@
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "services"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Parse the response body",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Set service_id environment variable",
+                  "pm.environment.set('service_id', jsonData.id);",
+                  "",
+                  "// Test response status",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get Service by ID",
@@ -650,6 +690,132 @@
           }
         }
       ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Create Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20T10:00:00Z\",\n    \"notes\": \"Please provide a haircut with styling\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Parse the response body",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Set appointment_id environment variable",
+                  "pm.environment.set('appointment_id', jsonData.id);",
+                  "",
+                  "// Test response status",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Appointment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/{{appointment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "{{appointment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20T11:00:00Z\",\n    \"notes\": \"Updated appointment notes\",\n    \"status\": \"confirmed\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/{{appointment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "{{appointment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get User Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/user/appointments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "user", "appointments"]
+            }
+          }
+        },
+        {
+          "name": "Get Stylist Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/stylist/appointments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "stylist", "appointments"]
+            }
+          }
+        }
+      ]
     }
   ],
   "variable": [
@@ -675,12 +841,22 @@
     },
     {
       "key": "category_id",
-      "value": "your-category-id",
+      "value": "",
       "type": "string"
     },
     {
       "key": "service_id",
-      "value": "your-service-id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "stylist_id",
+      "value": "your-stylist-id",
       "type": "string"
     }
   ]

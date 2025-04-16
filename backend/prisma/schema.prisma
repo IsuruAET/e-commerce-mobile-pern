@@ -10,6 +10,14 @@ datasource db {
 enum UserRole {
   ADMIN
   USER
+  STYLIST
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
 }
 
 model User {
@@ -24,6 +32,8 @@ model User {
   updatedAt     DateTime             @updatedAt
   refreshTokens RefreshToken[]
   passwordResetTokens   PasswordResetToken[]
+  userAppointments      Appointment[] @relation("UserAppointments")
+  stylistAppointments   Appointment[] @relation("StylistAppointments")
 }
 
 model RefreshToken {
@@ -67,14 +77,15 @@ model Service {
   id          String         @id @default(uuid())
   name        String
   description String
-  price       Float
-  duration    Int
+  price       Decimal        @db.Decimal(10, 2)
+  duration    Int            @default(30) // in minutes
   categoryId  String
   isActive    Boolean        @default(true)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
-  category    Category       @relation(fields: [categoryId], references: [id])
+  category    Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   images      ServiceImage[]
+  appointments AppointmentService[]
 
   @@index([name])
   @@index([categoryId])
@@ -88,5 +99,39 @@ model ServiceImage {
   updatedAt DateTime @updatedAt
   service   Service  @relation(fields: [serviceId], references: [id])
 
+  @@index([serviceId])
+}
+
+model Appointment {
+  id              String              @id @default(uuid())
+  userId          String
+  stylistId       String
+  date            DateTime
+  status          AppointmentStatus   @default(PENDING)
+  notes           String?
+  estimatedDuration Int
+  totalPrice      Decimal             @db.Decimal(10, 2)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  user            User                @relation("UserAppointments", fields: [userId], references: [id], onDelete: Cascade)
+  stylist         User                @relation("StylistAppointments", fields: [stylistId], references: [id], onDelete: Cascade)
+  services        AppointmentService[]
+
+  @@index([userId])
+  @@index([stylistId])
+  @@index([date])
+}
+
+model AppointmentService {
+  id            String      @id @default(uuid())
+  appointmentId String
+  serviceId     String
+  numberOfPeople Int        @default(1)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  service       Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
   @@index([serviceId])
 }
