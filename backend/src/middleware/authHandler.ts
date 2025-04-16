@@ -1,5 +1,6 @@
-import { expressjwt, Request as JWTRequest } from "express-jwt";
+import { expressjwt } from "express-jwt";
 import { Request, Response, NextFunction } from "express";
+
 import { AppError } from "./errorHandler";
 
 // Extend Express Request type to include auth property
@@ -12,12 +13,28 @@ export interface AuthRequest extends Request {
 }
 
 // JWT middleware for protecting routes
-export const requireAuth = expressjwt({
-  secret: process.env.JWT_ACCESS_SECRET!,
-  algorithms: ["HS256"],
-  requestProperty: "auth", // The property to attach the decoded token to
-  credentialsRequired: true, // If false, continue to next middleware if no token is provided
-});
+export const requireAuth = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  expressjwt({
+    secret: process.env.JWT_ACCESS_SECRET!,
+    algorithms: ["HS256"],
+    requestProperty: "auth",
+    credentialsRequired: true,
+  })(req, res, (err) => {
+    if (err) {
+      if (err.name === "UnauthorizedError") {
+        return next(
+          new AppError(401, "Unauthorized - Invalid or expired token")
+        );
+      }
+      return next(new AppError(500, "Authentication error"));
+    }
+    next();
+  });
+};
 
 // Middleware to check if user has required role
 export const requireRole = (roles: string[]) => {
@@ -34,11 +51,3 @@ export const requireRole = (roles: string[]) => {
     next();
   };
 };
-
-// Optional auth middleware for routes that can be accessed with or without authentication
-export const optionalAuth = expressjwt({
-  secret: process.env.JWT_ACCESS_SECRET!,
-  algorithms: ["HS256"],
-  requestProperty: "auth",
-  credentialsRequired: false,
-});

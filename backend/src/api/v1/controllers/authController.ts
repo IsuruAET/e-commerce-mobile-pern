@@ -19,7 +19,6 @@ export class AuthController {
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: "/api/v1/auth/refresh-token",
       });
 
       res.status(201).json(rest);
@@ -42,7 +41,6 @@ export class AuthController {
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: "/api/v1/auth/refresh-token",
       });
 
       res.status(200).json(rest);
@@ -64,7 +62,6 @@ export class AuthController {
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: "/api/v1/auth/refresh-token",
       });
 
       // Return only the access token to the client
@@ -84,7 +81,6 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        path: "/api/v1/auth/refresh-token",
       });
 
       res.status(200).json({ message: "Logged out successfully" });
@@ -118,7 +114,6 @@ export class AuthController {
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            path: "/api/v1/auth/refresh-token",
           });
 
           res.status(200).json(rest);

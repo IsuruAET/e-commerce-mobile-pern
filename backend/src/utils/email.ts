@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 
+import { AppError } from "middleware/errorHandler";
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -34,6 +36,6 @@ export const sendEmail = async ({ to, subject, html }: EmailOptions) => {
     });
   } catch (error) {
     console.error("Error sending email:", error);
-    throw new Error("Failed to send email");
+    throw new AppError(500, "Failed to send email");
   }
 };

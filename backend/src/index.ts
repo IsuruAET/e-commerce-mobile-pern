@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import passport from "passport";
+import cookieParser from "cookie-parser";
 
 import { connectDB } from "./config/database";
 import v1Routes from "./api/v1/index";
@@ -18,7 +19,9 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
+app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 

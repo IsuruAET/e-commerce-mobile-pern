@@ -156,7 +156,6 @@ export class UserService {
           throw new AppError(404, "User not found");
         }
       }
-      console.log(error);
       throw new AppError(500, "Failed to delete user");
     }
   }
