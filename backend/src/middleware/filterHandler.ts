@@ -9,14 +9,8 @@ declare global {
   }
 }
 
-// Error messages
-const ERROR_MESSAGES = {
-  INVALID_FILTER: "Invalid filter parameter",
-  UNAUTHORIZED_FIELD: "Unauthorized field access",
-};
-
 export const filterHandler = (allowedFilters: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     try {
       const filters: Record<string, any> = {};
 

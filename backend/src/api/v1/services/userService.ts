@@ -1,11 +1,9 @@
 import { Request } from "express";
-import { Prisma } from "@prisma/client";
+
 import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
-import { AppError } from "middleware/errorHandler";
 import { formatPaginationResponse } from "middleware/paginationHandler";
 import { PasswordUtils } from "utils/passwordUtils";
 import { BaseService } from "./baseService";
-import { ErrorCode } from "../../../constants/errorCodes";
 
 export class UserService extends BaseService {
   static async createUser(data: CreateUserInput) {

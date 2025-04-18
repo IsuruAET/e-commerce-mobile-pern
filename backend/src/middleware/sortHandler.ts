@@ -14,13 +14,6 @@ declare global {
   }
 }
 
-// Error messages
-const ERROR_MESSAGES = {
-  INVALID_SORT: "Invalid sort parameter",
-  UNAUTHORIZED_FIELD: "Unauthorized field access",
-  MISMATCHED_ARRAYS: "Sort fields and orders must have the same length",
-};
-
 export const sortHandler = (
   allowedSortFields: string[],
   defaultSort: { field: string; order: "asc" | "desc" } = {
@@ -28,7 +21,7 @@ export const sortHandler = (
     order: "desc",
   }
 ) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     try {
       let sortOptions: { field: string; order: "asc" | "desc" }[] = [];
 

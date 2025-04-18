@@ -1,9 +1,7 @@
 import { Request } from "express";
-import { Prisma } from "@prisma/client";
-import { AppError } from "middleware/errorHandler";
+
 import { formatPaginationResponse } from "middleware/paginationHandler";
 import { BaseService } from "./baseService";
-import { ErrorCode } from "../../../constants/errorCodes";
 
 export class ServiceService extends BaseService {
   static async createService(data: {

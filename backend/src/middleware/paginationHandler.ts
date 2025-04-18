@@ -4,7 +4,7 @@ import { ErrorCode } from "../constants/errorCodes";
 
 export const paginationHandler = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   try {
