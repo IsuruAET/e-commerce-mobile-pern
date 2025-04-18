@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
+
 import { AppError } from "middleware/errorHandler";
-import { ErrorCode } from "../constants/errorCodes";
+import { ErrorCode } from "constants/errorCodes";
 
 interface EmailOptions {
   to: string;

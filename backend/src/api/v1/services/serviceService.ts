@@ -12,9 +12,9 @@ export class ServiceService extends BaseService {
     categoryId: string;
     images: string[];
   }) {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async (tx) => {
       // First create the service
-      const service = await this.prisma.service.create({
+      const service = await tx.service.create({
         data: {
           name: data.name,
           description: data.description,
@@ -28,7 +28,7 @@ export class ServiceService extends BaseService {
       // Then create the service images
       const serviceImages = await Promise.all(
         data.images.map((url) =>
-          this.prisma.serviceImage.create({
+          tx.serviceImage.create({
             data: {
               url,
               serviceId: service.id,
@@ -153,9 +153,9 @@ export class ServiceService extends BaseService {
       images?: string[];
     }
   ) {
-    return await this.handleNotFound(async () => {
+    return await this.handleTransaction(async (tx) => {
       // Update service
-      const service = await this.prisma.service.update({
+      const service = await tx.service.update({
         where: { id },
         data: {
           name: data.name,
@@ -173,14 +173,14 @@ export class ServiceService extends BaseService {
       // If images are provided, update them
       if (data.images) {
         // Delete existing images
-        await this.prisma.serviceImage.deleteMany({
+        await tx.serviceImage.deleteMany({
           where: { serviceId: id },
         });
 
         // Create new images
         const newImages = await Promise.all(
           data.images.map((url) =>
-            this.prisma.serviceImage.create({
+            tx.serviceImage.create({
               data: {
                 url,
                 serviceId: id,
@@ -200,14 +200,14 @@ export class ServiceService extends BaseService {
   }
 
   static async deleteService(id: string) {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async (tx) => {
       // First delete all service images
-      await this.prisma.serviceImage.deleteMany({
+      await tx.serviceImage.deleteMany({
         where: { serviceId: id },
       });
 
       // Then delete the service
-      await this.prisma.service.delete({
+      await tx.service.delete({
         where: { id },
       });
     });

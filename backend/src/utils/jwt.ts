@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
-import { AppError } from "../middleware/errorHandler";
-import { ErrorCode } from "../constants/errorCodes";
+
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
 
 interface TokenPayload {
   userId: string;

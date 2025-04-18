@@ -8,15 +8,13 @@ import {
 } from "../schemas/appointmentSchema";
 import { AppointmentService } from "../services/appointmentService";
 
-const appointmentService = new AppointmentService();
-
 export class AppointmentController {
-  async createAppointment(
+  static async createAppointment(
     req: AuthRequest<{}, {}, CreateAppointmentInput["body"]>,
     res: Response
   ) {
     try {
-      const appointment = await appointmentService.createAppointment(
+      const appointment = await AppointmentService.createAppointment(
         req.body,
         req.auth!.userId
       );
@@ -26,12 +24,12 @@ export class AppointmentController {
     }
   }
 
-  async getAppointment(
+  static async getAppointment(
     req: Request<GetAppointmentInput["params"]>,
     res: Response
   ) {
     try {
-      const appointment = await appointmentService.getAppointment(
+      const appointment = await AppointmentService.getAppointment(
         req.params.id
       );
       if (!appointment) {
@@ -43,7 +41,7 @@ export class AppointmentController {
     }
   }
 
-  async updateAppointment(
+  static async updateAppointment(
     req: Request<
       UpdateAppointmentInput["params"],
       {},
@@ -52,7 +50,7 @@ export class AppointmentController {
     res: Response
   ) {
     try {
-      const appointment = await appointmentService.updateAppointment(
+      const appointment = await AppointmentService.updateAppointment(
         req.params.id,
         req.body
       );
@@ -62,9 +60,9 @@ export class AppointmentController {
     }
   }
 
-  async getUserAppointments(req: AuthRequest, res: Response) {
+  static async getUserAppointments(req: AuthRequest, res: Response) {
     try {
-      const appointments = await appointmentService.getUserAppointments(
+      const appointments = await AppointmentService.getUserAppointments(
         req.auth!.userId
       );
       res.json(appointments);
@@ -73,9 +71,9 @@ export class AppointmentController {
     }
   }
 
-  async getStylistAppointments(req: AuthRequest, res: Response) {
+  static async getStylistAppointments(req: AuthRequest, res: Response) {
     try {
-      const appointments = await appointmentService.getStylistAppointments(
+      const appointments = await AppointmentService.getStylistAppointments(
         req.auth!.userId
       );
       res.json(appointments);

@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
+
 import {
   ErrorCode,
   ERROR_MESSAGES,
   ERROR_STATUS_CODES,
   ErrorType,
-} from "../constants/errorCodes";
+} from "constants/errorCodes";
 
 export class AppError extends Error {
   constructor(

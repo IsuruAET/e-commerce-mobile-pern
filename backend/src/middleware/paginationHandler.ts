@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
+
 import { AppError } from "./errorHandler";
-import { ErrorCode } from "../constants/errorCodes";
+import { ErrorCode } from "constants/errorCodes";
 
 export const paginationHandler = (
   req: Request,

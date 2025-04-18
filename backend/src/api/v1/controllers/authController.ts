@@ -7,7 +7,7 @@ export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password, name } = req.body;
-      const { refreshToken, ...rest } = await AuthService.register(
+      const { refreshToken, ...rest } = await AuthService.registerUser(
         email,
         password,
         name
@@ -30,7 +30,7 @@ export class AuthController {
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
-      const { refreshToken, ...rest } = await AuthService.login(
+      const { refreshToken, ...rest } = await AuthService.loginUser(
         email,
         password
       );
@@ -54,7 +54,7 @@ export class AuthController {
       const refreshToken = req.cookies.refreshToken;
 
       const { refreshToken: newRefreshToken, ...rest } =
-        await AuthService.refreshToken(refreshToken);
+        await AuthService.refreshUserToken(refreshToken);
 
       // Set new refresh token in HTTP-only cookie
       res.cookie("refreshToken", newRefreshToken, {
@@ -74,7 +74,7 @@ export class AuthController {
   static async logout(req: Request, res: Response, next: NextFunction) {
     try {
       const refreshToken = req.cookies.refreshToken;
-      await AuthService.logout(refreshToken);
+      await AuthService.logoutUser(refreshToken);
 
       // Clear the refresh token cookie
       res.clearCookie("refreshToken", {
@@ -127,7 +127,7 @@ export class AuthController {
   static async forgotPassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { email } = req.body;
-      const result = await AuthService.forgotPassword(email);
+      const result = await AuthService.requestPasswordReset(email);
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -137,7 +137,7 @@ export class AuthController {
   static async resetPassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { token, password } = req.body;
-      const result = await AuthService.resetPassword(token, password);
+      const result = await AuthService.resetUserPassword(token, password);
       res.status(200).json(result);
     } catch (error) {
       next(error);

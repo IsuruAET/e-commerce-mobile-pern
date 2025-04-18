@@ -10,7 +10,6 @@ import { requireAuth, requireRole } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 
 const router = Router();
-const appointmentController = new AppointmentController();
 
 // All routes require authentication
 router.use(requireAuth);
@@ -18,27 +17,27 @@ router.use(requireAuth);
 router.post(
   "/",
   validateRequest(createAppointmentSchema),
-  appointmentController.createAppointment
+  AppointmentController.createAppointment
 );
 
 router.get(
   "/:id",
   validateRequest(getAppointmentSchema),
-  appointmentController.getAppointment
+  AppointmentController.getAppointment
 );
 
 router.put(
   "/:id",
   requireRole(["ADMIN"]),
   validateRequest(updateAppointmentSchema),
-  appointmentController.updateAppointment
+  AppointmentController.updateAppointment
 );
 
-router.get("/user/appointments", appointmentController.getUserAppointments);
+router.get("/user/appointments", AppointmentController.getUserAppointments);
 router.get(
   "/stylist/appointments",
   requireRole(["STYLIST"]),
-  appointmentController.getStylistAppointments
+  AppointmentController.getStylistAppointments
 );
 
 export default router;

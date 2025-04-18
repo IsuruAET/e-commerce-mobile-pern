@@ -104,19 +104,19 @@ export class UserService extends BaseService {
   }
 
   static async deleteUser(id: string) {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async (tx) => {
       // First delete all related refresh tokens and password reset tokens
-      await this.prisma.$transaction([
-        this.prisma.refreshToken.deleteMany({
-          where: { userId: id },
-        }),
-        this.prisma.passwordResetToken.deleteMany({
-          where: { userId: id },
-        }),
-        this.prisma.user.delete({
-          where: { id },
-        }),
-      ]);
+      await tx.refreshToken.deleteMany({
+        where: { userId: id },
+      });
+
+      await tx.passwordResetToken.deleteMany({
+        where: { userId: id },
+      });
+
+      await tx.user.delete({
+        where: { id },
+      });
     });
   }
 }

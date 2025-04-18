@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
+
 import { AppError } from "./errorHandler";
-import { ErrorCode } from "../constants/errorCodes";
+import { ErrorCode } from "constants/errorCodes";
 
 // Extend Express Request type to include sort options
 declare global {

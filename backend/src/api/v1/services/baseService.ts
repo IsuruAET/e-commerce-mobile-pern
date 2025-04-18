@@ -1,6 +1,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
+
 import { AppError } from "middleware/errorHandler";
-import { ErrorCode } from "../../../constants/errorCodes";
+import { ErrorCode } from "constants/errorCodes";
 
 export class BaseService {
   protected static prisma = new PrismaClient();
@@ -39,5 +40,38 @@ export class BaseService {
       throw new AppError(errorCode);
     }
     return result;
+  }
+
+  protected static async handleTransaction<T>(
+    operations: (
+      tx: Omit<
+        PrismaClient,
+        | "$connect"
+        | "$disconnect"
+        | "$on"
+        | "$transaction"
+        | "$use"
+        | "$extends"
+      >
+    ) => Promise<T>,
+    _errorCode: ErrorCode = ErrorCode.DATABASE_ERROR,
+    options?: {
+      timeout?: number;
+      maxRetries?: number;
+      isolationLevel?: Prisma.TransactionIsolationLevel;
+    }
+  ): Promise<T> {
+    return await this.handleDatabaseError(async () => {
+      return await this.prisma.$transaction(
+        async (tx) => {
+          return await operations(tx);
+        },
+        {
+          timeout: options?.timeout || 5000,
+          maxWait: options?.timeout || 7000,
+          isolationLevel: options?.isolationLevel || "Serializable",
+        }
+      );
+    });
   }
 }

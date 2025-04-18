@@ -1,11 +1,11 @@
 import { setInterval } from "timers";
 
+import { BaseService } from "./baseService";
 import { AppError } from "middleware/errorHandler";
-import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 import { sendEmail } from "utils/email";
 import { PasswordUtils } from "utils/passwordUtils";
 import { JwtUtils } from "utils/jwt";
-import { BaseService } from "./baseService";
+import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 
 export class AuthService extends BaseService {
   static async storeRefreshToken(token: string, userId: string) {
@@ -55,9 +55,9 @@ export class AuthService extends BaseService {
     }, intervalHours * 60 * 60 * 1000);
   }
 
-  static async register(email: string, password: string, name: string) {
-    return await this.handleDatabaseError(async () => {
-      const existingUser = await this.prisma.user.findUnique({
+  static async registerUser(email: string, password: string, name: string) {
+    return await this.handleTransaction(async (tx) => {
+      const existingUser = await tx.user.findUnique({
         where: { email },
       });
 
@@ -67,7 +67,7 @@ export class AuthService extends BaseService {
 
       const hashedPassword = await PasswordUtils.hashPassword(password);
 
-      const user = await this.prisma.user.create({
+      const user = await tx.user.create({
         data: {
           email,
           password: hashedPassword,
@@ -81,7 +81,13 @@ export class AuthService extends BaseService {
         role: user.role || "USER",
       });
 
-      await this.storeRefreshToken(refreshToken, user.id);
+      await tx.refreshToken.create({
+        data: {
+          token: refreshToken,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        },
+      });
 
       return {
         accessToken,
@@ -95,9 +101,9 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async login(email: string, password: string) {
-    return await this.handleDatabaseError(async () => {
-      const user = await this.prisma.user.findUnique({
+  static async loginUser(email: string, password: string) {
+    return await this.handleTransaction(async (tx) => {
+      const user = await tx.user.findUnique({
         where: { email },
       });
 
@@ -105,7 +111,12 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_CREDENTIALS);
       }
 
-      await this.cleanupExpiredTokens(user.id);
+      await tx.refreshToken.deleteMany({
+        where: {
+          userId: user.id,
+          expiresAt: { lt: new Date() },
+        },
+      });
 
       const isPasswordValid = await PasswordUtils.comparePassword(
         password,
@@ -121,7 +132,13 @@ export class AuthService extends BaseService {
         role: user.role || "",
       });
 
-      await this.storeRefreshToken(refreshToken, user.id);
+      await tx.refreshToken.create({
+        data: {
+          token: refreshToken,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        },
+      });
 
       return {
         accessToken,
@@ -135,15 +152,15 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async refreshToken(refreshToken: string) {
-    return await this.handleDatabaseError(async () => {
+  static async refreshUserToken(refreshToken: string) {
+    return await this.handleTransaction(async (tx) => {
       if (!refreshToken) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
       }
 
       const decoded = JwtUtils.verifyRefreshToken(refreshToken);
 
-      const storedToken = await this.prisma.refreshToken.findFirst({
+      const storedToken = await tx.refreshToken.findFirst({
         where: {
           token: refreshToken,
           userId: decoded.userId,
@@ -162,7 +179,7 @@ export class AuthService extends BaseService {
           role: decoded.role,
         });
 
-      await this.prisma.refreshToken.update({
+      await tx.refreshToken.update({
         where: { id: storedToken.id },
         data: {
           token: newRefreshToken,
@@ -177,7 +194,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async logout(refreshToken: string) {
+  static async logoutUser(refreshToken: string) {
     return await this.handleDatabaseError(async () => {
       if (!refreshToken) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
@@ -208,7 +225,13 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_USER_DATA);
       }
 
-      await this.storeRefreshToken(tokens.refreshToken, user.id);
+      await this.prisma.refreshToken.create({
+        data: {
+          token: tokens.refreshToken,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        },
+      });
 
       return {
         accessToken: tokens.accessToken,
@@ -222,9 +245,9 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async forgotPassword(email: string) {
-    return await this.handleDatabaseError(async () => {
-      const user = await this.prisma.user.findUnique({
+  static async requestPasswordReset(email: string) {
+    return await this.handleTransaction(async (tx) => {
+      const user = await tx.user.findUnique({
         where: { email },
       });
 
@@ -235,7 +258,7 @@ export class AuthService extends BaseService {
         };
       }
 
-      const recentAttempts = await this.prisma.passwordResetToken.count({
+      const recentAttempts = await tx.passwordResetToken.count({
         where: {
           userId: user.id,
           createdAt: {
@@ -250,7 +273,7 @@ export class AuthService extends BaseService {
 
       const resetToken = JwtUtils.generatePasswordResetToken(user.id);
 
-      await this.prisma.passwordResetToken.create({
+      await tx.passwordResetToken.create({
         data: {
           token: resetToken,
           userId: user.id,
@@ -288,15 +311,15 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async resetPassword(token: string, newPassword: string) {
-    return await this.handleDatabaseError(async () => {
+  static async resetUserPassword(token: string, newPassword: string) {
+    return await this.handleTransaction(async (tx) => {
       if (!token) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
       }
 
       const { userId } = JwtUtils.verifyPasswordResetToken(token);
 
-      const resetToken = await this.prisma.passwordResetToken.findFirst({
+      const resetToken = await tx.passwordResetToken.findFirst({
         where: {
           token: token,
           userId: userId,
@@ -310,12 +333,12 @@ export class AuthService extends BaseService {
 
       const hashedPassword = await PasswordUtils.hashPassword(newPassword);
 
-      await this.prisma.$transaction([
-        this.prisma.user.update({
+      await Promise.all([
+        tx.user.update({
           where: { id: userId },
           data: { password: hashedPassword },
         }),
-        this.prisma.passwordResetToken.deleteMany({
+        tx.passwordResetToken.deleteMany({
           where: { userId: userId },
         }),
       ]);

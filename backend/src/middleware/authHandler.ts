@@ -1,7 +1,8 @@
 import { expressjwt } from "express-jwt";
 import { Request, Response, NextFunction } from "express";
+
 import { AppError } from "./errorHandler";
-import { ErrorCode } from "../constants/errorCodes";
+import { ErrorCode } from "constants/errorCodes";
 
 // Extend Express Request type to include auth property
 export interface AuthRequest<P = {}, ResBody = {}, ReqBody = {}, ReqQuery = {}>

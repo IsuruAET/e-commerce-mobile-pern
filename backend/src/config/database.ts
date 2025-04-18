@@ -1,7 +1,8 @@
 import { Pool, PoolConfig } from "pg";
 import dotenv from "dotenv";
-import { AppError } from "../middleware/errorHandler";
-import { ErrorCode } from "../constants/errorCodes";
+
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
 
 dotenv.config();
 

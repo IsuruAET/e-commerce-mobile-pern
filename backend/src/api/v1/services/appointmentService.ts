@@ -5,13 +5,13 @@ import {
 import { BaseService } from "./baseService";
 
 export class AppointmentService extends BaseService {
-  async createAppointment(
+  static async createAppointment(
     input: CreateAppointmentInput["body"],
     userId: string
   ) {
-    return BaseService.handleDatabaseError(async () => {
+    return await this.handleTransaction(async (tx) => {
       // First, get all services to calculate total price and duration
-      const services = await BaseService.prisma.service.findMany({
+      const services = await tx.service.findMany({
         where: {
           id: {
             in: input.services.map((s: { serviceId: string }) => s.serviceId),
@@ -32,7 +32,7 @@ export class AppointmentService extends BaseService {
         0
       );
 
-      return BaseService.prisma.appointment.create({
+      return tx.appointment.create({
         data: {
           userId,
           stylistId: input.stylistId,
@@ -72,9 +72,9 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  async getAppointment(id: string) {
-    return BaseService.handleNotFound(async () => {
-      return BaseService.prisma.appointment.findUnique({
+  static async getAppointment(id: string) {
+    return await this.handleNotFound(async () => {
+      return this.prisma.appointment.findUnique({
         where: { id },
         include: {
           services: {
@@ -101,8 +101,11 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  async updateAppointment(id: string, input: UpdateAppointmentInput["body"]) {
-    return BaseService.handleDatabaseError(async () => {
+  static async updateAppointment(
+    id: string,
+    input: UpdateAppointmentInput["body"]
+  ) {
+    return await this.handleTransaction(async (tx) => {
       let updateData: any = {
         date: input.date ? new Date(input.date) : undefined,
         status: input.status,
@@ -111,7 +114,7 @@ export class AppointmentService extends BaseService {
 
       if (input.services) {
         // Get all services to calculate new total price and duration
-        const services = await BaseService.prisma.service.findMany({
+        const services = await tx.service.findMany({
           where: {
             id: {
               in: input.services.map((s: { serviceId: string }) => s.serviceId),
@@ -151,7 +154,7 @@ export class AppointmentService extends BaseService {
         };
       }
 
-      return BaseService.prisma.appointment.update({
+      return tx.appointment.update({
         where: { id },
         data: updateData,
         include: {
@@ -179,9 +182,9 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  async getUserAppointments(userId: string) {
-    return BaseService.handleDatabaseError(async () => {
-      return BaseService.prisma.appointment.findMany({
+  static async getUserAppointments(userId: string) {
+    return await this.handleDatabaseError(async () => {
+      return this.prisma.appointment.findMany({
         where: { userId },
         include: {
           services: {
@@ -204,9 +207,9 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  async getStylistAppointments(stylistId: string) {
-    return BaseService.handleDatabaseError(async () => {
-      return BaseService.prisma.appointment.findMany({
+  static async getStylistAppointments(stylistId: string) {
+    return await this.handleDatabaseError(async () => {
+      return this.prisma.appointment.findMany({
         where: { stylistId },
         include: {
           services: {
