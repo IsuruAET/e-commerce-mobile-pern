@@ -30,14 +30,14 @@ export class AppError extends Error {
 }
 
 interface ErrorResponse {
-  status: "error";
+  status: string;
   code: ErrorCode;
   message: string;
   type?: ErrorType;
-  errors?: any[];
-  stack?: string;
   requestId?: string;
   timestamp: string;
+  errors?: any[];
+  stack?: string;
 }
 
 export const errorHandler = (
@@ -77,8 +77,27 @@ export const errorHandler = (
   // Add stack trace in development
   if (process.env.NODE_ENV === "development") {
     response.stack = err.stack;
-    console.error(err);
   }
+
+  // Log the error with request ID
+  const errorLog = {
+    requestId: req.id,
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.url,
+    error: {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+      ...(err instanceof AppError && {
+        code: err.errorCode,
+        type: err.type,
+        isOperational: err.isOperational,
+      }),
+    },
+  };
+
+  console.error(JSON.stringify(errorLog, null, 2));
 
   return res.status(ERROR_STATUS_CODES[response.code]).json(response);
 };
