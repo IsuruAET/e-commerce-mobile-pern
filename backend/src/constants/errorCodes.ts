@@ -19,6 +19,7 @@ export enum ErrorCode {
   TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND",
   VALIDATION_ERROR = "VALIDATION_ERROR",
   INVALID_USER_DATA = "INVALID_USER_DATA",
+  OPERATION_TIMEOUT = "OPERATION_TIMEOUT",
 
   // Authentication Errors (401)
   UNAUTHORIZED = "UNAUTHORIZED",
@@ -67,6 +68,7 @@ export const ERROR_MESSAGES: ErrorMessages = {
   [ErrorCode.VALIDATION_ERROR]: "Please check your input and try again.",
   [ErrorCode.INVALID_USER_DATA]:
     "The information provided is not valid. Please check and try again.",
+  [ErrorCode.OPERATION_TIMEOUT]: "The operation timed out. Please try again.",
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: "You need to be logged in to do that.",
@@ -117,6 +119,7 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.TOKEN_NOT_FOUND]: 400,
   [ErrorCode.VALIDATION_ERROR]: 400,
   [ErrorCode.INVALID_USER_DATA]: 400,
+  [ErrorCode.OPERATION_TIMEOUT]: 408,
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: 401,

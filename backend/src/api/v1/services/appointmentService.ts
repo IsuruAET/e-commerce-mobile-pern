@@ -9,67 +9,74 @@ export class AppointmentService extends BaseService {
     input: CreateAppointmentInput["body"],
     userId: string
   ) {
-    return await this.handleTransaction(async (tx) => {
-      // First, get all services to calculate total price and duration
-      const services = await tx.service.findMany({
-        where: {
-          id: {
-            in: input.services.map((s: { serviceId: string }) => s.serviceId),
+    return await this.handleWithTimeout(async () => {
+      return await this.handleTransaction(async (tx) => {
+        // First, get all services to calculate total price and duration
+        const services = await tx.service.findMany({
+          where: {
+            id: {
+              in: input.services.map((s: { serviceId: string }) => s.serviceId),
+            },
           },
-        },
-      });
+        });
 
-      // Calculate total price and duration based on number of people per service
-      const totalPrice = input.services.reduce((sum: number, serviceInput) => {
-        const service = services.find((s) => s.id === serviceInput.serviceId);
-        return (
-          sum + (Number(service?.price) || 0) * serviceInput.numberOfPeople
+        // Calculate total price and duration based on number of people per service
+        const totalPrice = input.services.reduce(
+          (sum: number, serviceInput) => {
+            const service = services.find(
+              (s) => s.id === serviceInput.serviceId
+            );
+            return (
+              sum + (Number(service?.price) || 0) * serviceInput.numberOfPeople
+            );
+          },
+          0
         );
-      }, 0);
 
-      const estimatedDuration = services.reduce(
-        (sum: number, service) => sum + service.duration,
-        0
-      );
+        const estimatedDuration = services.reduce(
+          (sum: number, service) => sum + service.duration,
+          0
+        );
 
-      return tx.appointment.create({
-        data: {
-          userId,
-          stylistId: input.stylistId,
-          date: new Date(input.date),
-          notes: input.notes,
-          estimatedDuration,
-          totalPrice,
-          services: {
-            create: input.services.map((serviceInput) => ({
-              serviceId: serviceInput.serviceId,
-              numberOfPeople: serviceInput.numberOfPeople,
-            })),
-          },
-        },
-        include: {
-          services: {
-            include: {
-              service: true,
+        return tx.appointment.create({
+          data: {
+            userId,
+            stylistId: input.stylistId,
+            date: new Date(input.date),
+            notes: input.notes,
+            estimatedDuration,
+            totalPrice,
+            services: {
+              create: input.services.map((serviceInput) => ({
+                serviceId: serviceInput.serviceId,
+                numberOfPeople: serviceInput.numberOfPeople,
+              })),
             },
           },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
+          include: {
+            services: {
+              include: {
+                service: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            stylist: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
             },
           },
-          stylist: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
+        });
       });
-    });
+    }, 10000); // 10 second timeout
   }
 
   static async getAppointment(id: string) {
@@ -105,81 +112,86 @@ export class AppointmentService extends BaseService {
     id: string,
     input: UpdateAppointmentInput["body"]
   ) {
-    return await this.handleTransaction(async (tx) => {
-      let updateData: any = {
-        date: input.date ? new Date(input.date) : undefined,
-        status: input.status,
-        notes: input.notes,
-      };
+    return await this.handleWithTimeout(async () => {
+      return await this.handleTransaction(async (tx) => {
+        let updateData: any = {
+          date: input.date ? new Date(input.date) : undefined,
+          status: input.status,
+          notes: input.notes,
+        };
 
-      if (input.services) {
-        // Get all services to calculate new total price and duration
-        const services = await tx.service.findMany({
-          where: {
-            id: {
-              in: input.services.map((s: { serviceId: string }) => s.serviceId),
+        if (input.services) {
+          // Get all services to calculate new total price and duration
+          const services = await tx.service.findMany({
+            where: {
+              id: {
+                in: input.services.map(
+                  (s: { serviceId: string }) => s.serviceId
+                ),
+              },
+            },
+          });
+
+          // Calculate total price and duration based on number of people per service
+          const totalPrice = input.services.reduce(
+            (sum: number, serviceInput) => {
+              const service = services.find(
+                (s) => s.id === serviceInput.serviceId
+              );
+              return (
+                sum +
+                (Number(service?.price) || 0) * serviceInput.numberOfPeople
+              );
+            },
+            0
+          );
+
+          const estimatedDuration = services.reduce(
+            (sum: number, service) => sum + service.duration,
+            0
+          );
+
+          updateData = {
+            ...updateData,
+            totalPrice,
+            estimatedDuration,
+            services: {
+              deleteMany: {},
+              create: input.services.map((serviceInput) => ({
+                serviceId: serviceInput.serviceId,
+                numberOfPeople: serviceInput.numberOfPeople,
+              })),
+            },
+          };
+        }
+
+        return tx.appointment.update({
+          where: { id },
+          data: updateData,
+          include: {
+            services: {
+              include: {
+                service: true,
+              },
+            },
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            stylist: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
             },
           },
         });
-
-        // Calculate total price and duration based on number of people per service
-        const totalPrice = input.services.reduce(
-          (sum: number, serviceInput) => {
-            const service = services.find(
-              (s) => s.id === serviceInput.serviceId
-            );
-            return (
-              sum + (Number(service?.price) || 0) * serviceInput.numberOfPeople
-            );
-          },
-          0
-        );
-
-        const estimatedDuration = services.reduce(
-          (sum: number, service) => sum + service.duration,
-          0
-        );
-
-        updateData = {
-          ...updateData,
-          totalPrice,
-          estimatedDuration,
-          services: {
-            deleteMany: {},
-            create: input.services.map((serviceInput) => ({
-              serviceId: serviceInput.serviceId,
-              numberOfPeople: serviceInput.numberOfPeople,
-            })),
-          },
-        };
-      }
-
-      return tx.appointment.update({
-        where: { id },
-        data: updateData,
-        include: {
-          services: {
-            include: {
-              service: true,
-            },
-          },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          stylist: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
       });
-    });
+    }, 10000); // 10 second timeout
   }
 
   static async getUserAppointments(userId: string) {

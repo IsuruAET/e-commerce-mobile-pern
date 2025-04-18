@@ -74,4 +74,19 @@ export class BaseService {
       );
     });
   }
+
+  protected static async handleWithTimeout<T>(
+    operation: () => Promise<T>,
+    timeoutMs: number = 30000
+  ): Promise<T> {
+    return await Promise.race<T>([
+      operation(),
+      new Promise<T>((_, reject) =>
+        setTimeout(
+          () => reject(new AppError(ErrorCode.OPERATION_TIMEOUT)),
+          timeoutMs
+        )
+      ),
+    ]);
+  }
 }
