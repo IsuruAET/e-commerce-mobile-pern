@@ -10,6 +10,7 @@ import v1Routes from "./api/v1/index";
 import { AuthService } from "./api/v1/services/authService";
 import { errorHandler } from "middleware/errorHandler";
 import { requireAuth } from "middleware/authHandler";
+import { requestIdMiddleware } from "middleware/requestId";
 import "./config/passport";
 
 // Load environment variables
@@ -20,6 +21,7 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
+app.use(requestIdMiddleware);
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());

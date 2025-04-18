@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 
+interface CustomRequest extends Request {
+  id: string;
+}
+
 import {
   ErrorCode,
   ERROR_MESSAGES,
@@ -32,11 +36,13 @@ interface ErrorResponse {
   type?: ErrorType;
   errors?: any[];
   stack?: string;
+  requestId?: string;
+  timestamp: string;
 }
 
 export const errorHandler = (
   err: Error | AppError,
-  _req: Request,
+  req: CustomRequest,
   res: Response,
   _next: NextFunction
 ) => {
@@ -51,6 +57,8 @@ export const errorHandler = (
       code: err.errorCode,
       message: err.message,
       type: err.type,
+      requestId: req.id,
+      timestamp: new Date().toISOString(),
       ...(err.errors && { errors: err.errors }),
     };
   }
@@ -61,6 +69,8 @@ export const errorHandler = (
       code: ErrorCode.INTERNAL_SERVER_ERROR,
       message: ERROR_MESSAGES[ErrorCode.INTERNAL_SERVER_ERROR],
       type: ErrorType.INTERNAL,
+      requestId: req.id,
+      timestamp: new Date().toISOString(),
     };
   }
 
