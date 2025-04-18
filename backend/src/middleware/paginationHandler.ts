@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import { AppError } from "./errorHandler";
+import { ErrorCode } from "../constants/errorCodes";
 
 export const paginationHandler = (
   req: Request,
@@ -12,10 +14,10 @@ export const paginationHandler = (
 
     // Validate pagination parameters
     if (page < 1) {
-      throw new Error("Page number must be greater than 0");
+      throw new AppError(ErrorCode.INVALID_INPUT);
     }
     if (limit < 1 || limit > 100) {
-      throw new Error("Limit must be between 1 and 100");
+      throw new AppError(ErrorCode.INVALID_INPUT);
     }
 
     // Calculate skip value

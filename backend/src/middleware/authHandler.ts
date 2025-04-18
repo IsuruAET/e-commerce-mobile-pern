@@ -1,7 +1,7 @@
 import { expressjwt } from "express-jwt";
 import { Request, Response, NextFunction } from "express";
-
 import { AppError } from "./errorHandler";
+import { ErrorCode } from "../constants/errorCodes";
 
 // Extend Express Request type to include auth property
 export interface AuthRequest<P = {}, ResBody = {}, ReqBody = {}, ReqQuery = {}>
@@ -42,11 +42,9 @@ export const requireAuth = (
   })(req, res, (err) => {
     if (err) {
       if (err.name === "UnauthorizedError") {
-        return next(
-          new AppError(401, "Unauthorized - Invalid or expired token")
-        );
+        return next(new AppError(ErrorCode.UNAUTHORIZED));
       }
-      return next(new AppError(500, "Authentication error"));
+      return next(new AppError(ErrorCode.AUTHENTICATION_FAILED));
     }
     next();
   });
@@ -56,12 +54,12 @@ export const requireAuth = (
 export const requireRole = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.auth) {
-      throw new AppError(401, "Unauthorized - No token provided");
+      throw new AppError(ErrorCode.UNAUTHORIZED);
     }
 
     const userRole = req.auth.role;
     if (!roles.includes(userRole)) {
-      throw new AppError(403, "Forbidden - Insufficient permissions");
+      throw new AppError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }
 
     next();

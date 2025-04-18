@@ -1,5 +1,7 @@
 import { Pool, PoolConfig } from "pg";
 import dotenv from "dotenv";
+import { AppError } from "../middleware/errorHandler";
+import { ErrorCode } from "../constants/errorCodes";
 
 dotenv.config();
 
@@ -74,10 +76,7 @@ class Database {
         console.log(`Database ${config.database} created successfully`);
       }
     } catch (error) {
-      throw new DatabaseError(
-        `Failed to create database: ${(error as Error).message}`,
-        error as Error
-      );
+      throw new AppError(ErrorCode.DATABASE_ERROR);
     } finally {
       client.release();
       await tempPool.end();
@@ -119,10 +118,7 @@ class Database {
         );
 
         if (this.connectionAttempts === this.MAX_RETRIES) {
-          throw new DatabaseError(
-            "Failed to connect to database after maximum retries",
-            error as Error
-          );
+          throw new AppError(ErrorCode.DATABASE_ERROR);
         }
 
         await this.wait(this.RETRY_DELAY);
@@ -159,16 +155,13 @@ class Database {
       console.log("Database connection closed");
     } catch (error) {
       console.error("Error while disconnecting:", error);
-      throw new DatabaseError(
-        "Failed to disconnect from database",
-        error as Error
-      );
+      throw new AppError(ErrorCode.DATABASE_ERROR);
     }
   }
 
   public getPool(): Pool {
     if (!this.pool) {
-      throw new DatabaseError("Database not connected");
+      throw new AppError(ErrorCode.DATABASE_ERROR);
     }
     return this.pool;
   }

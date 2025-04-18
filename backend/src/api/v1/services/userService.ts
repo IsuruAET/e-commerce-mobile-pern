@@ -1,20 +1,19 @@
 import { Request } from "express";
-import { PrismaClient, Prisma } from "@prisma/client";
-
+import { Prisma } from "@prisma/client";
 import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
 import { AppError } from "middleware/errorHandler";
 import { formatPaginationResponse } from "middleware/paginationHandler";
 import { PasswordUtils } from "utils/passwordUtils";
+import { BaseService } from "./baseService";
+import { ErrorCode } from "../../../constants/errorCodes";
 
-const prisma = new PrismaClient();
-
-export class UserService {
+export class UserService extends BaseService {
   static async createUser(data: CreateUserInput) {
-    try {
+    return await this.handleDatabaseError(async () => {
       // Hash the password using PasswordUtils
       const hashedPassword = await PasswordUtils.hashPassword(data.password);
 
-      const user = await prisma.user.create({
+      const user = await this.prisma.user.create({
         data: {
           email: data.email,
           password: hashedPassword,
@@ -31,19 +30,12 @@ export class UserService {
       });
 
       return user;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
-          throw new AppError(409, "User with this email already exists");
-        }
-      }
-      throw new AppError(500, "Failed to create user");
-    }
+    });
   }
 
   static async getUserById(id: string) {
-    try {
-      const user = await prisma.user.findUnique({
+    return await this.handleNotFound(async () => {
+      return await this.prisma.user.findUnique({
         where: { id },
         select: {
           id: true,
@@ -54,26 +46,15 @@ export class UserService {
           updatedAt: true,
         },
       });
-
-      if (!user) {
-        throw new AppError(404, "User not found");
-      }
-
-      return user;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError(500, "Failed to retrieve user");
-    }
+    });
   }
 
   static async listUsers(req: Request) {
-    try {
+    return await this.handleDatabaseError(async () => {
       const { skip, limit } = req.pagination;
 
       const [users, total] = await Promise.all([
-        prisma.user.findMany({
+        this.prisma.user.findMany({
           skip,
           take: limit,
           select: {
@@ -85,27 +66,25 @@ export class UserService {
             updatedAt: true,
           },
         }),
-        prisma.user.count(),
+        this.prisma.user.count(),
       ]);
 
       return {
         data: users,
         pagination: formatPaginationResponse(req, total),
       };
-    } catch (error) {
-      throw new AppError(500, "Failed to retrieve users");
-    }
+    });
   }
 
   static async updateUser(id: string, data: UpdateUserInput) {
-    try {
+    return await this.handleNotFound(async () => {
       // If password is being updated, hash it using PasswordUtils
       const updateData: any = { ...data };
       if (data.password) {
         updateData.password = await PasswordUtils.hashPassword(data.password);
       }
 
-      const user = await prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id },
         data: {
           email: updateData.email,
@@ -123,40 +102,23 @@ export class UserService {
       });
 
       return user;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2025") {
-          throw new AppError(404, "User not found");
-        }
-        if (error.code === "P2002") {
-          throw new AppError(409, "User with this email already exists");
-        }
-      }
-      throw new AppError(500, "Failed to update user");
-    }
+    });
   }
 
   static async deleteUser(id: string) {
-    try {
+    return await this.handleDatabaseError(async () => {
       // First delete all related refresh tokens and password reset tokens
-      await prisma.$transaction([
-        prisma.refreshToken.deleteMany({
+      await this.prisma.$transaction([
+        this.prisma.refreshToken.deleteMany({
           where: { userId: id },
         }),
-        prisma.passwordResetToken.deleteMany({
+        this.prisma.passwordResetToken.deleteMany({
           where: { userId: id },
         }),
-        prisma.user.delete({
+        this.prisma.user.delete({
           where: { id },
         }),
       ]);
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2025") {
-          throw new AppError(404, "User not found");
-        }
-      }
-      throw new AppError(500, "Failed to delete user");
-    }
+    });
   }
 }

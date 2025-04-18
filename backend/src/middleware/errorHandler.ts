@@ -1,21 +1,34 @@
 import { Request, Response, NextFunction } from "express";
+import {
+  ErrorCode,
+  ERROR_MESSAGES,
+  ERROR_STATUS_CODES,
+  ErrorType,
+} from "../constants/errorCodes";
 
 export class AppError extends Error {
   constructor(
-    public statusCode: number,
-    public message: string,
+    public errorCode: ErrorCode,
+    public message: string = ERROR_MESSAGES[errorCode],
     public isOperational: boolean = true,
-    public errors?: any[]
+    public errors?: any[],
+    public type?: ErrorType
   ) {
     super(message);
+    this.name = "AppError";
     Object.setPrototypeOf(this, AppError.prototype);
+  }
+
+  get statusCode(): number {
+    return ERROR_STATUS_CODES[this.errorCode];
   }
 }
 
 interface ErrorResponse {
   status: "error";
+  code: ErrorCode;
   message: string;
-  code: number;
+  type?: ErrorType;
   errors?: any[];
   stack?: string;
 }
@@ -26,22 +39,35 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  // Set response headers to ensure JSON response
   res.setHeader("Content-Type", "application/json");
 
-  const response: ErrorResponse = {
-    status: "error",
-    message: err.message || "Internal server error",
-    code: err instanceof AppError ? err.statusCode : 500,
-    ...(err instanceof AppError && err.errors && { errors: err.errors }),
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-  };
+  let response: ErrorResponse;
 
-  // Log error in development
+  // Handle AppError
+  if (err instanceof AppError) {
+    response = {
+      status: "error",
+      code: err.errorCode,
+      message: err.message,
+      type: err.type,
+      ...(err.errors && { errors: err.errors }),
+    };
+  }
+  // Handle other errors
+  else {
+    response = {
+      status: "error",
+      code: ErrorCode.INTERNAL_SERVER_ERROR,
+      message: ERROR_MESSAGES[ErrorCode.INTERNAL_SERVER_ERROR],
+      type: ErrorType.INTERNAL,
+    };
+  }
+
+  // Add stack trace in development
   if (process.env.NODE_ENV === "development") {
+    response.stack = err.stack;
     console.error(err);
   }
 
-  // Send JSON response
-  return res.status(response.code).json(response);
+  return res.status(ERROR_STATUS_CODES[response.code]).json(response);
 };

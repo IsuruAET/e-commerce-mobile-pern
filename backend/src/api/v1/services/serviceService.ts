@@ -1,12 +1,11 @@
 import { Request } from "express";
-import { PrismaClient, Prisma } from "@prisma/client";
-
+import { Prisma } from "@prisma/client";
 import { AppError } from "middleware/errorHandler";
 import { formatPaginationResponse } from "middleware/paginationHandler";
+import { BaseService } from "./baseService";
+import { ErrorCode } from "../../../constants/errorCodes";
 
-const prisma = new PrismaClient();
-
-export class ServiceService {
+export class ServiceService extends BaseService {
   static async createService(data: {
     name: string;
     description: string;
@@ -15,9 +14,9 @@ export class ServiceService {
     categoryId: string;
     images: string[];
   }) {
-    try {
+    return await this.handleDatabaseError(async () => {
       // First create the service
-      const service = await prisma.service.create({
+      const service = await this.prisma.service.create({
         data: {
           name: data.name,
           description: data.description,
@@ -31,7 +30,7 @@ export class ServiceService {
       // Then create the service images
       const serviceImages = await Promise.all(
         data.images.map((url) =>
-          prisma.serviceImage.create({
+          this.prisma.serviceImage.create({
             data: {
               url,
               serviceId: service.id,
@@ -44,44 +43,23 @@ export class ServiceService {
         ...service,
         images: serviceImages,
       };
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
-          throw new AppError(409, "Service with this name already exists");
-        }
-        if (error.code === "P2003") {
-          throw new AppError(404, "Category not found");
-        }
-      }
-      throw new AppError(500, "Failed to create service");
-    }
+    });
   }
 
   static async getServiceById(id: string) {
-    try {
-      const service = await prisma.service.findUnique({
+    return await this.handleNotFound(async () => {
+      return await this.prisma.service.findUnique({
         where: { id },
         include: {
           images: true,
           category: true,
         },
       });
-
-      if (!service) {
-        throw new AppError(404, "Service not found");
-      }
-
-      return service;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError(500, "Failed to retrieve service");
-    }
+    });
   }
 
   static async listActiveServices(req: Request) {
-    try {
+    return await this.handleDatabaseError(async () => {
       const { skip, limit } = req.pagination;
       const filters = req.filters || {};
       const sortOptions = req.sortOptions || [
@@ -89,7 +67,7 @@ export class ServiceService {
       ];
 
       const [services, total] = await Promise.all([
-        prisma.service.findMany({
+        this.prisma.service.findMany({
           where: {
             isActive: true,
             ...filters,
@@ -110,7 +88,7 @@ export class ServiceService {
             updatedAt: true,
           },
         }),
-        prisma.service.count({
+        this.prisma.service.count({
           where: {
             isActive: true,
             ...filters,
@@ -122,13 +100,11 @@ export class ServiceService {
         data: services,
         pagination: formatPaginationResponse(req, total),
       };
-    } catch (error) {
-      throw new AppError(500, "Failed to retrieve active services");
-    }
+    });
   }
 
   static async listAllServices(req: Request) {
-    try {
+    return await this.handleDatabaseError(async () => {
       const { skip, limit } = req.pagination;
       const filters = req.filters || {};
       const sortOptions = req.sortOptions || [
@@ -136,7 +112,7 @@ export class ServiceService {
       ];
 
       const [services, total] = await Promise.all([
-        prisma.service.findMany({
+        this.prisma.service.findMany({
           where: filters,
           skip,
           take: limit,
@@ -155,7 +131,7 @@ export class ServiceService {
             category: true,
           },
         }),
-        prisma.service.count({
+        this.prisma.service.count({
           where: filters,
         }),
       ]);
@@ -164,9 +140,7 @@ export class ServiceService {
         data: services,
         pagination: formatPaginationResponse(req, total),
       };
-    } catch (error) {
-      throw new AppError(500, "Failed to retrieve all services");
-    }
+    });
   }
 
   static async updateService(
@@ -181,9 +155,9 @@ export class ServiceService {
       images?: string[];
     }
   ) {
-    try {
+    return await this.handleNotFound(async () => {
       // Update service
-      const service = await prisma.service.update({
+      const service = await this.prisma.service.update({
         where: { id },
         data: {
           name: data.name,
@@ -201,14 +175,14 @@ export class ServiceService {
       // If images are provided, update them
       if (data.images) {
         // Delete existing images
-        await prisma.serviceImage.deleteMany({
+        await this.prisma.serviceImage.deleteMany({
           where: { serviceId: id },
         });
 
         // Create new images
         const newImages = await Promise.all(
           data.images.map((url) =>
-            prisma.serviceImage.create({
+            this.prisma.serviceImage.create({
               data: {
                 url,
                 serviceId: id,
@@ -224,40 +198,20 @@ export class ServiceService {
       }
 
       return service;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2025") {
-          throw new AppError(404, "Service not found");
-        }
-        if (error.code === "P2002") {
-          throw new AppError(409, "Service with this name already exists");
-        }
-        if (error.code === "P2003") {
-          throw new AppError(404, "Category not found");
-        }
-      }
-      throw new AppError(500, "Failed to update service");
-    }
+    });
   }
 
   static async deleteService(id: string) {
-    try {
+    return await this.handleDatabaseError(async () => {
       // First delete all service images
-      await prisma.serviceImage.deleteMany({
+      await this.prisma.serviceImage.deleteMany({
         where: { serviceId: id },
       });
 
       // Then delete the service
-      await prisma.service.delete({
+      await this.prisma.service.delete({
         where: { id },
       });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2025") {
-          throw new AppError(404, "Service not found");
-        }
-      }
-      throw new AppError(500, "Failed to delete service");
-    }
+    });
   }
 }

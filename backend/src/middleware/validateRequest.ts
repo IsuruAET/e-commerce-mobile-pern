@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AnyZodObject, ZodError } from "zod";
 import { AppError } from "./errorHandler";
+import { ErrorCode, ErrorType } from "../constants/errorCodes";
 
 export const validateRequest = (schema: AnyZodObject) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -17,7 +18,15 @@ export const validateRequest = (schema: AnyZodObject) => {
           path: err.path.join("."),
           message: err.message,
         }));
-        return next(new AppError(400, JSON.stringify(errors)));
+        return next(
+          new AppError(
+            ErrorCode.VALIDATION_ERROR,
+            undefined,
+            true,
+            errors,
+            ErrorType.VALIDATION
+          )
+        );
       }
       return next(error);
     }

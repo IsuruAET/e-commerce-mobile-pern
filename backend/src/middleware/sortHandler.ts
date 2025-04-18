@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import { AppError } from "./errorHandler";
+import { ErrorCode } from "../constants/errorCodes";
 
 // Extend Express Request type to include sort options
 declare global {
@@ -36,7 +38,7 @@ export const sortHandler = (
 
       if (Array.isArray(sortByArray) && Array.isArray(sortOrderArray)) {
         if (sortByArray.length !== sortOrderArray.length) {
-          throw new Error(ERROR_MESSAGES.MISMATCHED_ARRAYS);
+          throw new AppError(ErrorCode.INVALID_INPUT);
         }
 
         for (let i = 0; i < sortByArray.length; i++) {
@@ -62,7 +64,7 @@ export const sortHandler = (
         const orders = sortOrderArray.split(",");
 
         if (fields.length !== orders.length) {
-          throw new Error(ERROR_MESSAGES.MISMATCHED_ARRAYS);
+          throw new AppError(ErrorCode.INVALID_INPUT);
         }
 
         for (let i = 0; i < fields.length; i++) {
