@@ -2,9 +2,9 @@ import { setInterval } from "timers";
 
 import { BaseService } from "./baseService";
 import { AppError } from "middleware/errorHandler";
-import { sendEmail } from "utils/email";
+import { sendEmail } from "utils/emailUtils";
 import { PasswordUtils } from "utils/passwordUtils";
-import { JwtUtils } from "utils/jwt";
+import { JwtUtils } from "utils/jwtUtils";
 import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 
 export class AuthService extends BaseService {
