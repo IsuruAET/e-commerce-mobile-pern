@@ -6,6 +6,7 @@ export enum ErrorType {
   CONFLICT = "CONFLICT",
   RATE_LIMIT = "RATE_LIMIT",
   INTERNAL = "INTERNAL",
+  SECURITY = "SECURITY",
 }
 
 export enum ErrorCode {
@@ -20,6 +21,11 @@ export enum ErrorCode {
   VALIDATION_ERROR = "VALIDATION_ERROR",
   INVALID_USER_DATA = "INVALID_USER_DATA",
   OPERATION_TIMEOUT = "OPERATION_TIMEOUT",
+
+  // Security Errors (403)
+  CSRF_TOKEN_MISSING = "CSRF_TOKEN_MISSING",
+  CSRF_TOKEN_INVALID = "CSRF_TOKEN_INVALID",
+  CSRF_TOKEN_MISMATCH = "CSRF_TOKEN_MISMATCH",
 
   // Authentication Errors (401)
   UNAUTHORIZED = "UNAUTHORIZED",
@@ -69,6 +75,14 @@ export const ERROR_MESSAGES: ErrorMessages = {
   [ErrorCode.INVALID_USER_DATA]:
     "The information provided is not valid. Please check and try again.",
   [ErrorCode.OPERATION_TIMEOUT]: "The operation timed out. Please try again.",
+
+  // Security Errors
+  [ErrorCode.CSRF_TOKEN_MISSING]:
+    "CSRF token is missing. Please refresh the page and try again.",
+  [ErrorCode.CSRF_TOKEN_INVALID]:
+    "Invalid CSRF token. Please refresh the page and try again.",
+  [ErrorCode.CSRF_TOKEN_MISMATCH]:
+    "CSRF token mismatch. Please refresh the page and try again.",
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: "You need to be logged in to do that.",
@@ -120,6 +134,11 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.VALIDATION_ERROR]: 400,
   [ErrorCode.INVALID_USER_DATA]: 400,
   [ErrorCode.OPERATION_TIMEOUT]: 408,
+
+  // Security Errors
+  [ErrorCode.CSRF_TOKEN_MISSING]: 403,
+  [ErrorCode.CSRF_TOKEN_INVALID]: 403,
+  [ErrorCode.CSRF_TOKEN_MISMATCH]: 403,
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: 401,

@@ -2,15 +2,17 @@
   "info": {
     "_postman_id": "e-commerce-api",
     "name": "E-Commerce API",
-    "description": "API collection for E-Commerce mobile application",
+    "description": "API collection for E-Commerce mobile application with comprehensive testing and documentation",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "Authentication",
+      "description": "Authentication endpoints for user registration, login, and token management",
       "item": [
         {
           "name": "Register",
+          "description": "Register a new user account",
           "request": {
             "method": "POST",
             "header": [
@@ -21,7 +23,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"email\": \"{{test_email}}\",\n    \"password\": \"{{test_password}}\",\n    \"name\": \"Test User\"\n}"
+              "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\",\n    \"name\": \"Test User\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/register",
@@ -35,6 +37,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "// Test response time",
+                  "pm.test('Response time is less than 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
                   "// Parse the response body",
                   "var jsonData = pm.response.json();",
                   "",
@@ -42,14 +49,32 @@
                   "pm.environment.set('access_token', jsonData.accessToken);",
                   "pm.environment.set('user_id', jsonData.user.id);",
                   "",
-                  "// Test if tokens are present",
-                  "pm.test('Access token is present', function () {",
-                  "    pm.expect(jsonData.accessToken).to.exist;",
+                  "// Extract CSRF token from response headers or cookies",
+                  "const csrfToken = pm.response.headers.get('X-CSRF-Token') || pm.cookies.get('csrf_token');",
+                  "if (csrfToken) {",
+                  "    pm.environment.set('csrf_token', csrfToken);",
+                  "}",
+                  "",
+                  "// Test response structure",
+                  "pm.test('Response has required fields', function () {",
+                  "    pm.expect(jsonData).to.have.property('accessToken');",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user).to.have.property('id');",
+                  "    pm.expect(jsonData.user).to.have.property('email');",
+                  "    pm.expect(jsonData.user).to.have.property('name');",
                   "});",
                   "",
                   "// Test response status",
                   "pm.test('Status code is 201', function () {",
                   "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "// Test data types",
+                  "pm.test('Data types are correct', function () {",
+                  "    pm.expect(typeof jsonData.accessToken).to.equal('string');",
+                  "    pm.expect(typeof jsonData.user.id).to.equal('string');",
+                  "    pm.expect(typeof jsonData.user.email).to.equal('string');",
+                  "    pm.expect(typeof jsonData.user.name).to.equal('string');",
                   "});"
                 ]
               }
@@ -58,6 +83,7 @@
         },
         {
           "name": "Login",
+          "description": "Login with existing credentials",
           "request": {
             "method": "POST",
             "header": [
@@ -82,6 +108,11 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
+                  "// Test response time",
+                  "pm.test('Response time is less than 500ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
                   "// Parse the response body",
                   "var jsonData = pm.response.json();",
                   "",
@@ -89,14 +120,30 @@
                   "pm.environment.set('access_token', jsonData.accessToken);",
                   "pm.environment.set('user_id', jsonData.user.id);",
                   "",
-                  "// Test if tokens are present",
-                  "pm.test('Access token is present', function () {",
-                  "    pm.expect(jsonData.accessToken).to.exist;",
+                  "// Extract CSRF token from response headers or cookies",
+                  "const csrfToken = pm.response.headers.get('X-CSRF-Token') || pm.cookies.get('csrf_token');",
+                  "if (csrfToken) {",
+                  "    pm.environment.set('csrf_token', csrfToken);",
+                  "}",
+                  "",
+                  "// Test response structure",
+                  "pm.test('Response has required fields', function () {",
+                  "    pm.expect(jsonData).to.have.property('accessToken');",
+                  "    pm.expect(jsonData).to.have.property('user');",
+                  "    pm.expect(jsonData.user).to.have.property('id');",
+                  "    pm.expect(jsonData.user).to.have.property('email');",
                   "});",
                   "",
                   "// Test response status",
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Test data types",
+                  "pm.test('Data types are correct', function () {",
+                  "    pm.expect(typeof jsonData.accessToken).to.equal('string');",
+                  "    pm.expect(typeof jsonData.user.id).to.equal('string');",
+                  "    pm.expect(typeof jsonData.user.email).to.equal('string');",
                   "});"
                 ]
               }
@@ -157,6 +204,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -270,6 +321,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "body": {
@@ -311,6 +366,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -328,6 +387,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -349,6 +412,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "body": {
@@ -370,6 +437,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -396,6 +467,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "body": {
@@ -437,6 +512,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -454,6 +533,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -488,6 +571,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -541,6 +628,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "body": {
@@ -562,6 +653,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -588,6 +683,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "body": {
@@ -609,6 +708,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -626,6 +729,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -659,6 +766,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "body": {
@@ -680,6 +791,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -706,6 +821,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "body": {
@@ -747,6 +866,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -768,6 +891,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "body": {
@@ -789,6 +916,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -806,6 +937,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
               }
             ],
             "url": {
@@ -822,17 +957,32 @@
     {
       "key": "base_url",
       "value": "http://localhost:5000",
-      "type": "string"
+      "type": "string",
+      "description": "Base URL for the API"
     },
     {
       "key": "access_token",
-      "value": "your-access-token",
-      "type": "string"
+      "value": "",
+      "type": "string",
+      "description": "JWT access token for authenticated requests"
     },
     {
       "key": "user_id",
-      "value": "your-user-id",
-      "type": "string"
+      "value": "",
+      "type": "string",
+      "description": "ID of the authenticated user"
+    },
+    {
+      "key": "test_email",
+      "value": "admin@example.com",
+      "type": "string",
+      "description": "Test email for authentication"
+    },
+    {
+      "key": "test_password",
+      "value": "password123",
+      "type": "string",
+      "description": "Test password for authentication"
     },
     {
       "key": "reset_token",
@@ -858,6 +1008,12 @@
       "key": "stylist_id",
       "value": "your-stylist-id",
       "type": "string"
+    },
+    {
+      "key": "csrf_token",
+      "value": "",
+      "type": "string",
+      "description": "CSRF token for form submissions"
     }
   ]
 }

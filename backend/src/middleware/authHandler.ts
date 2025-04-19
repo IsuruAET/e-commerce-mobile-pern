@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 
 import { AppError } from "./errorHandler";
 import { ErrorCode } from "constants/errorCodes";
+import { PUBLIC_ROUTES } from "constants/publicRoutes";
 
 // Extend Express Request type to include auth property
 export interface AuthRequest<P = {}, ResBody = {}, ReqBody = {}, ReqQuery = {}>
@@ -21,17 +22,7 @@ export const requireAuth = (
   next: NextFunction
 ) => {
   // Skip authentication for specific auth routes
-  const publicAuthRoutes = [
-    "/auth/register",
-    "/auth/login",
-    "/auth/google",
-    "/auth/google/callback",
-    "/auth/refresh-token",
-    "/auth/forgot-password",
-    "/auth/reset-password",
-  ];
-
-  if (publicAuthRoutes.includes(req.path)) {
+  if (PUBLIC_ROUTES.includes(req.path)) {
     return next();
   }
 

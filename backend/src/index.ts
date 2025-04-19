@@ -1,7 +1,6 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import passport from "passport";
 import cookieParser from "cookie-parser";
 
 import { connectDB } from "./config/database";
@@ -11,6 +10,7 @@ import { AuthService } from "./api/v1/services/authService";
 import { errorHandler } from "middleware/errorHandler";
 import { requireAuth } from "middleware/authHandler";
 import { requestIdMiddleware } from "middleware/requestId";
+import { csrfProtection, setCsrfToken } from "middleware/csrfHandler";
 import "./config/passport";
 
 // Load environment variables
@@ -19,8 +19,16 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Configure CORS
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestIdMiddleware);
@@ -28,8 +36,9 @@ app.use(requestIdMiddleware);
 // Setup logging middleware
 setupLogging().forEach((middleware) => app.use(middleware));
 
-// API Routes
-app.use("/api/v1", requireAuth, v1Routes);
+// CSRF Protection
+app.use(setCsrfToken); // Set CSRF token for all routes
+app.use("/api/v1", csrfProtection, requireAuth, v1Routes); // Protect API routes with CSRF
 
 // Error handling middleware
 app.use(errorHandler);

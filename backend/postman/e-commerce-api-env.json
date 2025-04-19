@@ -6,31 +6,85 @@
       "key": "base_url",
       "value": "http://localhost:5000",
       "type": "default",
-      "enabled": true
+      "enabled": true,
+      "description": "Base URL for the API"
     },
     {
       "key": "access_token",
       "value": "",
       "type": "secret",
-      "enabled": true
+      "enabled": true,
+      "description": "JWT access token for authenticated requests"
     },
     {
       "key": "user_id",
       "value": "",
       "type": "default",
-      "enabled": true
+      "enabled": true,
+      "description": "ID of the authenticated user"
     },
     {
       "key": "test_email",
-      "value": "test@example.com",
+      "value": "admin@example.com",
       "type": "default",
-      "enabled": true
+      "enabled": true,
+      "description": "Test email for authentication"
     },
     {
       "key": "test_password",
       "value": "password123",
       "type": "secret",
-      "enabled": true
+      "enabled": true,
+      "description": "Test password for authentication"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "default",
+      "enabled": true,
+      "description": "ID of the test category"
+    },
+    {
+      "key": "service_id",
+      "value": "",
+      "type": "default",
+      "enabled": true,
+      "description": "ID of the test service"
+    },
+    {
+      "key": "appointment_id",
+      "value": "",
+      "type": "default",
+      "enabled": true,
+      "description": "ID of the test appointment"
+    },
+    {
+      "key": "stylist_id",
+      "value": "",
+      "type": "default",
+      "enabled": true,
+      "description": "ID of the test stylist"
+    },
+    {
+      "key": "reset_token",
+      "value": "",
+      "type": "secret",
+      "enabled": true,
+      "description": "Password reset token"
+    },
+    {
+      "key": "test_name",
+      "value": "Test User",
+      "type": "default",
+      "enabled": true,
+      "description": "Name of the test user"
+    },
+    {
+      "key": "csrf_token",
+      "value": "",
+      "type": "secret",
+      "enabled": true,
+      "description": "CSRF token for form submissions"
     }
   ]
 }
