@@ -4,8 +4,8 @@ import {
   createServiceSchema,
   updateServiceSchema,
   serviceIdSchema,
-  paginationSchema,
 } from "../schemas/serviceSchema";
+import { paginationSchema } from "../schemas/shared/paginationSchema";
 import { ServiceController } from "../controllers/serviceController";
 import { requireRole } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";

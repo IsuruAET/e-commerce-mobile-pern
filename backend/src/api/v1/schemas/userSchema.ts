@@ -4,9 +4,9 @@ export const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   password: z.string().min(6),
-  name: z.string().min(2).max(50),
+  name: z.string().min(3).max(50),
   phone: z.string().optional(),
-  role: z.enum(["ADMIN", "USER"]),
+  role: z.enum(["ADMIN", "USER", "STYLIST"]),
   googleId: z.string().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -14,21 +14,43 @@ export const userSchema = z.object({
 
 export const createUserSchema = z.object({
   body: z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-    name: z.string().min(2).max(50),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    name: z
+      .string()
+      .min(3, "Name must be at least 3 characters")
+      .max(50, "Name must be less than 50 characters"),
     phone: z.string().optional(),
-    role: z.enum(["ADMIN", "USER"]).default("USER"),
+    role: z
+      .enum(["ADMIN", "USER", "STYLIST"], {
+        errorMap: () => ({
+          message: "Invalid role",
+        }),
+      })
+      .default("USER"),
   }),
 });
 
 export const updateUserSchema = z.object({
   body: z.object({
-    email: z.string().email().optional(),
-    password: z.string().min(6).optional(),
-    name: z.string().min(2).max(50).optional(),
+    email: z.string().email("Invalid email address").optional(),
+    password: z
+      .string()
+      .min(6, "Password must be at least 6 characters")
+      .optional(),
+    name: z
+      .string()
+      .min(3, "Name must be at least 3 characters")
+      .max(50, "Name must be less than 50 characters")
+      .optional(),
     phone: z.string().optional(),
-    role: z.enum(["ADMIN", "USER"]).optional(),
+    role: z
+      .enum(["ADMIN", "USER", "STYLIST"], {
+        errorMap: () => ({
+          message: "Invalid role",
+        }),
+      })
+      .optional(),
   }),
 });
 
@@ -38,14 +60,6 @@ export const userIdSchema = z.object({
   }),
 });
 
-export const paginationSchema = z.object({
-  query: z.object({
-    page: z.coerce.number().int().positive().default(1),
-    limit: z.coerce.number().int().positive().max(100).default(10),
-  }),
-});
-
 export type User = z.infer<typeof userSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>["body"];
 export type UpdateUserInput = z.infer<typeof updateUserSchema>["body"];
-export type PaginationInput = z.infer<typeof paginationSchema>["query"];

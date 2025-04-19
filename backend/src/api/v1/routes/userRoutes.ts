@@ -5,6 +5,7 @@ import {
   updateUserSchema,
   userIdSchema,
 } from "../schemas/userSchema";
+import { paginationSchema } from "../schemas/shared/paginationSchema";
 import { UserController } from "../controllers/userController";
 import { requireRole } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
@@ -32,6 +33,7 @@ router.get(
 router.get(
   "/",
   requireRole(["ADMIN"]),
+  validateRequest(paginationSchema),
   paginationHandler,
   UserController.listUsers
 );

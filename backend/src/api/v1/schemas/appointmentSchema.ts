@@ -1,8 +1,22 @@
 import { z } from "zod";
 
-const serviceSchema = z.object({
+const appointmentServiceSchema = z.object({
   serviceId: z.string().uuid(),
   numberOfPeople: z.number().int().min(1).default(1),
+});
+
+export const appointmentSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  stylistId: z.string().uuid(),
+  date: z.date(),
+  status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]),
+  notes: z.string().optional(),
+  estimatedDuration: z.number().int().positive().min(30),
+  totalPrice: z.number().positive(),
+  services: z.array(appointmentServiceSchema),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 
 export const createAppointmentSchema = z.object({
@@ -10,7 +24,9 @@ export const createAppointmentSchema = z.object({
     stylistId: z.string().uuid(),
     date: z.string().datetime(),
     notes: z.string().optional(),
-    services: z.array(serviceSchema),
+    services: z
+      .array(appointmentServiceSchema)
+      .min(1, "At least one service is required"),
   }),
 });
 
@@ -21,10 +37,17 @@ export const updateAppointmentSchema = z.object({
   body: z.object({
     date: z.string().datetime().optional(),
     status: z
-      .enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"])
+      .enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"], {
+        errorMap: () => ({
+          message: "Invalid status",
+        }),
+      })
       .optional(),
     notes: z.string().optional(),
-    services: z.array(serviceSchema).optional(),
+    services: z
+      .array(appointmentServiceSchema)
+      .min(1, "At least one service is required")
+      .optional(),
   }),
 });
 
@@ -42,6 +65,7 @@ export const getAppointmentStatsSchema = z.object({
   }),
 });
 
+export type Appointment = z.infer<typeof appointmentSchema>;
 export type CreateAppointmentInput = z.TypeOf<typeof createAppointmentSchema>;
 export type UpdateAppointmentInput = z.TypeOf<typeof updateAppointmentSchema>;
 export type GetAppointmentInput = z.TypeOf<typeof getAppointmentSchema>;

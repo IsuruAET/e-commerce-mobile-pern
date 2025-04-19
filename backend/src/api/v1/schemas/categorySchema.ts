@@ -1,52 +1,28 @@
 import { z } from "zod";
 
-// Base image validation schema that can be reused
-const imageSchema = z
-  .string({
-    required_error: "Category image is required",
-    invalid_type_error: "Category image must be a string",
-  })
-  .url("Category image must be a valid URL");
+import { imageSchema } from "./shared/imageSchema";
 
 export const categorySchema = z.object({
-  name: z
-    .string({
-      required_error: "Category name is required",
-      invalid_type_error: "Category name must be a string",
-    })
-    .min(2, "Category name must be at least 2 characters long")
-    .max(50, "Category name must not exceed 50 characters"),
-
-  description: z
-    .string({
-      required_error: "Category description is required",
-      invalid_type_error: "Category description must be a string",
-    })
-    .min(10, "Category description must be at least 10 characters long")
-    .max(500, "Category description must not exceed 500 characters"),
-
+  id: z.string().uuid(),
+  name: z.string().min(3).max(50),
+  description: z.string().min(10).max(500),
   image: imageSchema,
-
   isActive: z.boolean().default(true),
-
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 
 export const createCategorySchema = z.object({
   body: z.object({
     name: z
       .string()
-      .min(2, "Category name must be at least 2 characters long")
-      .max(50, "Category name must not exceed 50 characters"),
-
+      .min(3, "Name must be at least 3 characters")
+      .max(50, "Name must be less than 50 characters"),
     description: z
       .string()
-      .min(10, "Category description must be at least 10 characters long")
-      .max(500, "Category description must not exceed 500 characters"),
-
+      .min(10, "Description must be at least 10 characters")
+      .max(500, "Description must be less than 500 characters"),
     image: imageSchema,
-
     isActive: z.boolean().default(true),
   }),
 });
@@ -55,25 +31,20 @@ export const updateCategorySchema = z.object({
   body: z.object({
     name: z
       .string()
-      .min(2, "Category name must be at least 2 characters long")
-      .max(50, "Category name must not exceed 50 characters")
+      .min(3, "Name must be at least 3 characters")
+      .max(50, "Name must be less than 50 characters")
       .optional(),
-
     description: z
       .string()
-      .min(10, "Category description must be at least 10 characters long")
-      .max(500, "Category description must not exceed 500 characters")
+      .min(10, "Description must be at least 10 characters")
+      .max(500, "Description must be less than 500 characters")
       .optional(),
-
-    image: imageSchema,
-
-    isActive: z.boolean().optional(),
   }),
 });
 
 export const categoryIdSchema = z.object({
   params: z.object({
-    id: z.string().uuid("Invalid category ID format"),
+    id: z.string().uuid(),
   }),
 });
 
