@@ -4,10 +4,12 @@ import {
   createAppointmentSchema,
   updateAppointmentSchema,
   getAppointmentSchema,
+  getAppointmentStatsSchema,
 } from "../schemas/appointmentSchema";
 import { AppointmentController } from "../controllers/appointmentController";
 import { requireAuth, requireRole } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
+import { filterHandler } from "middleware/filterHandler";
 
 const router = Router();
 
@@ -38,6 +40,22 @@ router.get(
   "/stylist/appointments",
   requireRole(["STYLIST"]),
   AppointmentController.getStylistAppointments
+);
+
+router.get(
+  "/stats/income",
+  requireRole(["ADMIN"]),
+  validateRequest(getAppointmentStatsSchema),
+  filterHandler(["stylistId", "startDate", "endDate"]),
+  AppointmentController.getTotalIncome
+);
+
+router.get(
+  "/stats/services",
+  requireRole(["ADMIN"]),
+  validateRequest(getAppointmentStatsSchema),
+  filterHandler(["stylistId", "startDate", "endDate"]),
+  AppointmentController.getTotalServices
 );
 
 export default router;

@@ -81,4 +81,48 @@ export class AppointmentController {
       res.status(400).json({ error: error.message });
     }
   }
+
+  static async getTotalIncome(
+    req: AuthRequest<
+      {},
+      {},
+      {},
+      { stylistId?: string; startDate?: string; endDate?: string }
+    >,
+    res: Response
+  ) {
+    try {
+      const { stylistId, startDate, endDate } = req.query;
+      const totalIncome = await AppointmentService.getTotalIncome(
+        stylistId,
+        startDate,
+        endDate
+      );
+      res.json({ totalIncome });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  static async getTotalServices(
+    req: AuthRequest<
+      {},
+      {},
+      {},
+      { stylistId?: string; startDate?: string; endDate?: string }
+    >,
+    res: Response
+  ) {
+    try {
+      const { stylistId, startDate, endDate } = req.query;
+      const totalServices = await AppointmentService.getTotalServices(
+        stylistId,
+        startDate,
+        endDate
+      );
+      res.json({ totalServices });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 }

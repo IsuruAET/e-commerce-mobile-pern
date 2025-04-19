@@ -34,6 +34,17 @@ export const getAppointmentSchema = z.object({
   }),
 });
 
+export const getAppointmentStatsSchema = z.object({
+  query: z.object({
+    stylistId: z.string().uuid().optional(),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+  }),
+});
+
 export type CreateAppointmentInput = z.TypeOf<typeof createAppointmentSchema>;
 export type UpdateAppointmentInput = z.TypeOf<typeof updateAppointmentSchema>;
 export type GetAppointmentInput = z.TypeOf<typeof getAppointmentSchema>;
+export type GetAppointmentStatsInput = z.infer<
+  typeof getAppointmentStatsSchema
+>;

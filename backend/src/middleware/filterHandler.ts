@@ -43,6 +43,25 @@ export const filterHandler = (allowedFilters: string[]) => {
         }
       });
 
+      // Handle date range filtering
+      if (
+        allowedFilters.includes("startDate") ||
+        allowedFilters.includes("endDate")
+      ) {
+        const startDate = req.query.startDate as string;
+        const endDate = req.query.endDate as string;
+
+        if (startDate || endDate) {
+          filters.date = {};
+          if (startDate) {
+            filters.date.gte = new Date(startDate);
+          }
+          if (endDate) {
+            filters.date.lte = new Date(endDate);
+          }
+        }
+      }
+
       // Attach filters to request object
       req.filters = filters;
       next();

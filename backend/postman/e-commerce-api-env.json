@@ -85,6 +85,20 @@
       "type": "secret",
       "enabled": true,
       "description": "CSRF token for form submissions"
+    },
+    {
+      "key": "start_date",
+      "value": "2024-01-01T00:00:00Z",
+      "type": "default",
+      "enabled": true,
+      "description": "Start date for date range filtering"
+    },
+    {
+      "key": "end_date",
+      "value": "2024-12-31T23:59:59Z",
+      "type": "default",
+      "enabled": true,
+      "description": "End date for date range filtering"
     }
   ]
 }

@@ -243,4 +243,68 @@ export class AppointmentService extends BaseService {
       });
     });
   }
+
+  static async getTotalIncome(
+    stylistId?: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<number> {
+    return await this.handleDatabaseError(async () => {
+      const where: any = {
+        status: "COMPLETED",
+        ...(stylistId && { stylistId }),
+      };
+
+      if (startDate || endDate) {
+        where.date = {};
+        if (startDate) {
+          where.date.gte = new Date(startDate);
+        }
+        if (endDate) {
+          where.date.lte = new Date(endDate);
+        }
+      }
+
+      const result = await this.prisma.appointment.aggregate({
+        where,
+        _sum: {
+          totalPrice: true,
+        },
+      });
+      return Number(result._sum?.totalPrice || 0);
+    });
+  }
+
+  static async getTotalServices(
+    stylistId?: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<number> {
+    return await this.handleDatabaseError(async () => {
+      const where: any = {
+        appointment: {
+          status: "COMPLETED",
+          ...(stylistId && { stylistId }),
+        },
+      };
+
+      if (startDate || endDate) {
+        where.appointment.date = {};
+        if (startDate) {
+          where.appointment.date.gte = new Date(startDate);
+        }
+        if (endDate) {
+          where.appointment.date.lte = new Date(endDate);
+        }
+      }
+
+      const result = await this.prisma.appointmentService.aggregate({
+        where,
+        _sum: {
+          numberOfPeople: true,
+        },
+      });
+      return Number(result._sum?.numberOfPeople || 0);
+    });
+  }
 }

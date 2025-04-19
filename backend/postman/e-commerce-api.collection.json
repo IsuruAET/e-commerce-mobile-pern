@@ -953,6 +953,144 @@
               "path": ["api", "v1", "appointments", "stylist", "appointments"]
             }
           }
+        },
+        {
+          "name": "Get Total Income",
+          "description": "Get total income from all appointments (ADMIN only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/stats/income",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "stats", "income"],
+              "query": [
+                {
+                  "key": "stylistId",
+                  "value": "{{stylist_id}}",
+                  "description": "Filter by stylist ID (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "{{start_date}}",
+                  "description": "Start date for filtering (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{end_date}}",
+                  "description": "End date for filtering (optional)",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Test response status",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Parse the response body",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Test response structure",
+                  "pm.test('Response has totalIncome field', function () {",
+                  "    pm.expect(jsonData).to.have.property('totalIncome');",
+                  "});",
+                  "",
+                  "// Test data type",
+                  "pm.test('totalIncome is a number', function () {",
+                  "    pm.expect(typeof jsonData.totalIncome).to.equal('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Total Services",
+          "description": "Get total number of services booked (ADMIN only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/appointments/stats/services",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "appointments", "stats", "services"],
+              "query": [
+                {
+                  "key": "stylistId",
+                  "value": "{{stylist_id}}",
+                  "description": "Filter by stylist ID (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "{{start_date}}",
+                  "description": "Start date for filtering (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{end_date}}",
+                  "description": "End date for filtering (optional)",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Test response status",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Parse the response body",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Test response structure",
+                  "pm.test('Response has totalServices field', function () {",
+                  "    pm.expect(jsonData).to.have.property('totalServices');",
+                  "});",
+                  "",
+                  "// Test data type",
+                  "pm.test('totalServices is a number', function () {",
+                  "    pm.expect(typeof jsonData.totalServices).to.equal('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     }
