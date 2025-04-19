@@ -227,13 +227,17 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "// Clear access token after successful logout",
+                  "// Clear access token and user ID after successful logout",
                   "pm.environment.unset('access_token');",
                   "pm.environment.unset('user_id');",
+                  "pm.environment.unset('csrf_token');",
                   "",
-                  "// Verify token is cleared",
+                  "// Verify tokens are cleared",
                   "pm.test('Access token is cleared', function () {",
                   "    pm.expect(pm.environment.get('access_token')).to.be.undefined;",
+                  "});",
+                  "pm.test('CSRF token is cleared', function () {",
+                  "    pm.expect(pm.environment.get('csrf_token')).to.be.undefined;",
                   "});"
                 ]
               }

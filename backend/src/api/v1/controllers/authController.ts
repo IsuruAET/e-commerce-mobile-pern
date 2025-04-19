@@ -83,6 +83,18 @@ export class AuthController {
         sameSite: "strict",
       });
 
+      // Clear CSRF token cookies
+      res.clearCookie("csrf_token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+      res.clearCookie("csrf_token_js", {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
       res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
       next(error);
