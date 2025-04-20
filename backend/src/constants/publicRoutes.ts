@@ -1,4 +1,5 @@
 export const PUBLIC_ROUTES = [
+  "/health",
   "/auth/register",
   "/auth/login",
   "/auth/google",
