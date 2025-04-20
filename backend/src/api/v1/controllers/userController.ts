@@ -67,4 +67,17 @@ export class UserController {
       next(error);
     }
   }
+
+  static async softDeleteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      await UserService.softDeleteUser(id);
+      res.status(200).json({
+        success: true,
+        message: "User soft deleted successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

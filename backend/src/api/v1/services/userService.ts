@@ -1,4 +1,5 @@
 import { Request } from "express";
+import { DateTime } from "luxon";
 
 import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
 import { formatPaginationResponse } from "middleware/paginationHandler";
@@ -129,6 +130,52 @@ export class UserService extends BaseService {
 
       await tx.user.delete({
         where: { id },
+      });
+    });
+  }
+
+  static async softDeleteUser(id: string) {
+    return await this.handleTransaction(async (tx) => {
+      // Find all active appointments
+      const activeAppointments = await tx.appointment.findMany({
+        where: {
+          OR: [{ userId: id }, { stylistId: id }],
+          status: { in: ["PENDING", "CONFIRMED"] },
+        },
+      });
+
+      // Update all active appointments to CANCELLED with a note
+      if (activeAppointments.length > 0) {
+        await tx.appointment.updateMany({
+          where: {
+            id: {
+              in: activeAppointments.map((appointment) => appointment.id),
+            },
+          },
+          data: {
+            status: "CANCELLED",
+            notes: "Appointment cancelled due to account deletion",
+          },
+        });
+      }
+
+      // Delete all refresh tokens
+      await tx.refreshToken.deleteMany({
+        where: { userId: id },
+      });
+
+      // Delete all password reset tokens
+      await tx.passwordResetToken.deleteMany({
+        where: { userId: id },
+      });
+
+      // Soft delete the user
+      await tx.user.update({
+        where: { id },
+        data: {
+          isDeleted: true,
+          deletedAt: DateTime.now().toJSDate(),
+        },
       });
     });
   }

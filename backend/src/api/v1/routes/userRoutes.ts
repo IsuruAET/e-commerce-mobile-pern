@@ -55,4 +55,12 @@ router.delete(
   UserController.deleteUser
 );
 
+// Soft delete user
+router.patch(
+  "/:id/soft-delete",
+  requireRole(["ADMIN"]),
+  validateRequest(userIdSchema),
+  UserController.softDeleteUser
+);
+
 export default router;
