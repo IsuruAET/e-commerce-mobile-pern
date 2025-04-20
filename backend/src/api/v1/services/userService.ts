@@ -115,13 +115,7 @@ export class UserService extends BaseService {
       });
 
       if (appointments) {
-        throw new AppError(
-          ErrorCode.USER_HAS_APPOINTMENTS,
-          undefined,
-          true,
-          undefined,
-          ErrorType.CONFLICT
-        );
+        throw new AppError(ErrorCode.USER_HAS_APPOINTMENTS);
       }
 
       // First delete all related refresh tokens and password reset tokens

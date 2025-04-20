@@ -7,14 +7,11 @@ import {
   getAppointmentStatsSchema,
 } from "../schemas/appointmentSchema";
 import { AppointmentController } from "../controllers/appointmentController";
-import { requireAuth, requireRole } from "middleware/authHandler";
+import { requireRole } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 import { filterHandler } from "middleware/filterHandler";
 
 const router = Router();
-
-// All routes require authentication
-router.use(requireAuth);
 
 router.post(
   "/",

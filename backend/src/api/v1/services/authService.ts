@@ -349,4 +349,50 @@ export class AuthService extends BaseService {
       return { message: "Password reset successful" };
     });
   }
+
+  static async softDeleteUserAccount(userId: string) {
+    return await this.handleTransaction(async (tx) => {
+      // Find all active appointments
+      const activeAppointments = await tx.appointment.findMany({
+        where: {
+          OR: [{ userId }, { stylistId: userId }],
+          status: { in: ["PENDING", "CONFIRMED"] },
+        },
+      });
+
+      // Update all active appointments to CANCELLED with a note
+      if (activeAppointments.length > 0) {
+        await tx.appointment.updateMany({
+          where: {
+            id: {
+              in: activeAppointments.map((appointment) => appointment.id),
+            },
+          },
+          data: {
+            status: "CANCELLED",
+            notes: "Appointment cancelled due to account deletion",
+          },
+        });
+      }
+
+      // Delete all refresh tokens
+      await tx.refreshToken.deleteMany({
+        where: { userId },
+      });
+
+      // Delete all password reset tokens
+      await tx.passwordResetToken.deleteMany({
+        where: { userId },
+      });
+
+      // Soft delete the user
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          isDeleted: true,
+          deletedAt: DateTime.now().toJSDate(),
+        },
+      });
+    });
+  }
 }

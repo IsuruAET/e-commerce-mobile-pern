@@ -2,6 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import passport from "passport";
 
 import { AuthService } from "../services/authService";
+import { AuthRequest } from "middleware/authHandler";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
 
 export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
@@ -151,6 +154,44 @@ export class AuthController {
       const { token, password } = req.body;
       const result = await AuthService.resetUserPassword(token, password);
       res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async softDeleteAccount(
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = req.auth?.userId;
+      if (!userId) {
+        throw new AppError(ErrorCode.UNAUTHORIZED);
+      }
+
+      await AuthService.softDeleteUserAccount(userId);
+
+      // Clear the refresh token cookie
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      // Clear CSRF token cookies
+      res.clearCookie("csrf_token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+      res.clearCookie("csrf_token_js", {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      res.status(200).json({ message: "Account deleted successfully" });
     } catch (error) {
       next(error);
     }
