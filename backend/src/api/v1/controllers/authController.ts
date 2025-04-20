@@ -139,6 +139,30 @@ export class AuthController {
     )(req, res, next);
   }
 
+  static async changePassword(
+    req: Request & AuthRequest,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.auth?.userId;
+
+      if (!userId) {
+        throw new AppError(ErrorCode.UNAUTHORIZED);
+      }
+
+      const result = await AuthService.changePassword(
+        userId,
+        currentPassword,
+        newPassword
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async forgotPassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { email } = req.body;

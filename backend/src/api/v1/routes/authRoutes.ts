@@ -5,6 +5,7 @@ import {
   registerSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  changePasswordSchema,
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
 import { validateRequest } from "middleware/validateRequest";
@@ -26,6 +27,12 @@ router.post("/logout", AuthController.logout);
 // Google OAuth routes
 router.get("/google", AuthController.googleAuth);
 router.get("/google/callback", AuthController.googleCallback);
+
+router.post(
+  "/change-password",
+  validateRequest(changePasswordSchema),
+  AuthController.changePassword
+);
 
 router.post(
   "/forgot-password",

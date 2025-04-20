@@ -246,6 +246,41 @@ export class AuthService extends BaseService {
     });
   }
 
+  static async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ) {
+    return await this.handleDatabaseError(async () => {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { password: true },
+      });
+
+      if (!user || !user.password) {
+        throw new AppError(ErrorCode.USER_NOT_FOUND);
+      }
+
+      const isPasswordValid = await PasswordUtils.comparePassword(
+        currentPassword,
+        user.password
+      );
+
+      if (!isPasswordValid) {
+        throw new AppError(ErrorCode.INVALID_CREDENTIALS);
+      }
+
+      const hashedPassword = await PasswordUtils.hashPassword(newPassword);
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+      });
+
+      return { message: "Password changed successfully" };
+    });
+  }
+
   static async requestPasswordReset(email: string) {
     return await this.handleWithTimeout(async () => {
       return await this.handleTransaction(async (tx) => {
