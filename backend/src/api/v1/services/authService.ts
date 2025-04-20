@@ -1,4 +1,5 @@
 import { setInterval } from "timers";
+import { DateTime } from "luxon";
 
 import { BaseService } from "./baseService";
 import { AppError } from "middleware/errorHandler";
@@ -14,7 +15,7 @@ export class AuthService extends BaseService {
         data: {
           token,
           userId,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
         },
       });
     });
@@ -23,7 +24,7 @@ export class AuthService extends BaseService {
   static async cleanupExpiredTokens(userId?: string) {
     return await this.handleDatabaseError(async () => {
       const whereClause = {
-        expiresAt: { lt: new Date() },
+        expiresAt: { lt: DateTime.now().toJSDate() },
         ...(userId ? { userId } : {}),
       };
 
@@ -37,7 +38,7 @@ export class AuthService extends BaseService {
     return await this.handleDatabaseError(async () => {
       await this.prisma.passwordResetToken.deleteMany({
         where: {
-          expiresAt: { lt: new Date() },
+          expiresAt: { lt: DateTime.now().toJSDate() },
         },
       });
     });
@@ -48,7 +49,7 @@ export class AuthService extends BaseService {
       try {
         await this.cleanupExpiredTokens();
         await this.cleanupExpiredPasswordResetTokens();
-        console.log(`Cleaned up expired tokens at ${new Date().toISOString()}`);
+        console.log(`Cleaned up expired tokens at ${DateTime.now().toISO()}`);
       } catch (error) {
         console.error("Error cleaning up expired tokens:", error);
       }
@@ -85,7 +86,7 @@ export class AuthService extends BaseService {
         data: {
           token: refreshToken,
           userId: user.id,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
         },
       });
 
@@ -114,7 +115,7 @@ export class AuthService extends BaseService {
       await tx.refreshToken.deleteMany({
         where: {
           userId: user.id,
-          expiresAt: { lt: new Date() },
+          expiresAt: { lt: DateTime.now().toJSDate() },
         },
       });
 
@@ -136,7 +137,7 @@ export class AuthService extends BaseService {
         data: {
           token: refreshToken,
           userId: user.id,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
         },
       });
 
@@ -164,7 +165,7 @@ export class AuthService extends BaseService {
         where: {
           token: refreshToken,
           userId: decoded.userId,
-          expiresAt: { gt: new Date() },
+          expiresAt: { gt: DateTime.now().toJSDate() },
         },
       });
 
@@ -183,7 +184,7 @@ export class AuthService extends BaseService {
         where: { id: storedToken.id },
         data: {
           token: newRefreshToken,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
         },
       });
 
@@ -229,7 +230,7 @@ export class AuthService extends BaseService {
         data: {
           token: tokens.refreshToken,
           userId: user.id,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
         },
       });
 
@@ -263,7 +264,7 @@ export class AuthService extends BaseService {
           where: {
             userId: user.id,
             createdAt: {
-              gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+              gte: DateTime.now().minus({ days: 1 }).toJSDate(),
             },
           },
         });
@@ -278,7 +279,7 @@ export class AuthService extends BaseService {
           data: {
             token: resetToken,
             userId: user.id,
-            expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+            expiresAt: DateTime.now().plus({ hours: 1 }).toJSDate(), // 1 hour
           },
         });
 
@@ -325,7 +326,7 @@ export class AuthService extends BaseService {
         where: {
           token: token,
           userId: userId,
-          expiresAt: { gt: new Date() },
+          expiresAt: { gt: DateTime.now().toJSDate() },
         },
       });
 

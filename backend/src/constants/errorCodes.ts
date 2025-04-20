@@ -16,7 +16,6 @@ export enum ErrorCode {
   INVALID_TOKEN = "INVALID_TOKEN",
   INVALID_REFRESH_TOKEN = "INVALID_REFRESH_TOKEN",
   INVALID_RESET_TOKEN = "INVALID_RESET_TOKEN",
-  INVALID_DATE_FORMAT = "INVALID_DATE_FORMAT",
   TOKEN_EXPIRED = "TOKEN_EXPIRED",
   TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND",
   VALIDATION_ERROR = "VALIDATION_ERROR",
@@ -69,8 +68,6 @@ export const ERROR_MESSAGES: ErrorMessages = {
     "Your session has expired. Please log in again.",
   [ErrorCode.INVALID_RESET_TOKEN]:
     "This password reset link has expired or is invalid. Please request a new one.",
-  [ErrorCode.INVALID_DATE_FORMAT]:
-    "The date format is invalid. Please provide a valid date.",
   [ErrorCode.TOKEN_EXPIRED]: "The token has expired. Please request a new one.",
   [ErrorCode.TOKEN_NOT_FOUND]:
     "We couldn't find your request. Please try again.",
@@ -132,7 +129,6 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.INVALID_TOKEN]: 400,
   [ErrorCode.INVALID_REFRESH_TOKEN]: 400,
   [ErrorCode.INVALID_RESET_TOKEN]: 400,
-  [ErrorCode.INVALID_DATE_FORMAT]: 400,
   [ErrorCode.TOKEN_EXPIRED]: 400,
   [ErrorCode.TOKEN_NOT_FOUND]: 400,
   [ErrorCode.VALIDATION_ERROR]: 400,

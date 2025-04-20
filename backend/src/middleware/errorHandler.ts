@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { DateTime } from "luxon";
 
 interface CustomRequest extends Request {
   id: string;
@@ -48,6 +49,8 @@ export const errorHandler = (
 ) => {
   res.setHeader("Content-Type", "application/json");
 
+  const timestamp = DateTime.now().toISO();
+
   let response: ErrorResponse;
 
   // Handle AppError
@@ -58,7 +61,7 @@ export const errorHandler = (
       message: err.message,
       type: err.type,
       requestId: req.id,
-      timestamp: new Date().toISOString(),
+      timestamp,
       ...(err.errors && { errors: err.errors }),
     };
   }
@@ -70,7 +73,7 @@ export const errorHandler = (
       message: ERROR_MESSAGES[ErrorCode.INTERNAL_SERVER_ERROR],
       type: ErrorType.INTERNAL,
       requestId: req.id,
-      timestamp: new Date().toISOString(),
+      timestamp,
     };
   }
 
@@ -82,7 +85,7 @@ export const errorHandler = (
   // Log the error with request ID
   const errorLog = {
     requestId: req.id,
-    timestamp: new Date().toISOString(),
+    timestamp,
     method: req.method,
     url: req.url,
     error: {

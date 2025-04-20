@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { DateTime } from "luxon";
 
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
@@ -77,5 +78,9 @@ export class JwtUtils {
     } catch (error) {
       throw new AppError(ErrorCode.INVALID_RESET_TOKEN);
     }
+  }
+
+  static getRefreshTokenExpirationDate(days: number = 7): Date {
+    return DateTime.now().plus({ days }).toJSDate();
   }
 }

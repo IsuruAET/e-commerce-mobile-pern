@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { DateTime } from "luxon";
 
 // Extend Express Request type to include filters
 declare global {
@@ -54,10 +55,10 @@ export const filterHandler = (allowedFilters: string[]) => {
         if (startDate || endDate) {
           filters.date = {};
           if (startDate) {
-            filters.date.gte = new Date(startDate);
+            filters.date.gte = DateTime.fromISO(startDate).toJSDate();
           }
           if (endDate) {
-            filters.date.lte = new Date(endDate);
+            filters.date.lte = DateTime.fromISO(endDate).toJSDate();
           }
         }
       }

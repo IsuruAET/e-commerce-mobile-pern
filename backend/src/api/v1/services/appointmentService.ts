@@ -3,6 +3,7 @@ import {
   UpdateAppointmentInput,
 } from "../schemas/appointmentSchema";
 import { BaseService } from "./baseService";
+import { DateTime } from "luxon";
 
 export class AppointmentService extends BaseService {
   static async createAppointment(
@@ -38,11 +39,14 @@ export class AppointmentService extends BaseService {
           0
         );
 
+        // Convert input date to DateTime and then to JS Date
+        const appointmentDate = DateTime.fromISO(input.date).toJSDate();
+
         return tx.appointment.create({
           data: {
             userId,
             stylistId: input.stylistId,
-            date: new Date(input.date),
+            date: appointmentDate,
             notes: input.notes,
             estimatedDuration,
             totalPrice,
@@ -115,10 +119,13 @@ export class AppointmentService extends BaseService {
     return await this.handleWithTimeout(async () => {
       return await this.handleTransaction(async (tx) => {
         let updateData: any = {
-          date: input.date ? new Date(input.date) : undefined,
           status: input.status,
           notes: input.notes,
         };
+
+        if (input.date) {
+          updateData.date = DateTime.fromISO(input.date).toJSDate();
+        }
 
         if (input.services) {
           // Get all services to calculate new total price and duration
@@ -258,10 +265,10 @@ export class AppointmentService extends BaseService {
       if (startDate || endDate) {
         where.date = {};
         if (startDate) {
-          where.date.gte = new Date(startDate);
+          where.date.gte = DateTime.fromISO(startDate).toJSDate();
         }
         if (endDate) {
-          where.date.lte = new Date(endDate);
+          where.date.lte = DateTime.fromISO(endDate).toJSDate();
         }
       }
 
@@ -291,10 +298,10 @@ export class AppointmentService extends BaseService {
       if (startDate || endDate) {
         where.appointment.date = {};
         if (startDate) {
-          where.appointment.date.gte = new Date(startDate);
+          where.appointment.date.gte = DateTime.fromISO(startDate).toJSDate();
         }
         if (endDate) {
-          where.appointment.date.lte = new Date(endDate);
+          where.appointment.date.lte = DateTime.fromISO(endDate).toJSDate();
         }
       }
 
