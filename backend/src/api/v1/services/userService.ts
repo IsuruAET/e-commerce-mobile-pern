@@ -4,6 +4,8 @@ import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
 import { formatPaginationResponse } from "middleware/paginationHandler";
 import { PasswordUtils } from "utils/passwordUtils";
 import { BaseService } from "./baseService";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode, ErrorType } from "constants/errorCodes";
 
 export class UserService extends BaseService {
   static async createUser(data: CreateUserInput) {
@@ -105,6 +107,23 @@ export class UserService extends BaseService {
 
   static async deleteUser(id: string) {
     return await this.handleTransaction(async (tx) => {
+      // Check if user has any appointments as client or stylist
+      const appointments = await tx.appointment.findFirst({
+        where: {
+          OR: [{ userId: id }, { stylistId: id }],
+        },
+      });
+
+      if (appointments) {
+        throw new AppError(
+          ErrorCode.USER_HAS_APPOINTMENTS,
+          undefined,
+          true,
+          undefined,
+          ErrorType.CONFLICT
+        );
+      }
+
       // First delete all related refresh tokens and password reset tokens
       await tx.refreshToken.deleteMany({
         where: { userId: id },

@@ -10,7 +10,7 @@ export enum ErrorType {
 }
 
 export enum ErrorCode {
-  // Validation Errors (400-499)
+  // Validation Errors (400)
   INVALID_INPUT = "INVALID_INPUT",
   INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
   INVALID_TOKEN = "INVALID_TOKEN",
@@ -20,12 +20,6 @@ export enum ErrorCode {
   TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND",
   VALIDATION_ERROR = "VALIDATION_ERROR",
   INVALID_USER_DATA = "INVALID_USER_DATA",
-  OPERATION_TIMEOUT = "OPERATION_TIMEOUT",
-
-  // Security Errors (403)
-  CSRF_TOKEN_MISSING = "CSRF_TOKEN_MISSING",
-  CSRF_TOKEN_INVALID = "CSRF_TOKEN_INVALID",
-  CSRF_TOKEN_MISMATCH = "CSRF_TOKEN_MISMATCH",
 
   // Authentication Errors (401)
   UNAUTHORIZED = "UNAUTHORIZED",
@@ -35,14 +29,23 @@ export enum ErrorCode {
   FORBIDDEN = "FORBIDDEN",
   INSUFFICIENT_PERMISSIONS = "INSUFFICIENT_PERMISSIONS",
 
+  // Security Errors (403)
+  CSRF_TOKEN_MISSING = "CSRF_TOKEN_MISSING",
+  CSRF_TOKEN_INVALID = "CSRF_TOKEN_INVALID",
+  CSRF_TOKEN_MISMATCH = "CSRF_TOKEN_MISMATCH",
+
   // Not Found Errors (404)
   RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND",
   USER_NOT_FOUND = "USER_NOT_FOUND",
+
+  // Timeout Errors (408)
+  OPERATION_TIMEOUT = "OPERATION_TIMEOUT",
 
   // Conflict Errors (409)
   EMAIL_EXISTS = "EMAIL_EXISTS",
   UNIQUE_CONSTRAINT_VIOLATION = "UNIQUE_CONSTRAINT_VIOLATION",
   FOREIGN_KEY_CONSTRAINT_VIOLATION = "FOREIGN_KEY_CONSTRAINT_VIOLATION",
+  USER_HAS_APPOINTMENTS = "USER_HAS_APPOINTMENTS",
 
   // Rate Limit Errors (429)
   TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS",
@@ -74,15 +77,6 @@ export const ERROR_MESSAGES: ErrorMessages = {
   [ErrorCode.VALIDATION_ERROR]: "Please check your input and try again.",
   [ErrorCode.INVALID_USER_DATA]:
     "The information provided is not valid. Please check and try again.",
-  [ErrorCode.OPERATION_TIMEOUT]: "The operation timed out. Please try again.",
-
-  // Security Errors
-  [ErrorCode.CSRF_TOKEN_MISSING]:
-    "CSRF token is missing. Please refresh the page and try again.",
-  [ErrorCode.CSRF_TOKEN_INVALID]:
-    "Invalid CSRF token. Please refresh the page and try again.",
-  [ErrorCode.CSRF_TOKEN_MISMATCH]:
-    "CSRF token mismatch. Please refresh the page and try again.",
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: "You need to be logged in to do that.",
@@ -94,9 +88,20 @@ export const ERROR_MESSAGES: ErrorMessages = {
   [ErrorCode.INSUFFICIENT_PERMISSIONS]:
     "You don't have sufficient permissions to perform this action.",
 
+  // Security Errors
+  [ErrorCode.CSRF_TOKEN_MISSING]:
+    "CSRF token is missing. Please refresh the page and try again.",
+  [ErrorCode.CSRF_TOKEN_INVALID]:
+    "Invalid CSRF token. Please refresh the page and try again.",
+  [ErrorCode.CSRF_TOKEN_MISMATCH]:
+    "CSRF token mismatch. Please refresh the page and try again.",
+
   // Not Found Errors
   [ErrorCode.RESOURCE_NOT_FOUND]: "We couldn't find what you're looking for.",
   [ErrorCode.USER_NOT_FOUND]: "User not found.",
+
+  // Timeout Errors
+  [ErrorCode.OPERATION_TIMEOUT]: "The operation timed out. Please try again.",
 
   // Conflict Errors
   [ErrorCode.EMAIL_EXISTS]:
@@ -105,6 +110,8 @@ export const ERROR_MESSAGES: ErrorMessages = {
     "This value already exists. Please use a different one.",
   [ErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION]:
     "A foreign key constraint was violated. Please check your input and try again.",
+  [ErrorCode.USER_HAS_APPOINTMENTS]:
+    "Cannot delete user. User has active appointments as either a client or stylist.",
 
   // Rate Limit Errors
   [ErrorCode.TOO_MANY_REQUESTS]: "Too many requests. Please try again later.",
@@ -133,12 +140,6 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.TOKEN_NOT_FOUND]: 400,
   [ErrorCode.VALIDATION_ERROR]: 400,
   [ErrorCode.INVALID_USER_DATA]: 400,
-  [ErrorCode.OPERATION_TIMEOUT]: 408,
-
-  // Security Errors
-  [ErrorCode.CSRF_TOKEN_MISSING]: 403,
-  [ErrorCode.CSRF_TOKEN_INVALID]: 403,
-  [ErrorCode.CSRF_TOKEN_MISMATCH]: 403,
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: 401,
@@ -148,14 +149,23 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.FORBIDDEN]: 403,
   [ErrorCode.INSUFFICIENT_PERMISSIONS]: 403,
 
+  // Security Errors
+  [ErrorCode.CSRF_TOKEN_MISSING]: 403,
+  [ErrorCode.CSRF_TOKEN_INVALID]: 403,
+  [ErrorCode.CSRF_TOKEN_MISMATCH]: 403,
+
   // Not Found Errors
   [ErrorCode.RESOURCE_NOT_FOUND]: 404,
   [ErrorCode.USER_NOT_FOUND]: 404,
+
+  // Timeout Errors
+  [ErrorCode.OPERATION_TIMEOUT]: 408,
 
   // Conflict Errors
   [ErrorCode.EMAIL_EXISTS]: 409,
   [ErrorCode.UNIQUE_CONSTRAINT_VIOLATION]: 409,
   [ErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION]: 409,
+  [ErrorCode.USER_HAS_APPOINTMENTS]: 409,
 
   // Rate Limit Errors
   [ErrorCode.TOO_MANY_REQUESTS]: 429,
