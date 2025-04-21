@@ -68,13 +68,26 @@ export class UserController {
     }
   }
 
-  static async softDeleteUser(req: Request, res: Response, next: NextFunction) {
+  static async deactivateUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await UserService.softDeleteUser(id);
+      await UserService.deactivateUser(id);
       res.status(200).json({
         success: true,
-        message: "User soft deleted successfully",
+        message: "User deactivated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async reactivateUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      await UserService.reactivateUser(id);
+      res.status(200).json({
+        success: true,
+        message: "User reactivated successfully",
       });
     } catch (error) {
       next(error);

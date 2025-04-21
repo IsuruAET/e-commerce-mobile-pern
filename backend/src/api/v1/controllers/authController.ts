@@ -183,7 +183,7 @@ export class AuthController {
     }
   }
 
-  static async softDeleteAccount(
+  static async deactivateAccount(
     req: AuthRequest,
     res: Response,
     next: NextFunction
@@ -194,7 +194,7 @@ export class AuthController {
         throw new AppError(ErrorCode.UNAUTHORIZED);
       }
 
-      await AuthService.softDeleteUserAccount(userId);
+      await AuthService.deactivateUserAccount(userId);
 
       // Clear the refresh token cookie
       res.clearCookie("refreshToken", {
@@ -215,7 +215,7 @@ export class AuthController {
         sameSite: "strict",
       });
 
-      res.status(200).json({ message: "Account deleted successfully" });
+      res.status(200).json({ message: "Account deactivated successfully" });
     } catch (error) {
       next(error);
     }

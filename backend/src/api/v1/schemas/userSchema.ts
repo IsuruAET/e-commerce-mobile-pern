@@ -8,8 +8,8 @@ export const userSchema = z.object({
   phone: z.string().optional(),
   role: z.enum(["ADMIN", "USER", "STYLIST"]),
   googleId: z.string().optional(),
-  isDeleted: z.boolean().default(false),
-  deletedAt: z.date().nullable(),
+  isDeactivated: z.boolean().default(false),
+  deactivatedAt: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

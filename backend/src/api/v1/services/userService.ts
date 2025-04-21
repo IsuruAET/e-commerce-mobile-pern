@@ -134,7 +134,7 @@ export class UserService extends BaseService {
     });
   }
 
-  static async softDeleteUser(id: string) {
+  static async deactivateUser(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Find all active appointments
       const activeAppointments = await tx.appointment.findMany({
@@ -154,7 +154,7 @@ export class UserService extends BaseService {
           },
           data: {
             status: "CANCELLED",
-            notes: "Appointment cancelled due to account deletion",
+            notes: "Appointment cancelled due to account deactivation",
           },
         });
       }
@@ -173,8 +173,21 @@ export class UserService extends BaseService {
       await tx.user.update({
         where: { id },
         data: {
-          isDeleted: true,
-          deletedAt: DateTime.now().toJSDate(),
+          isDeactivated: true,
+          deactivatedAt: DateTime.now().toJSDate(),
+        },
+      });
+    });
+  }
+
+  static async reactivateUser(id: string) {
+    return await this.handleDatabaseError(async () => {
+      // Reactivate the user by setting isDeactivated to false and clearing deactivatedAt
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          isDeactivated: false,
+          deactivatedAt: null,
         },
       });
     });

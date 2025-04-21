@@ -385,7 +385,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async softDeleteUserAccount(userId: string) {
+  static async deactivateUserAccount(userId: string) {
     return await this.handleTransaction(async (tx) => {
       // Find all active appointments
       const activeAppointments = await tx.appointment.findMany({
@@ -405,7 +405,7 @@ export class AuthService extends BaseService {
           },
           data: {
             status: "CANCELLED",
-            notes: "Appointment cancelled due to account deletion",
+            notes: "Appointment cancelled due to account deactivation",
           },
         });
       }
@@ -420,12 +420,12 @@ export class AuthService extends BaseService {
         where: { userId },
       });
 
-      // Soft delete the user
+      // Deactivate the user
       await tx.user.update({
         where: { id: userId },
         data: {
-          isDeleted: true,
-          deletedAt: DateTime.now().toJSDate(),
+          isDeactivated: true,
+          deactivatedAt: DateTime.now().toJSDate(),
         },
       });
     });

@@ -181,28 +181,6 @@
           }
         },
         {
-          "name": "Delete Account",
-          "description": "Soft delete user account",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}"
-              },
-              {
-                "key": "X-CSRF-Token",
-                "value": "{{csrf_token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/auth/account",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "account"]
-            }
-          }
-        },
-        {
           "name": "Refresh Token",
           "request": {
             "method": "POST",
@@ -359,6 +337,42 @@
               "path": ["api", "v1", "auth", "reset-password"]
             }
           }
+        },
+        {
+          "name": "Deactivate Account",
+          "description": "Deactivate user account",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/deactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "deactivate"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Test response status",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -861,7 +875,8 @@
           }
         },
         {
-          "name": "Soft Delete User",
+          "name": "Deactivate User",
+          "description": "Deactivate a user account (ADMIN only)",
           "request": {
             "method": "PATCH",
             "header": [
@@ -875,11 +890,61 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/users/{{user_id}}/soft-delete",
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}/deactivate",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "{{user_id}}", "soft-delete"]
+              "path": ["api", "v1", "users", "{{user_id}}", "deactivate"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Test response status",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reactivate User",
+          "description": "Reactivate a deactivated user account (ADMIN only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}/reactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}", "reactivate"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Test response status",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

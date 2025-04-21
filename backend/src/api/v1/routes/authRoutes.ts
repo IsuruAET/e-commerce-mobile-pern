@@ -46,7 +46,7 @@ router.post(
   AuthController.resetPassword
 );
 
-// Soft delete user account
-router.delete("/account", AuthController.softDeleteAccount);
+// Deactivate user account
+router.patch("/deactivate", AuthController.deactivateAccount);
 
 export default router;
