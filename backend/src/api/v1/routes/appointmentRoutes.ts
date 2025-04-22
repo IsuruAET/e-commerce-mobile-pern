@@ -5,13 +5,11 @@ import {
   updateAppointmentSchema,
   getAppointmentSchema,
   getAppointmentStatsSchema,
-  CreateAppointmentInput,
 } from "../schemas/appointmentSchema";
 import { AppointmentController } from "../controllers/appointmentController";
 import { requireRole } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 import { filterHandler } from "middleware/filterHandler";
-import { withAuth } from "middleware/authHandler";
 
 const router = Router();
 
@@ -19,9 +17,7 @@ const router = Router();
 router.post(
   "/",
   validateRequest(createAppointmentSchema),
-  withAuth<{}, CreateAppointmentInput["body"]>(
-    AppointmentController.createAppointment
-  )
+  AppointmentController.createAppointment
 );
 
 router.get(
@@ -37,15 +33,12 @@ router.put(
   AppointmentController.updateAppointment
 );
 
-router.get(
-  "/user/appointments",
-  withAuth(AppointmentController.getUserAppointments)
-);
+router.get("/user/appointments", AppointmentController.getUserAppointments);
 
 router.get(
   "/stylist/appointments",
   requireRole(["STYLIST"]),
-  withAuth(AppointmentController.getStylistAppointments)
+  AppointmentController.getStylistAppointments
 );
 
 router.get(

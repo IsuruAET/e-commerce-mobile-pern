@@ -1,22 +1,25 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthRequest } from "middleware/authHandler";
 
-import {
-  CreateAppointmentInput,
-  GetAppointmentStatsInput,
-} from "../schemas/appointmentSchema";
+import { GetAppointmentStatsInput } from "../schemas/appointmentSchema";
 import { AppointmentService } from "../services/appointmentService";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
 
 export class AppointmentController {
   static async createAppointment(
-    req: AuthRequest<{}, {}, CreateAppointmentInput["body"]>,
+    req: Request,
     res: Response<{ success: boolean; message: string; data: any }>,
     next: NextFunction
   ) {
     try {
+      const userId = req.auth?.userId;
+      if (!userId) {
+        throw new AppError(ErrorCode.UNAUTHORIZED);
+      }
+
       const appointment = await AppointmentService.createAppointment(
         req.body,
-        req.auth!.userId
+        userId
       );
       res.status(201).json({
         success: true,
@@ -74,14 +77,17 @@ export class AppointmentController {
   }
 
   static async getUserAppointments(
-    req: AuthRequest,
+    req: Request,
     res: Response<{ success: boolean; data: any[] }>,
     next: NextFunction
   ) {
     try {
-      const appointments = await AppointmentService.getUserAppointments(
-        req.auth!.userId
-      );
+      const userId = req.auth?.userId;
+      if (!userId) {
+        throw new AppError(ErrorCode.UNAUTHORIZED);
+      }
+
+      const appointments = await AppointmentService.getUserAppointments(userId);
       res.status(200).json({
         success: true,
         data: appointments,
@@ -92,13 +98,18 @@ export class AppointmentController {
   }
 
   static async getStylistAppointments(
-    req: AuthRequest,
+    req: Request,
     res: Response<{ success: boolean; data: any[] }>,
     next: NextFunction
   ) {
     try {
+      const userId = req.auth?.userId;
+      if (!userId) {
+        throw new AppError(ErrorCode.UNAUTHORIZED);
+      }
+
       const appointments = await AppointmentService.getStylistAppointments(
-        req.auth!.userId
+        userId
       );
       res.status(200).json({
         success: true,

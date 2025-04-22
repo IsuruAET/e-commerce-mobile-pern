@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { withAuth } from "middleware/authHandler";
 
 import {
   loginSchema,
@@ -7,7 +6,6 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema,
-  ChangePasswordInput,
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
 import { validateRequest } from "middleware/validateRequest";
@@ -47,10 +45,10 @@ router.post(
 router.post(
   "/change-password",
   validateRequest(changePasswordSchema),
-  withAuth<{}, ChangePasswordInput["body"]>(AuthController.changePassword)
+  AuthController.changePassword
 );
 
 // Deactivate user account
-router.patch("/deactivate", withAuth(AuthController.deactivateAccount));
+router.patch("/deactivate", AuthController.deactivateAccount);
 
 export default router;

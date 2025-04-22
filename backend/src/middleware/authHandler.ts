@@ -6,29 +6,18 @@ import { ErrorCode } from "constants/errorCodes";
 import { PUBLIC_ROUTES } from "constants/publicRoutes";
 
 // Extend Express Request type to include auth property
-export interface AuthRequest<P = {}, ResBody = {}, ReqBody = {}, ReqQuery = {}>
-  extends Request<P, ResBody, ReqBody, ReqQuery> {
-  auth: {
-    userId: string;
-    email: string;
-    role: string;
-    isDeactivated: boolean;
-  };
+declare global {
+  namespace Express {
+    interface Request {
+      auth?: {
+        userId: string;
+        email: string;
+        role: string;
+        isDeactivated: boolean;
+      };
+    }
+  }
 }
-
-// Wrapper function to handle type conversion for authenticated routes
-export const withAuth = <P = {}, T = {}>(
-  handler: (
-    req: AuthRequest<P, {}, T>,
-    res: Response,
-    next: NextFunction
-  ) => Promise<void>
-): RequestHandler<P, any, T> => {
-  return (req, res, next) => {
-    const authReq = req as AuthRequest<P, {}, T>;
-    return handler(authReq, res, next);
-  };
-};
 
 // JWT middleware for protecting routes
 export const requireAuth = (
@@ -55,8 +44,7 @@ export const requireAuth = (
     }
 
     // Check deactivation status from JWT token
-    const auth = (req as AuthRequest).auth;
-    if (auth?.isDeactivated) {
+    if (req.auth?.isDeactivated) {
       return next(new AppError(ErrorCode.ACCOUNT_DEACTIVATED));
     }
 
@@ -67,12 +55,11 @@ export const requireAuth = (
 // Middleware to check if user has required role
 export const requireRole = (roles: string[]): RequestHandler => {
   return (req, res, next) => {
-    const authReq = req as AuthRequest;
-    if (!authReq.auth) {
+    if (!req.auth) {
       throw new AppError(ErrorCode.UNAUTHORIZED);
     }
 
-    const userRole = authReq.auth.role;
+    const userRole = req.auth.role;
     if (!roles.includes(userRole)) {
       throw new AppError(ErrorCode.INSUFFICIENT_PERMISSIONS);
     }

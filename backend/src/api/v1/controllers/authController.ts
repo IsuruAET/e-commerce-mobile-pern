@@ -2,10 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import passport from "passport";
 
 import { AuthService } from "../services/authService";
-import { AuthRequest } from "middleware/authHandler";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
-import { ChangePasswordInput } from "../schemas/authSchema";
 
 export class AuthController {
   static async register(
@@ -68,10 +66,12 @@ export class AuthController {
   ): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
-      const accessToken = req.headers.authorization?.split(" ")[1];
+      if (!refreshToken) {
+        throw new AppError(ErrorCode.UNAUTHORIZED);
+      }
 
-      const { refreshToken: newRefreshToken, ...rest } =
-        await AuthService.refreshUserToken(refreshToken, accessToken);
+      const { accessToken, refreshToken: newRefreshToken } =
+        await AuthService.refreshUserToken(refreshToken);
 
       // Set new refresh token in HTTP-only cookie
       res.cookie("refreshToken", newRefreshToken, {
@@ -81,8 +81,7 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
-      // Return only the access token to the client
-      res.status(200).json(rest);
+      res.status(200).json({ accessToken });
     } catch (error) {
       next(error);
     }
@@ -95,9 +94,11 @@ export class AuthController {
   ): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
-      await AuthService.logoutUser(refreshToken);
+      if (refreshToken) {
+        await AuthService.logoutUser(refreshToken);
+      }
 
-      // Clear the refresh token cookie
+      // Clear refresh token cookie
       res.clearCookie("refreshToken", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -162,7 +163,7 @@ export class AuthController {
   }
 
   static async changePassword(
-    req: AuthRequest<{}, {}, ChangePasswordInput["body"]>,
+    req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
@@ -214,7 +215,7 @@ export class AuthController {
   }
 
   static async deactivateAccount(
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
