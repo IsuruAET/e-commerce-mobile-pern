@@ -66,9 +66,9 @@ export const getAppointmentStatsSchema = z.object({
 });
 
 export type Appointment = z.infer<typeof appointmentSchema>;
-export type CreateAppointmentInput = z.TypeOf<typeof createAppointmentSchema>;
-export type UpdateAppointmentInput = z.TypeOf<typeof updateAppointmentSchema>;
-export type GetAppointmentInput = z.TypeOf<typeof getAppointmentSchema>;
+export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
+export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>;
+export type GetAppointmentInput = z.infer<typeof getAppointmentSchema>;
 export type GetAppointmentStatsInput = z.infer<
   typeof getAppointmentStatsSchema
 >;

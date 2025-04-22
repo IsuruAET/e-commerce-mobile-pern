@@ -5,9 +5,14 @@ import { AuthService } from "../services/authService";
 import { AuthRequest } from "middleware/authHandler";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
+import { ChangePasswordInput } from "../schemas/authSchema";
 
 export class AuthController {
-  static async register(req: Request, res: Response, next: NextFunction) {
+  static async register(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { email, password, name } = req.body;
       const { refreshToken, ...rest } = await AuthService.registerUser(
@@ -30,7 +35,11 @@ export class AuthController {
     }
   }
 
-  static async login(req: Request, res: Response, next: NextFunction) {
+  static async login(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { email, password } = req.body;
       const { refreshToken, ...rest } = await AuthService.loginUser(
@@ -52,7 +61,11 @@ export class AuthController {
     }
   }
 
-  static async refreshToken(req: Request, res: Response, next: NextFunction) {
+  static async refreshToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
       const accessToken = req.headers.authorization?.split(" ")[1];
@@ -75,7 +88,11 @@ export class AuthController {
     }
   }
 
-  static async logout(req: Request, res: Response, next: NextFunction) {
+  static async logout(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
       await AuthService.logoutUser(refreshToken);
@@ -105,13 +122,17 @@ export class AuthController {
     }
   }
 
-  static googleAuth(req: Request, res: Response, next: NextFunction) {
+  static googleAuth(req: Request, res: Response, next: NextFunction): void {
     passport.authenticate("google", {
       scope: ["profile", "email"],
     })(req, res, next);
   }
 
-  static googleCallback(req: Request, res: Response, next: NextFunction) {
+  static async googleCallback(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     passport.authenticate(
       "google",
       { session: false },
@@ -141,10 +162,10 @@ export class AuthController {
   }
 
   static async changePassword(
-    req: AuthRequest<{}, {}, { currentPassword: string; newPassword: string }>,
+    req: AuthRequest<{}, {}, ChangePasswordInput["body"]>,
     res: Response,
     next: NextFunction
-  ) {
+  ): Promise<void> {
     try {
       const { currentPassword, newPassword } = req.body;
       const userId = req.auth?.userId;
@@ -164,7 +185,11 @@ export class AuthController {
     }
   }
 
-  static async forgotPassword(req: Request, res: Response, next: NextFunction) {
+  static async forgotPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { email } = req.body;
       const result = await AuthService.requestPasswordReset(email);
@@ -174,7 +199,11 @@ export class AuthController {
     }
   }
 
-  static async resetPassword(req: Request, res: Response, next: NextFunction) {
+  static async resetPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const { token, password } = req.body;
       const result = await AuthService.resetUserPassword(token, password);
@@ -188,7 +217,7 @@ export class AuthController {
     req: AuthRequest,
     res: Response,
     next: NextFunction
-  ) {
+  ): Promise<void> {
     try {
       const userId = req.auth?.userId;
       if (!userId) {

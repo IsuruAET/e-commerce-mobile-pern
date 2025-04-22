@@ -1,95 +1,118 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { AuthRequest } from "middleware/authHandler";
 
 import {
   CreateAppointmentInput,
-  UpdateAppointmentInput,
-  GetAppointmentInput,
+  GetAppointmentStatsInput,
 } from "../schemas/appointmentSchema";
 import { AppointmentService } from "../services/appointmentService";
 
 export class AppointmentController {
   static async createAppointment(
     req: AuthRequest<{}, {}, CreateAppointmentInput["body"]>,
-    res: Response
+    res: Response<{ success: boolean; message: string; data: any }>,
+    next: NextFunction
   ) {
     try {
       const appointment = await AppointmentService.createAppointment(
         req.body,
         req.auth!.userId
       );
-      res.status(201).json(appointment);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(201).json({
+        success: true,
+        message: "Appointment created successfully",
+        data: appointment,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
   static async getAppointment(
-    req: Request<GetAppointmentInput["params"]>,
-    res: Response
+    req: Request,
+    res: Response<{ success: boolean; message?: string; data?: any }>,
+    next: NextFunction
   ) {
     try {
       const appointment = await AppointmentService.getAppointment(
         req.params.id
       );
       if (!appointment) {
-        return res.status(404).json({ error: "Appointment not found" });
+        res.status(404).json({
+          success: false,
+          message: "Appointment not found",
+        });
+        return;
       }
-      res.json(appointment);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(200).json({
+        success: true,
+        data: appointment,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
   static async updateAppointment(
-    req: Request<
-      UpdateAppointmentInput["params"],
-      {},
-      UpdateAppointmentInput["body"]
-    >,
-    res: Response
+    req: Request,
+    res: Response<{ success: boolean; message: string; data: any }>,
+    next: NextFunction
   ) {
     try {
       const appointment = await AppointmentService.updateAppointment(
         req.params.id,
         req.body
       );
-      res.json(appointment);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(200).json({
+        success: true,
+        message: "Appointment updated successfully",
+        data: appointment,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
-  static async getUserAppointments(req: AuthRequest, res: Response) {
+  static async getUserAppointments(
+    req: AuthRequest,
+    res: Response<{ success: boolean; data: any[] }>,
+    next: NextFunction
+  ) {
     try {
       const appointments = await AppointmentService.getUserAppointments(
         req.auth!.userId
       );
-      res.json(appointments);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(200).json({
+        success: true,
+        data: appointments,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
-  static async getStylistAppointments(req: AuthRequest, res: Response) {
+  static async getStylistAppointments(
+    req: AuthRequest,
+    res: Response<{ success: boolean; data: any[] }>,
+    next: NextFunction
+  ) {
     try {
       const appointments = await AppointmentService.getStylistAppointments(
         req.auth!.userId
       );
-      res.json(appointments);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(200).json({
+        success: true,
+        data: appointments,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
   static async getTotalIncome(
-    req: AuthRequest<
-      {},
-      {},
-      {},
-      { stylistId?: string; startDate?: string; endDate?: string }
-    >,
-    res: Response
+    req: Request<{}, {}, {}, GetAppointmentStatsInput["query"]>,
+    res: Response<{ success: boolean; data: { totalIncome: number } }>,
+    next: NextFunction
   ) {
     try {
       const { stylistId, startDate, endDate } = req.query;
@@ -98,20 +121,19 @@ export class AppointmentController {
         startDate,
         endDate
       );
-      res.json({ totalIncome });
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(200).json({
+        success: true,
+        data: { totalIncome },
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
   static async getTotalServices(
-    req: AuthRequest<
-      {},
-      {},
-      {},
-      { stylistId?: string; startDate?: string; endDate?: string }
-    >,
-    res: Response
+    req: Request<{}, {}, {}, GetAppointmentStatsInput["query"]>,
+    res: Response<{ success: boolean; data: { totalServices: number } }>,
+    next: NextFunction
   ) {
     try {
       const { stylistId, startDate, endDate } = req.query;
@@ -120,9 +142,12 @@ export class AppointmentController {
         startDate,
         endDate
       );
-      res.json({ totalServices });
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      res.status(200).json({
+        success: true,
+        data: { totalServices },
+      });
+    } catch (error) {
+      next(error);
     }
   }
 }

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { withAuth } from "middleware/authHandler";
 
 import {
   loginSchema,
@@ -6,12 +7,14 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema,
+  ChangePasswordInput,
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
 import { validateRequest } from "middleware/validateRequest";
 
 const router = Router();
 
+// Public routes
 router.post(
   "/register",
   validateRequest(registerSchema),
@@ -29,12 +32,6 @@ router.get("/google", AuthController.googleAuth);
 router.get("/google/callback", AuthController.googleCallback);
 
 router.post(
-  "/change-password",
-  validateRequest(changePasswordSchema),
-  AuthController.changePassword
-);
-
-router.post(
   "/forgot-password",
   validateRequest(forgotPasswordSchema),
   AuthController.forgotPassword
@@ -46,7 +43,14 @@ router.post(
   AuthController.resetPassword
 );
 
+// Private routes
+router.post(
+  "/change-password",
+  validateRequest(changePasswordSchema),
+  withAuth<{}, ChangePasswordInput["body"]>(AuthController.changePassword)
+);
+
 // Deactivate user account
-router.patch("/deactivate", AuthController.deactivateAccount);
+router.patch("/deactivate", withAuth(AuthController.deactivateAccount));
 
 export default router;
