@@ -2,8 +2,6 @@ import { Request, Response, NextFunction } from "express";
 
 import { GetAppointmentStatsInput } from "../schemas/appointmentSchema";
 import { AppointmentService } from "../services/appointmentService";
-import { AppError } from "middleware/errorHandler";
-import { ErrorCode } from "constants/errorCodes";
 
 export class AppointmentController {
   static async createAppointment(
@@ -12,11 +10,7 @@ export class AppointmentController {
     next: NextFunction
   ) {
     try {
-      const userId = req.auth?.userId;
-      if (!userId) {
-        throw new AppError(ErrorCode.UNAUTHORIZED);
-      }
-
+      const userId = req.auth?.userId as string;
       const appointment = await AppointmentService.createAppointment(
         req.body,
         userId
@@ -82,11 +76,7 @@ export class AppointmentController {
     next: NextFunction
   ) {
     try {
-      const userId = req.auth?.userId;
-      if (!userId) {
-        throw new AppError(ErrorCode.UNAUTHORIZED);
-      }
-
+      const userId = req.auth?.userId as string;
       const appointments = await AppointmentService.getUserAppointments(userId);
       res.status(200).json({
         success: true,
@@ -103,11 +93,7 @@ export class AppointmentController {
     next: NextFunction
   ) {
     try {
-      const userId = req.auth?.userId;
-      if (!userId) {
-        throw new AppError(ErrorCode.UNAUTHORIZED);
-      }
-
+      const userId = req.auth?.userId as string;
       const appointments = await AppointmentService.getStylistAppointments(
         userId
       );

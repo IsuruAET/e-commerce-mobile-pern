@@ -2,8 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import passport from "passport";
 
 import { AuthService } from "../services/authService";
-import { AppError } from "middleware/errorHandler";
-import { ErrorCode } from "constants/errorCodes";
 
 export class AuthController {
   static async register(
@@ -65,10 +63,7 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const refreshToken = req.cookies.refreshToken;
-      if (!refreshToken) {
-        throw new AppError(ErrorCode.UNAUTHORIZED);
-      }
+      const refreshToken = req.cookies.refreshToken as string;
 
       const { accessToken, refreshToken: newRefreshToken } =
         await AuthService.refreshUserToken(refreshToken);
@@ -169,11 +164,7 @@ export class AuthController {
   ): Promise<void> {
     try {
       const { currentPassword, newPassword } = req.body;
-      const userId = req.auth?.userId;
-
-      if (!userId) {
-        throw new AppError(ErrorCode.UNAUTHORIZED);
-      }
+      const userId = req.auth?.userId as string;
 
       const result = await AuthService.changePassword(
         userId,
@@ -220,11 +211,7 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const userId = req.auth?.userId;
-      if (!userId) {
-        throw new AppError(ErrorCode.UNAUTHORIZED);
-      }
-
+      const userId = req.auth?.userId as string;
       await AuthService.deactivateUserAccount(userId);
 
       // Clear the refresh token cookie
