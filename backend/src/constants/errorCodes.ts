@@ -24,6 +24,7 @@ export enum ErrorCode {
   // Authentication Errors (401)
   UNAUTHORIZED = "UNAUTHORIZED",
   AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED",
+  ACCOUNT_DEACTIVATED = "ACCOUNT_DEACTIVATED",
 
   // Authorization Errors (403)
   FORBIDDEN = "FORBIDDEN",
@@ -82,6 +83,8 @@ export const ERROR_MESSAGES: ErrorMessages = {
   [ErrorCode.UNAUTHORIZED]: "You need to be logged in to do that.",
   [ErrorCode.AUTHENTICATION_FAILED]:
     "We couldn't verify your identity. Please try again.",
+  [ErrorCode.ACCOUNT_DEACTIVATED]:
+    "This account has been deactivated. Please contact support for assistance.",
 
   // Authorization Errors
   [ErrorCode.FORBIDDEN]: "You don't have permission to do that.",
@@ -144,6 +147,7 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: 401,
   [ErrorCode.AUTHENTICATION_FAILED]: 401,
+  [ErrorCode.ACCOUNT_DEACTIVATED]: 401,
 
   // Authorization Errors
   [ErrorCode.FORBIDDEN]: 403,

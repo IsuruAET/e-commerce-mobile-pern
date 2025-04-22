@@ -4,10 +4,11 @@ import { DateTime } from "luxon";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 
-interface TokenPayload {
+export interface TokenPayload {
   userId: string;
   email: string;
   role: string;
+  isDeactivated: boolean;
 }
 
 export class JwtUtils {

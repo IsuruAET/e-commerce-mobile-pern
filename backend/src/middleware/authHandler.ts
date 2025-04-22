@@ -12,6 +12,7 @@ export interface AuthRequest<P = {}, ResBody = {}, ReqBody = {}, ReqQuery = {}>
     userId: string;
     email: string;
     role: string;
+    isDeactivated: boolean;
   };
 }
 
@@ -38,6 +39,13 @@ export const requireAuth = (
       }
       return next(new AppError(ErrorCode.AUTHENTICATION_FAILED));
     }
+
+    // Check deactivation status from JWT token
+    const auth = (req as AuthRequest).auth;
+    if (auth?.isDeactivated) {
+      return next(new AppError(ErrorCode.ACCOUNT_DEACTIVATED));
+    }
+
     next();
   });
 };

@@ -42,6 +42,7 @@ passport.use(
           userId: user.id,
           email: user.email || "",
           role: user.role || "USER",
+          isDeactivated: user.isDeactivated || false,
         });
 
         return done(null, { user, tokens });

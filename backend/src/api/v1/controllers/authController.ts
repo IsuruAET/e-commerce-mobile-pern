@@ -55,9 +55,10 @@ export class AuthController {
   static async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
       const refreshToken = req.cookies.refreshToken;
+      const accessToken = req.headers.authorization?.split(" ")[1];
 
       const { refreshToken: newRefreshToken, ...rest } =
-        await AuthService.refreshUserToken(refreshToken);
+        await AuthService.refreshUserToken(refreshToken, accessToken);
 
       // Set new refresh token in HTTP-only cookie
       res.cookie("refreshToken", newRefreshToken, {
@@ -140,7 +141,7 @@ export class AuthController {
   }
 
   static async changePassword(
-    req: Request & AuthRequest,
+    req: AuthRequest<{}, {}, { currentPassword: string; newPassword: string }>,
     res: Response,
     next: NextFunction
   ) {

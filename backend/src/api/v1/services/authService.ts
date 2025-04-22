@@ -1,11 +1,12 @@
 import { setInterval } from "timers";
 import { DateTime } from "luxon";
+import jwt from "jsonwebtoken";
 
 import { BaseService } from "./baseService";
 import { AppError } from "middleware/errorHandler";
 import { sendEmail } from "utils/emailUtils";
 import { PasswordUtils } from "utils/passwordUtils";
-import { JwtUtils } from "utils/jwtUtils";
+import { JwtUtils, TokenPayload } from "utils/jwtUtils";
 import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 
 export class AuthService extends BaseService {
@@ -80,6 +81,7 @@ export class AuthService extends BaseService {
         userId: user.id,
         email: user.email || "",
         role: user.role || "USER",
+        isDeactivated: user.isDeactivated || false,
       });
 
       await tx.refreshToken.create({
@@ -131,6 +133,7 @@ export class AuthService extends BaseService {
         userId: user.id,
         email: user.email || "",
         role: user.role || "",
+        isDeactivated: user.isDeactivated || false,
       });
 
       await tx.refreshToken.create({
@@ -153,18 +156,23 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async refreshUserToken(refreshToken: string) {
+  static async refreshUserToken(refreshToken: string, accessToken?: string) {
+    if (!refreshToken || !accessToken) {
+      throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
+    }
+
+    let decodedRefresh: TokenPayload;
+    try {
+      decodedRefresh = JwtUtils.verifyRefreshToken(refreshToken);
+    } catch {
+      throw new AppError(ErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
     return await this.handleTransaction(async (tx) => {
-      if (!refreshToken) {
-        throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
-      }
-
-      const decoded = JwtUtils.verifyRefreshToken(refreshToken);
-
       const storedToken = await tx.refreshToken.findFirst({
         where: {
           token: refreshToken,
-          userId: decoded.userId,
+          userId: decodedRefresh.userId,
           expiresAt: { gt: DateTime.now().toJSDate() },
         },
       });
@@ -173,25 +181,44 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_REFRESH_TOKEN);
       }
 
-      const { accessToken, refreshToken: newRefreshToken } =
-        JwtUtils.generateTokens({
-          userId: decoded.userId,
-          email: decoded.email,
-          role: decoded.role,
-        });
+      let decodedAccess: TokenPayload;
+      try {
+        decodedAccess = JwtUtils.verifyAccessToken(accessToken);
 
-      await tx.refreshToken.update({
-        where: { id: storedToken.id },
-        data: {
-          token: newRefreshToken,
-          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
-        },
-      });
+        if (decodedAccess.userId !== decodedRefresh.userId) {
+          throw new AppError(ErrorCode.INVALID_TOKEN);
+        }
 
-      return {
-        accessToken,
-        refreshToken: newRefreshToken,
-      };
+        // If access token is valid, return existing tokens
+        return { accessToken, refreshToken };
+      } catch (error) {
+        // Only generate new tokens if the error is due to token expiration
+        if (error instanceof jwt.TokenExpiredError) {
+          const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+            JwtUtils.generateTokens({
+              userId: decodedRefresh.userId,
+              email: decodedRefresh.email,
+              role: decodedRefresh.role,
+              isDeactivated: decodedRefresh?.isDeactivated || false,
+            });
+
+          await tx.refreshToken.update({
+            where: { id: storedToken.id },
+            data: {
+              token: newRefreshToken,
+              expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
+            },
+          });
+
+          return {
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+          };
+        }
+
+        // For other token errors, throw invalid token error
+        throw new AppError(ErrorCode.INVALID_TOKEN);
+      }
     });
   }
 
