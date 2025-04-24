@@ -114,6 +114,14 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_CREDENTIALS);
       }
 
+      // Check if user is deactivated
+      if (user.isDeactivated) {
+        throw new AppError(
+          ErrorCode.ACCOUNT_DEACTIVATED,
+          "Your account has been deactivated. Please contact support for assistance."
+        );
+      }
+
       await tx.refreshToken.deleteMany({
         where: {
           userId: user.id,
@@ -169,6 +177,22 @@ export class AuthService extends BaseService {
     }
 
     return await this.handleTransaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: decodedRefresh.userId },
+      });
+
+      if (!user) {
+        throw new AppError(ErrorCode.USER_NOT_FOUND);
+      }
+
+      // Check if user is deactivated
+      if (user.isDeactivated) {
+        throw new AppError(
+          ErrorCode.ACCOUNT_DEACTIVATED,
+          "Your account has been deactivated. Please contact support for assistance."
+        );
+      }
+
       const storedToken = await tx.refreshToken.findFirst({
         where: {
           token: refreshToken,
@@ -253,6 +277,14 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_USER_DATA);
       }
 
+      // Check if user is deactivated
+      if (user.isDeactivated) {
+        throw new AppError(
+          ErrorCode.ACCOUNT_DEACTIVATED,
+          "Your account has been deactivated. Please contact support for assistance."
+        );
+      }
+
       await this.prisma.refreshToken.create({
         data: {
           token: tokens.refreshToken,
@@ -322,6 +354,14 @@ export class AuthService extends BaseService {
           };
         }
 
+        // Check if user is deactivated
+        if (user.isDeactivated) {
+          throw new AppError(
+            ErrorCode.ACCOUNT_DEACTIVATED,
+            "Your account has been deactivated. Please contact support for assistance."
+          );
+        }
+
         const recentAttempts = await tx.passwordResetToken.count({
           where: {
             userId: user.id,
@@ -383,6 +423,22 @@ export class AuthService extends BaseService {
       }
 
       const { userId } = JwtUtils.verifyPasswordResetToken(token);
+
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new AppError(ErrorCode.USER_NOT_FOUND);
+      }
+
+      // Check if user is deactivated
+      if (user.isDeactivated) {
+        throw new AppError(
+          ErrorCode.ACCOUNT_DEACTIVATED,
+          "Your account has been deactivated. Please contact support for assistance."
+        );
+      }
 
       const resetToken = await tx.passwordResetToken.findFirst({
         where: {
