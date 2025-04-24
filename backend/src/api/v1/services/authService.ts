@@ -8,6 +8,7 @@ import { sendEmail } from "utils/emailUtils";
 import { PasswordUtils } from "utils/passwordUtils";
 import { JwtUtils, TokenPayload } from "utils/jwtUtils";
 import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
+import { logger } from "middleware/logger";
 
 export class AuthService extends BaseService {
   static async storeRefreshToken(token: string, userId: string) {
@@ -50,9 +51,9 @@ export class AuthService extends BaseService {
       try {
         await this.cleanupExpiredTokens();
         await this.cleanupExpiredPasswordResetTokens();
-        console.log(`Cleaned up expired tokens at ${DateTime.now().toISO()}`);
+        logger.info(`Cleaned up expired tokens at ${DateTime.now().toISO()}`);
       } catch (error) {
-        console.error("Error cleaning up expired tokens:", error);
+        logger.error("Error cleaning up expired tokens:", error);
       }
     }, intervalHours * 60 * 60 * 1000);
   }

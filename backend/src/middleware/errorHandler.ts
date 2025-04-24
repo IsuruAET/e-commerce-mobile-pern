@@ -82,25 +82,5 @@ export const errorHandler = (
     response.stack = err.stack;
   }
 
-  // Log the error with request ID
-  const errorLog = {
-    requestId: req.id,
-    timestamp,
-    method: req.method,
-    url: req.url,
-    error: {
-      name: err.name,
-      message: err.message,
-      stack: err.stack,
-      ...(err instanceof AppError && {
-        code: err.errorCode,
-        type: err.type,
-        isOperational: err.isOperational,
-      }),
-    },
-  };
-
-  console.error(JSON.stringify(errorLog, null, 2));
-
   return res.status(ERROR_STATUS_CODES[response.code]).json(response);
 };

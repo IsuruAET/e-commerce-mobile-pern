@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 
 import { connectDB } from "./config/database";
-import { setupLogging } from "./config/logger";
+import { requestLogger, logger } from "./middleware/logger";
 import v1Routes from "./api/v1/index";
 import { AuthService } from "./api/v1/services/authService";
 import { errorHandler } from "middleware/errorHandler";
@@ -32,9 +32,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(requestIdMiddleware);
-
-// Setup logging middleware
-setupLogging().forEach((middleware) => app.use(middleware));
+app.use(requestLogger);
 
 // CSRF Protection
 app.use(setCsrfToken); // Set CSRF token for all routes
@@ -60,11 +58,11 @@ const startServer = async () => {
     AuthService.startCleanupScheduler();
 
     app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-      console.log(`API v1 available at: http://localhost:${port}/api/v1`);
+      logger.info(`Server is running on port ${port}`);
+      logger.info(`API v1 available at: http://localhost:${port}/api/v1`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    logger.error("Failed to start server:", error);
     process.exit(1);
   }
 };

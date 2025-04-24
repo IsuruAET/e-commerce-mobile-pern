@@ -2,6 +2,7 @@ import { Pool, PoolConfig } from "pg";
 import dotenv from "dotenv";
 
 import { AppError } from "middleware/errorHandler";
+import { logger } from "middleware/logger";
 import { ErrorCode } from "constants/errorCodes";
 
 dotenv.config();
@@ -74,7 +75,7 @@ class Database {
 
       if (result.rows.length === 0) {
         await client.query(`CREATE DATABASE ${config.database}`);
-        console.log(`Database ${config.database} created successfully`);
+        logger.info(`Database ${config.database} created successfully`);
       }
     } catch (error) {
       throw new AppError(ErrorCode.DATABASE_ERROR);
@@ -90,7 +91,7 @@ class Database {
 
   public async connect(): Promise<void> {
     if (this.isConnected) {
-      console.log("Using existing database connection");
+      logger.info("Using existing database connection");
       return;
     }
 
@@ -107,13 +108,13 @@ class Database {
 
         this.isConnected = true;
         this.connectionAttempts = 0;
-        console.log("PostgreSQL connected successfully");
+        logger.info("PostgreSQL connected successfully");
 
         this.setupEventHandlers();
         return;
       } catch (error) {
         this.connectionAttempts++;
-        console.error(
+        logger.error(
           `Connection attempt ${this.connectionAttempts} failed:`,
           error
         );
@@ -131,7 +132,7 @@ class Database {
     if (!this.pool) return;
 
     this.pool.on("error", (err) => {
-      console.error("Unexpected error on idle client", err);
+      logger.error("Unexpected error on idle client", err);
       this.isConnected = false;
     });
 
@@ -141,7 +142,7 @@ class Database {
     });
 
     process.on("unhandledRejection", (reason, promise) => {
-      console.error("Unhandled Rejection at:", promise, "reason:", reason);
+      logger.error("Unhandled Rejection at:", promise, "reason:", reason);
     });
   }
 
@@ -153,9 +154,9 @@ class Database {
     try {
       await this.pool.end();
       this.isConnected = false;
-      console.log("Database connection closed");
+      logger.info("Database connection closed");
     } catch (error) {
-      console.error("Error while disconnecting:", error);
+      logger.error("Error while disconnecting:", error);
       throw new AppError(ErrorCode.DATABASE_ERROR);
     }
   }

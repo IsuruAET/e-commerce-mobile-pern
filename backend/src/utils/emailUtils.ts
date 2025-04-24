@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
+import { logger } from "middleware/logger";
 
 interface EmailOptions {
   to: string;
@@ -36,7 +37,7 @@ export const sendEmail = async ({ to, subject, html }: EmailOptions) => {
       html,
     });
   } catch (error) {
-    console.error("Error sending email:", error);
+    logger.error("Error sending email:", error);
     throw new AppError(ErrorCode.INTERNAL_SERVER_ERROR);
   }
 };

@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import { PUBLIC_ROUTES } from "constants/publicRoutes";
+import { logger } from "middleware/logger";
 
 // CSRF Configuration
 const CSRF_SECURITY = {
@@ -113,7 +114,7 @@ export const setCsrfToken = (
     next();
   } catch (error) {
     // Log the error for debugging
-    console.error("Error setting CSRF token:", error);
+    logger.error("Error setting CSRF token:", error);
     throw new AppError(ErrorCode.INTERNAL_SERVER_ERROR);
   }
 };
