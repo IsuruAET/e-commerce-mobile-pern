@@ -12,10 +12,12 @@ const baseLogger = pino({
       levelFirst: true,
       ignore: "pid,hostname",
       messageFormat: "{msg}",
+      translateTime: "SYS:standard",
     },
   },
   base: null,
-  timestamp: () => `,"time":"${DateTime.now().toISO()}"`,
+  timestamp: () =>
+    `,"time":"${DateTime.now().toFormat("yyyy-MM-dd HH:mm:ss.SSS")}"`,
 });
 
 // Create request logger middleware
