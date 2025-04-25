@@ -84,18 +84,31 @@ export class AuthService extends BaseService {
 
       const hashedPassword = await PasswordUtils.hashPassword(password);
 
+      // Get the default USER role
+      const userRole = await tx.role.findFirst({
+        where: { name: "USER" },
+      });
+
+      if (!userRole) {
+        throw new AppError(
+          ErrorCode.INTERNAL_SERVER_ERROR,
+          "Default role not found"
+        );
+      }
+
       const user = await tx.user.create({
         data: {
           email,
           password: hashedPassword,
           name,
+          roleId: userRole.id,
         },
       });
 
       const { accessToken, refreshToken } = JwtUtils.generateTokens({
         userId: user.id,
         email: user.email || "",
-        role: user.role || "USER",
+        role: userRole.name,
         isDeactivated: user.isDeactivated || false,
       });
 
@@ -123,6 +136,9 @@ export class AuthService extends BaseService {
     return await this.handleTransaction(async (tx) => {
       const user = await tx.user.findUnique({
         where: { email },
+        include: {
+          role: true,
+        },
       });
 
       if (!user) {
@@ -165,7 +181,7 @@ export class AuthService extends BaseService {
       const { accessToken, refreshToken } = JwtUtils.generateTokens({
         userId: user.id,
         email: user.email || "",
-        role: user.role || "",
+        role: user.role.name,
         isDeactivated: user.isDeactivated || false,
       });
 

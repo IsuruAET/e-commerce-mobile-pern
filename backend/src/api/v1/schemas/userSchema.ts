@@ -3,11 +3,11 @@ import { z } from "zod";
 export const userSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().min(3).max(50),
-  phone: z.string().optional(),
-  role: z.enum(["ADMIN", "USER", "STYLIST"]),
-  googleId: z.string().optional(),
+  password: z.string().nullable(),
+  name: z.string(),
+  phone: z.string().nullable(),
+  roleId: z.string().uuid(),
+  googleId: z.string().nullable(),
   isDeactivated: z.boolean().default(false),
   deactivatedAt: z.date().nullable(),
   createdAt: z.date(),
@@ -19,11 +19,7 @@ export const createUserSchema = z.object({
     email: z.string().email("Invalid email address"),
     name: z.string().min(1, "Name is required"),
     phone: z.string().optional(),
-    role: z.enum(["ADMIN", "USER", "STYLIST"], {
-      errorMap: () => ({
-        message: "Invalid role",
-      }),
-    }),
+    roleId: z.string().uuid("Invalid role ID"),
   }),
 });
 
@@ -49,13 +45,7 @@ export const updateUserSchema = z.object({
       .max(50, "Name must be less than 50 characters")
       .optional(),
     phone: z.string().optional(),
-    role: z
-      .enum(["ADMIN", "USER", "STYLIST"], {
-        errorMap: () => ({
-          message: "Invalid role",
-        }),
-      })
-      .optional(),
+    roleId: z.string().uuid("Invalid role ID").optional(),
   }),
 });
 

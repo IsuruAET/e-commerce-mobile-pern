@@ -9,6 +9,7 @@ import {
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
 import { validateRequest } from "middleware/validateRequest";
+import { requirePermission } from "middleware/authHandler";
 
 const router = Router();
 
@@ -44,11 +45,16 @@ router.post(
 // Private routes
 router.post(
   "/change-password",
+  requirePermission(["manage_auth"]),
   validateRequest(changePasswordSchema),
   AuthController.changePassword
 );
 
 // Deactivate user account
-router.patch("/deactivate", AuthController.deactivateAccount);
+router.patch(
+  "/deactivate",
+  requirePermission(["manage_auth"]),
+  AuthController.deactivateAccount
+);
 
 export default router;

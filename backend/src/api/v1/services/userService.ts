@@ -78,7 +78,7 @@ export class UserService extends BaseService {
           email: data.email,
           name: data.name,
           phone: data.phone,
-          role: data.role,
+          roleId: data.roleId,
         },
         select: {
           id: true,
@@ -99,7 +99,6 @@ export class UserService extends BaseService {
 
   static async createPassword(token: string, password: string) {
     return await this.handleTransaction(async (tx) => {
-      console.log("user", token);
       if (!token) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
       }
@@ -239,7 +238,9 @@ export class UserService extends BaseService {
           email: updateData.email,
           name: updateData.name,
           phone: updateData.phone,
-          role: updateData.role,
+          role: {
+            connect: { id: updateData.role },
+          },
         },
         select: {
           id: true,

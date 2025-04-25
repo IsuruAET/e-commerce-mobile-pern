@@ -9,7 +9,7 @@ import {
 } from "../schemas/userSchema";
 import { paginationSchema } from "../schemas/shared/paginationSchema";
 import { UserController } from "../controllers/userController";
-import { requireRole } from "middleware/authHandler";
+import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 import { paginationHandler } from "middleware/paginationHandler";
 
@@ -18,7 +18,7 @@ const router = Router();
 // Create user
 router.post(
   "/",
-  requireRole(["ADMIN"]),
+  requirePermission(["create_user"]),
   validateRequest(createUserSchema),
   UserController.createUser
 );
@@ -26,7 +26,7 @@ router.post(
 // Get user by id
 router.get(
   "/:id",
-  requireRole(["ADMIN"]),
+  requirePermission(["read_user"]),
   validateRequest(userIdSchema),
   UserController.getUserById
 );
@@ -34,7 +34,7 @@ router.get(
 // List all users with pagination
 router.get(
   "/",
-  requireRole(["ADMIN"]),
+  requirePermission(["list_users"]),
   validateRequest(paginationSchema),
   paginationHandler,
   UserController.listUsers
@@ -43,7 +43,7 @@ router.get(
 // Update user
 router.put(
   "/:id",
-  requireRole(["ADMIN"]),
+  requirePermission(["update_user"]),
   validateRequest(updateUserSchema),
   validateRequest(userIdSchema),
   UserController.updateUser
@@ -52,7 +52,7 @@ router.put(
 // Delete user
 router.delete(
   "/:id",
-  requireRole(["ADMIN"]),
+  requirePermission(["delete_user"]),
   validateRequest(userIdSchema),
   UserController.deleteUser
 );
@@ -60,7 +60,7 @@ router.delete(
 // Deactivate user
 router.patch(
   "/:id/deactivate",
-  requireRole(["ADMIN"]),
+  requirePermission(["deactivate_user"]),
   validateRequest(userIdSchema),
   UserController.deactivateUser
 );
@@ -68,7 +68,7 @@ router.patch(
 // Reactivate user
 router.patch(
   "/:id/reactivate",
-  requireRole(["ADMIN"]),
+  requirePermission(["reactivate_user"]),
   validateRequest(userIdSchema),
   UserController.reactivateUser
 );

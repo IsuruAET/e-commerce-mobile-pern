@@ -1,9 +1,12 @@
 import { expressjwt } from "express-jwt";
 import { Request, Response, NextFunction, RequestHandler } from "express";
+import { PrismaClient } from "@prisma/client";
 
 import { AppError } from "./errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import { PUBLIC_ROUTES } from "constants/publicRoutes";
+
+const prisma = new PrismaClient();
 
 // Extend Express Request type to include auth property
 declare global {
@@ -52,18 +55,42 @@ export const requireAuth = (
   });
 };
 
-// Middleware to check if user has required role
-export const requireRole = (roles: string[]): RequestHandler => {
-  return (req, res, next) => {
+// Middleware to check if user has required permission
+export const requirePermission = (permissions: string[]): RequestHandler => {
+  return async (req, res, next) => {
     if (!req.auth) {
       throw new AppError(ErrorCode.UNAUTHORIZED);
     }
 
-    const userRole = req.auth.role;
-    if (!roles.includes(userRole)) {
-      throw new AppError(ErrorCode.INSUFFICIENT_PERMISSIONS);
-    }
+    try {
+      // Get user's role and its permissions
+      const userRole = await prisma.role.findFirst({
+        where: { name: req.auth.role },
+        include: {
+          permissions: {
+            include: {
+              permission: true,
+            },
+          },
+        },
+      });
 
-    next();
+      if (!userRole) {
+        throw new AppError(ErrorCode.INSUFFICIENT_PERMISSIONS);
+      }
+
+      // Check if user has any of the required permissions
+      const hasPermission = userRole.permissions.some((rp) =>
+        permissions.includes(rp.permission.name)
+      );
+
+      if (!hasPermission) {
+        throw new AppError(ErrorCode.INSUFFICIENT_PERMISSIONS);
+      }
+
+      next();
+    } catch (error) {
+      next(error);
+    }
   };
 };
