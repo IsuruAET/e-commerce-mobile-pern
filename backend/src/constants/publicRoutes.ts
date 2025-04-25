@@ -7,4 +7,6 @@ export const PUBLIC_ROUTES = [
   "/auth/refresh-token",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/users/create-password",
+  "/users/request-password-creation",
 ];

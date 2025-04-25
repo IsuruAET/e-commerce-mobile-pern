@@ -4,6 +4,8 @@ import {
   createUserSchema,
   updateUserSchema,
   userIdSchema,
+  createPasswordSchema,
+  requestPasswordCreationSchema,
 } from "../schemas/userSchema";
 import { paginationSchema } from "../schemas/shared/paginationSchema";
 import { UserController } from "../controllers/userController";
@@ -69,6 +71,20 @@ router.patch(
   requireRole(["ADMIN"]),
   validateRequest(userIdSchema),
   UserController.reactivateUser
+);
+
+// Create password with token
+router.post(
+  "/create-password",
+  validateRequest(createPasswordSchema),
+  UserController.createPassword
+);
+
+// Request new password creation token
+router.post(
+  "/request-password-creation",
+  validateRequest(requestPasswordCreationSchema),
+  UserController.requestNewPasswordCreationToken
 );
 
 export default router;

@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { DateTime } from "luxon";
 
 import { AppError } from "middleware/errorHandler";
@@ -59,16 +59,19 @@ export class JwtUtils {
     }
   }
 
-  static generatePasswordResetToken(userId: string): string {
+  static generatePasswordToken(
+    userId: string,
+    expiresIn: SignOptions["expiresIn"] = "1h"
+  ): string {
     if (!process.env.JWT_ACCESS_SECRET) {
       throw new AppError(ErrorCode.INTERNAL_SERVER_ERROR);
     }
     return jwt.sign({ userId }, process.env.JWT_ACCESS_SECRET, {
-      expiresIn: "1h",
+      expiresIn,
     });
   }
 
-  static verifyPasswordResetToken(token: string): { userId: string } {
+  static verifyPasswordToken(token: string): { userId: string } {
     if (!process.env.JWT_ACCESS_SECRET) {
       throw new AppError(ErrorCode.INTERNAL_SERVER_ERROR);
     }

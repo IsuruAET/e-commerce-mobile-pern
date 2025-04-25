@@ -65,6 +65,20 @@ export class AuthService extends BaseService {
       });
 
       if (existingUser) {
+        // If user exists but has no password or Google ID, guide them to set password
+        if (!existingUser.password && !existingUser.googleId) {
+          throw new AppError(
+            ErrorCode.PASSWORD_NOT_SET,
+            "An account with this email already exists. Please check your email for the password creation link or request a new one."
+          );
+        }
+
+        // If user exists with Google ID, suggest using Google login
+        if (!existingUser.password && existingUser.googleId) {
+          throw new AppError(ErrorCode.SOCIAL_AUTH_REQUIRED);
+        }
+
+        // If user exists with password, show regular email exists message
         throw new AppError(ErrorCode.EMAIL_EXISTS);
       }
 
@@ -111,7 +125,7 @@ export class AuthService extends BaseService {
         where: { email },
       });
 
-      if (!user || !user.password) {
+      if (!user) {
         throw new AppError(ErrorCode.INVALID_CREDENTIALS);
       }
 
@@ -123,6 +137,16 @@ export class AuthService extends BaseService {
         );
       }
 
+      // Check if user needs to set password
+      if (!user.password && !user.googleId) {
+        throw new AppError(ErrorCode.PASSWORD_NOT_SET);
+      }
+
+      // If user has no password but has Google ID, suggest using Google login
+      if (!user.password && user.googleId) {
+        throw new AppError(ErrorCode.SOCIAL_AUTH_REQUIRED);
+      }
+
       await tx.refreshToken.deleteMany({
         where: {
           userId: user.id,
@@ -132,7 +156,7 @@ export class AuthService extends BaseService {
 
       const isPasswordValid = await PasswordUtils.comparePassword(
         password,
-        user.password
+        user.password as string
       );
       if (!isPasswordValid) {
         throw new AppError(ErrorCode.INVALID_CREDENTIALS);
@@ -373,16 +397,17 @@ export class AuthService extends BaseService {
         });
 
         if (recentAttempts >= 3) {
-          throw new AppError(ErrorCode.TOO_MANY_RESET_ATTEMPTS);
+          throw new AppError(ErrorCode.TOO_MANY_PASSWORD_ATTEMPTS);
         }
 
-        const resetToken = JwtUtils.generatePasswordResetToken(user.id);
+        const resetToken = JwtUtils.generatePasswordToken(user.id, "1h");
+        const expiresAt = DateTime.now().plus({ hours: 1 }).toJSDate();
 
         await tx.passwordResetToken.create({
           data: {
             token: resetToken,
             userId: user.id,
-            expiresAt: DateTime.now().plus({ hours: 1 }).toJSDate(), // 1 hour
+            expiresAt, // 1 hour
           },
         });
 
@@ -423,7 +448,7 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
       }
 
-      const { userId } = JwtUtils.verifyPasswordResetToken(token);
+      const { userId } = JwtUtils.verifyPasswordToken(token);
 
       const user = await tx.user.findUnique({
         where: { id: userId },

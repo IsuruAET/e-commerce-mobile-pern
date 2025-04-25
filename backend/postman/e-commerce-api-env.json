@@ -73,6 +73,13 @@
       "description": "Password reset token"
     },
     {
+      "key": "password_token",
+      "value": "",
+      "type": "secret",
+      "enabled": true,
+      "description": "Password create token"
+    },
+    {
       "key": "test_name",
       "value": "Test User",
       "type": "default",

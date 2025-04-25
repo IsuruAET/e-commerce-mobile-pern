@@ -17,29 +17,32 @@ export const userSchema = z.object({
 export const createUserSchema = z.object({
   body: z.object({
     email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    name: z
-      .string()
-      .min(3, "Name must be at least 3 characters")
-      .max(50, "Name must be less than 50 characters"),
+    name: z.string().min(1, "Name is required"),
     phone: z.string().optional(),
-    role: z
-      .enum(["ADMIN", "USER", "STYLIST"], {
-        errorMap: () => ({
-          message: "Invalid role",
-        }),
-      })
-      .default("USER"),
+    role: z.enum(["ADMIN", "USER", "STYLIST"], {
+      errorMap: () => ({
+        message: "Invalid role",
+      }),
+    }),
+  }),
+});
+
+export const createPasswordSchema = z.object({
+  body: z.object({
+    token: z.string(),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+  }),
+});
+
+export const requestPasswordCreationSchema = z.object({
+  body: z.object({
+    email: z.string().email("Invalid email format"),
   }),
 });
 
 export const updateUserSchema = z.object({
   body: z.object({
     email: z.string().email("Invalid email address").optional(),
-    password: z
-      .string()
-      .min(6, "Password must be at least 6 characters")
-      .optional(),
     name: z
       .string()
       .min(3, "Name must be at least 3 characters")
@@ -64,4 +67,9 @@ export const userIdSchema = z.object({
 
 export type User = z.infer<typeof userSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>["body"];
+export type CreatePasswordInput = z.infer<typeof createPasswordSchema>["body"];
+export type RequestPasswordCreationInput = z.infer<
+  typeof requestPasswordCreationSchema
+>["body"];
 export type UpdateUserInput = z.infer<typeof updateUserSchema>["body"];
+export type UserIdParams = z.infer<typeof userIdSchema>["params"];

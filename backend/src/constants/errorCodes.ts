@@ -16,10 +16,14 @@ export enum ErrorCode {
   INVALID_TOKEN = "INVALID_TOKEN",
   INVALID_REFRESH_TOKEN = "INVALID_REFRESH_TOKEN",
   INVALID_RESET_TOKEN = "INVALID_RESET_TOKEN",
+  INVALID_PASSWORD_CREATION_TOKEN = "INVALID_PASSWORD_CREATION_TOKEN",
   TOKEN_EXPIRED = "TOKEN_EXPIRED",
   TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND",
   VALIDATION_ERROR = "VALIDATION_ERROR",
   INVALID_USER_DATA = "INVALID_USER_DATA",
+  PASSWORD_ALREADY_SET = "PASSWORD_ALREADY_SET",
+  PASSWORD_NOT_SET = "PASSWORD_NOT_SET",
+  SOCIAL_AUTH_REQUIRED = "SOCIAL_AUTH_REQUIRED",
 
   // Authentication Errors (401)
   UNAUTHORIZED = "UNAUTHORIZED",
@@ -50,7 +54,7 @@ export enum ErrorCode {
 
   // Rate Limit Errors (429)
   TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS",
-  TOO_MANY_RESET_ATTEMPTS = "TOO_MANY_RESET_ATTEMPTS",
+  TOO_MANY_PASSWORD_ATTEMPTS = "TOO_MANY_PASSWORD_ATTEMPTS",
 
   // Internal Server Errors (500)
   INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
@@ -72,12 +76,20 @@ export const ERROR_MESSAGES: ErrorMessages = {
     "Your session has expired. Please log in again.",
   [ErrorCode.INVALID_RESET_TOKEN]:
     "This password reset link has expired or is invalid. Please request a new one.",
+  [ErrorCode.INVALID_PASSWORD_CREATION_TOKEN]:
+    "This password creation link has expired or is invalid. Please request a new one.",
   [ErrorCode.TOKEN_EXPIRED]: "The token has expired. Please request a new one.",
   [ErrorCode.TOKEN_NOT_FOUND]:
     "We couldn't find your request. Please try again.",
   [ErrorCode.VALIDATION_ERROR]: "Please check your input and try again.",
   [ErrorCode.INVALID_USER_DATA]:
     "The information provided is not valid. Please check and try again.",
+  [ErrorCode.PASSWORD_ALREADY_SET]:
+    "Password has already been set for this account",
+  [ErrorCode.PASSWORD_NOT_SET]:
+    "Your account has been created but you need to set your password. Please check your email for the password creation link or request a new one.",
+  [ErrorCode.SOCIAL_AUTH_REQUIRED]:
+    "Please use social authentication to access your account.",
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: "You need to be logged in to do that.",
@@ -118,7 +130,7 @@ export const ERROR_MESSAGES: ErrorMessages = {
 
   // Rate Limit Errors
   [ErrorCode.TOO_MANY_REQUESTS]: "Too many requests. Please try again later.",
-  [ErrorCode.TOO_MANY_RESET_ATTEMPTS]:
+  [ErrorCode.TOO_MANY_PASSWORD_ATTEMPTS]:
     "You've tried too many times. Please wait a while before trying again.",
 
   // Internal Server Errors
@@ -139,10 +151,14 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.INVALID_TOKEN]: 400,
   [ErrorCode.INVALID_REFRESH_TOKEN]: 400,
   [ErrorCode.INVALID_RESET_TOKEN]: 400,
+  [ErrorCode.INVALID_PASSWORD_CREATION_TOKEN]: 400,
   [ErrorCode.TOKEN_EXPIRED]: 400,
   [ErrorCode.TOKEN_NOT_FOUND]: 400,
   [ErrorCode.VALIDATION_ERROR]: 400,
   [ErrorCode.INVALID_USER_DATA]: 400,
+  [ErrorCode.PASSWORD_ALREADY_SET]: 400,
+  [ErrorCode.PASSWORD_NOT_SET]: 400,
+  [ErrorCode.SOCIAL_AUTH_REQUIRED]: 400,
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: 401,
@@ -173,7 +189,7 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
 
   // Rate Limit Errors
   [ErrorCode.TOO_MANY_REQUESTS]: 429,
-  [ErrorCode.TOO_MANY_RESET_ATTEMPTS]: 429,
+  [ErrorCode.TOO_MANY_PASSWORD_ATTEMPTS]: 429,
 
   // Internal Server Errors
   [ErrorCode.INTERNAL_SERVER_ERROR]: 500,

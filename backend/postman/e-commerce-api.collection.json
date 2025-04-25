@@ -747,6 +747,7 @@
       "item": [
         {
           "name": "Create User",
+          "description": "Create a new user (ADMIN only)",
           "request": {
             "method": "POST",
             "header": [
@@ -765,7 +766,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"user\"\n}"
+              "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"role\": \"USER\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/users",
@@ -775,7 +776,77 @@
           }
         },
         {
+          "name": "Create Password",
+          "description": "Create password using token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"token\": \"{{password_token}}\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/create-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "create-password"]
+            }
+          }
+        },
+        {
+          "name": "Request Password Creation Link",
+          "description": "Request a new password creation token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john.doe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/request-password-creation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "request-password-creation"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Test response status",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Parse the response body",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "// Set password_token environment variable if token is present in response",
+                  "if (jsonData && jsonData.token) {",
+                  "    pm.environment.set('password_token', jsonData.token);",
+                  "    console.log('Password token has been set in environment');",
+                  "} else {",
+                  "    console.log('No token found in response');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Get User by ID",
+          "description": "Get user details by ID (ADMIN only)",
           "request": {
             "method": "GET",
             "header": [
@@ -797,6 +868,7 @@
         },
         {
           "name": "List Users",
+          "description": "List all users with pagination (ADMIN only)",
           "request": {
             "method": "GET",
             "header": [
@@ -830,6 +902,7 @@
         },
         {
           "name": "Update User",
+          "description": "Update user details (ADMIN only)",
           "request": {
             "method": "PUT",
             "header": [
@@ -848,7 +921,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated.email@example.com\",\n    \"role\": \"admin\"\n}"
+              "raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated.email@example.com\",\n    \"phone\": \"+1987654321\",\n    \"role\": \"USER\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/users/{{user_id}}",
@@ -859,6 +932,7 @@
         },
         {
           "name": "Delete User",
+          "description": "Delete a user (ADMIN only)",
           "request": {
             "method": "DELETE",
             "header": [
