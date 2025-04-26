@@ -64,9 +64,10 @@ export class AuthController {
   ): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken as string;
+      const accessToken = req.headers.authorization?.split(" ")[1] as string;
 
-      const { accessToken, refreshToken: newRefreshToken } =
-        await AuthService.refreshUserToken(refreshToken);
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+        await AuthService.refreshUserToken(refreshToken, accessToken);
 
       // Set new refresh token in HTTP-only cookie
       res.cookie("refreshToken", newRefreshToken, {
@@ -76,7 +77,7 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
-      res.status(200).json({ accessToken });
+      res.status(200).json({ accessToken: newAccessToken });
     } catch (error) {
       next(error);
     }

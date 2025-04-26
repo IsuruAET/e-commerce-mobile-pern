@@ -9,6 +9,7 @@ export interface TokenPayload {
   email: string;
   role: string;
   isDeactivated: boolean;
+  exp?: number;
 }
 
 export class JwtUtils {
@@ -86,5 +87,13 @@ export class JwtUtils {
 
   static getRefreshTokenExpirationDate(days: number = 7): Date {
     return DateTime.now().plus({ days }).toJSDate();
+  }
+
+  static decodeToken(token: string): TokenPayload {
+    try {
+      return jwt.decode(token) as TokenPayload;
+    } catch {
+      throw new AppError(ErrorCode.INVALID_TOKEN);
+    }
   }
 }

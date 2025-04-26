@@ -205,7 +205,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async refreshUserToken(refreshToken: string, accessToken?: string) {
+  static async refreshUserToken(refreshToken: string, accessToken: string) {
     if (!refreshToken || !accessToken) {
       throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
     }
@@ -217,9 +217,23 @@ export class AuthService extends BaseService {
       throw new AppError(ErrorCode.INVALID_REFRESH_TOKEN);
     }
 
+    // Verify that access token belongs to the same user, even if expired
+    let decodedAccess: TokenPayload;
+    try {
+      decodedAccess = JwtUtils.decodeToken(accessToken);
+      if (decodedAccess.userId !== decodedRefresh.userId) {
+        throw new AppError(ErrorCode.INVALID_TOKEN);
+      }
+    } catch {
+      throw new AppError(ErrorCode.INVALID_TOKEN);
+    }
+
     return await this.handleTransaction(async (tx) => {
       const user = await tx.user.findUnique({
         where: { id: decodedRefresh.userId },
+        include: {
+          role: true,
+        },
       });
 
       if (!user) {
@@ -246,44 +260,35 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_REFRESH_TOKEN);
       }
 
-      let decodedAccess: TokenPayload;
-      try {
-        decodedAccess = JwtUtils.verifyAccessToken(accessToken);
-
-        if (decodedAccess.userId !== decodedRefresh.userId) {
-          throw new AppError(ErrorCode.INVALID_TOKEN);
-        }
-
-        // If access token is valid, return existing tokens
+      // Check if access token is expired using Luxon
+      const currentTime = DateTime.now().toSeconds();
+      if (decodedAccess.exp && decodedAccess.exp > currentTime) {
+        // If access token is not expired, return existing tokens
         return { accessToken, refreshToken };
-      } catch (error) {
-        // Only generate new tokens if the error is due to token expiration
-        if (error instanceof jwt.TokenExpiredError) {
-          const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-            JwtUtils.generateTokens({
-              userId: decodedRefresh.userId,
-              email: decodedRefresh.email,
-              role: decodedRefresh.role,
-              isDeactivated: decodedRefresh?.isDeactivated || false,
-            });
-
-          await tx.refreshToken.update({
-            where: { id: storedToken.id },
-            data: {
-              token: newRefreshToken,
-              expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
-            },
-          });
-
-          return {
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-          };
-        }
-
-        // For other token errors, throw invalid token error
-        throw new AppError(ErrorCode.INVALID_TOKEN);
       }
+
+      // Generate new tokens if access token is expired
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+        JwtUtils.generateTokens({
+          userId: decodedRefresh.userId,
+          email: decodedRefresh.email,
+          role: user.role.name,
+          isDeactivated: user.isDeactivated || false,
+        });
+
+      // Update refresh token in database
+      await tx.refreshToken.update({
+        where: { id: storedToken.id },
+        data: {
+          token: newRefreshToken,
+          expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
+        },
+      });
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
     });
   }
 

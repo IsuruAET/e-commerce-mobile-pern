@@ -1049,7 +1049,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20T10:00:00Z\",\n    \"notes\": \"Please provide a haircut with styling\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
+              "raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20\",\n    \"time\": \"10:00\",\n    \"notes\": \"Please provide a haircut with styling\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/appointments",
@@ -1119,7 +1119,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20T11:00:00Z\",\n    \"notes\": \"Updated appointment notes\",\n    \"status\": \"confirmed\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
+              "raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20\",\n    \"time\": \"11:00\",\n    \"notes\": \"Updated appointment notes\",\n    \"status\": \"confirmed\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/v1/appointments/{{appointment_id}}",

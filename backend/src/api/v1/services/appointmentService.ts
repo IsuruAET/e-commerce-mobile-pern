@@ -39,14 +39,16 @@ export class AppointmentService extends BaseService {
           0
         );
 
-        // Convert input date to DateTime and then to JS Date
+        // Convert input date and time to DateTime and then to JS Date
         const appointmentDate = DateTime.fromISO(input.date).toJSDate();
+        const appointmentTime = DateTime.fromISO(input.time).toJSDate();
 
         return tx.appointment.create({
           data: {
             userId,
             stylistId: input.stylistId,
             date: appointmentDate,
+            time: appointmentTime,
             notes: input.notes,
             estimatedDuration,
             totalPrice,
@@ -125,6 +127,9 @@ export class AppointmentService extends BaseService {
 
         if (input.date) {
           updateData.date = DateTime.fromISO(input.date).toJSDate();
+        }
+        if (input.time) {
+          updateData.time = DateTime.fromISO(input.time).toJSDate();
         }
 
         if (input.services) {

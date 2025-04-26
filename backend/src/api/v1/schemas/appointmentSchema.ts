@@ -10,6 +10,7 @@ export const appointmentSchema = z.object({
   userId: z.string().uuid(),
   stylistId: z.string().uuid(),
   date: z.date(),
+  time: z.date(),
   status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]),
   notes: z.string().optional(),
   estimatedDuration: z.number().int().positive().min(30),
@@ -23,6 +24,7 @@ export const createAppointmentSchema = z.object({
   body: z.object({
     stylistId: z.string().uuid(),
     date: z.string().datetime(),
+    time: z.string().datetime(),
     notes: z.string().optional(),
     services: z
       .array(appointmentServiceSchema)
@@ -36,6 +38,7 @@ export const updateAppointmentSchema = z.object({
   }),
   body: z.object({
     date: z.string().datetime().optional(),
+    time: z.string().datetime().optional(),
     status: z
       .enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"], {
         errorMap: () => ({

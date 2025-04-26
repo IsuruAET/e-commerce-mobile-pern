@@ -29,10 +29,13 @@ async function seedAppointments() {
     // Create 30 appointments
     for (let i = 0; i < 30; i++) {
       // Generate random date within next 30 days
-      const date = DateTime.now()
+      const appointmentDateTime = DateTime.now()
         .plus({ days: Math.floor(Math.random() * 30) })
-        .set({ hour: 9 + Math.floor(Math.random() * 8), minute: 0 })
-        .toJSDate();
+        .set({ hour: 9 + Math.floor(Math.random() * 8), minute: 0 });
+
+      // Split into date and time
+      const date = appointmentDateTime.startOf("day").toJSDate();
+      const time = appointmentDateTime.toJSDate();
 
       // Randomly select 1-3 services
       const numServices = Math.floor(Math.random() * 3) + 1;
@@ -56,6 +59,7 @@ async function seedAppointments() {
           userId: user.id,
           stylistId: stylist.id,
           date,
+          time,
           status: "PENDING",
           notes: `Sample appointment ${i + 1}`,
           estimatedDuration,
