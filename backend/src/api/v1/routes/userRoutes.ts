@@ -34,7 +34,7 @@ router.get(
 // List all users with pagination
 router.get(
   "/",
-  requirePermission(["list_users"]),
+  requirePermission(["read_users"]),
   validateRequest(paginationSchema),
   paginationHandler,
   UserController.listUsers
@@ -60,7 +60,7 @@ router.delete(
 // Deactivate user
 router.patch(
   "/:id/deactivate",
-  requirePermission(["deactivate_user"]),
+  requirePermission(["manage_users"]),
   validateRequest(userIdSchema),
   UserController.deactivateUser
 );
@@ -68,7 +68,7 @@ router.patch(
 // Reactivate user
 router.patch(
   "/:id/reactivate",
-  requirePermission(["reactivate_user"]),
+  requirePermission(["manage_users"]),
   validateRequest(userIdSchema),
   UserController.reactivateUser
 );

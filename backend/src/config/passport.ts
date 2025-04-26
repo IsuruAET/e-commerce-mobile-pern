@@ -26,7 +26,7 @@ passport.use(
         if (!user) {
           // Get the default USER role
           const userRole = await prisma.role.findUnique({
-            where: { name: "USER" },
+            where: { name: "user" },
           });
 
           if (!userRole) {

@@ -86,7 +86,7 @@ export class AuthService extends BaseService {
 
       // Get the default USER role
       const userRole = await tx.role.findFirst({
-        where: { name: "USER" },
+        where: { name: "user" },
       });
 
       if (!userRole) {
