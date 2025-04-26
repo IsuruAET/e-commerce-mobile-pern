@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 const users = [
+  // Admin users
   {
     email: "admin@example.com",
     password: "password123",
@@ -11,15 +12,71 @@ const users = [
     role: "admin",
   },
   {
+    email: "admin1@example.com",
+    password: "password123",
+    name: "Admin User 1",
+    role: "admin",
+  },
+  {
+    email: "admin2@example.com",
+    password: "password123",
+    name: "Admin User 2",
+    role: "admin",
+  },
+  {
+    email: "admin3@example.com",
+    password: "password123",
+    name: "Admin User 3",
+    role: "admin",
+  },
+  // Stylist users
+  {
     email: "stylist@example.com",
     password: "password123",
     name: "Stylist User",
     role: "stylist",
   },
   {
+    email: "stylist1@example.com",
+    password: "password123",
+    name: "Stylist User 1",
+    role: "stylist",
+  },
+  {
+    email: "stylist2@example.com",
+    password: "password123",
+    name: "Stylist User 2",
+    role: "stylist",
+  },
+  {
+    email: "stylist3@example.com",
+    password: "password123",
+    name: "Stylist User 3",
+    role: "stylist",
+  },
+  // Regular users
+  {
     email: "user@example.com",
     password: "password123",
     name: "Regular User",
+    role: "user",
+  },
+  {
+    email: "user1@example.com",
+    password: "password123",
+    name: "Regular User 1",
+    role: "user",
+  },
+  {
+    email: "user2@example.com",
+    password: "password123",
+    name: "Regular User 2",
+    role: "user",
+  },
+  {
+    email: "user3@example.com",
+    password: "password123",
+    name: "Regular User 3",
     role: "user",
   },
 ];

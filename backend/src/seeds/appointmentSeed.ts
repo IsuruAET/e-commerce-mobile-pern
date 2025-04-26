@@ -26,8 +26,8 @@ async function seedAppointments() {
       throw new Error("No services found");
     }
 
-    // Create 30 appointments
-    for (let i = 0; i < 30; i++) {
+    // Create 40 appointments
+    for (let i = 0; i < 40; i++) {
       // Generate random date within next 30 days
       const appointmentDateTime = DateTime.now()
         .plus({ days: Math.floor(Math.random() * 30) })
@@ -54,7 +54,7 @@ async function seedAppointments() {
       );
 
       // Create appointment
-      const appointment = await prisma.appointment.create({
+      await prisma.appointment.create({
         data: {
           userId: user.id,
           stylistId: stylist.id,

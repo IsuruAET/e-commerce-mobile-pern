@@ -156,25 +156,29 @@ async function seedServices() {
   try {
     console.log("Starting service seeding...");
 
-    for (const service of services) {
-      const category = await prisma.category.findUnique({
-        where: { name: service.category },
-      });
+    // First, get all categories
+    const categories = await prisma.category.findMany();
+    const categoryMap = new Map(categories.map((cat) => [cat.name, cat.id]));
 
-      if (!category) {
+    for (const service of services) {
+      const categoryId = categoryMap.get(service.category);
+
+      if (!categoryId) {
         console.error(`Category ${service.category} not found`);
         continue;
       }
 
       await prisma.service.upsert({
         where: { name: service.name },
-        update: {},
+        update: {
+          categoryId: categoryId,
+        },
         create: {
           name: service.name,
           description: service.description,
           price: service.price,
           duration: service.duration,
-          categoryId: category.id,
+          categoryId: categoryId,
         },
       });
 
