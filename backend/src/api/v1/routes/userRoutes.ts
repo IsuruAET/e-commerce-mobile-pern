@@ -6,12 +6,11 @@ import {
   userIdSchema,
   createPasswordSchema,
   requestPasswordCreationSchema,
+  listUsersSchema,
 } from "../schemas/userSchema";
-import { paginationSchema } from "../schemas/shared/paginationSchema";
 import { UserController } from "../controllers/userController";
 import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
-import { paginationHandler } from "middleware/paginationHandler";
 
 const router = Router();
 
@@ -35,8 +34,7 @@ router.get(
 router.get(
   "/",
   requirePermission(["read_users"]),
-  validateRequest(paginationSchema),
-  paginationHandler,
+  validateRequest(listUsersSchema),
   UserController.listUsers
 );
 

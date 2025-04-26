@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import { ServiceService } from "../services/serviceService";
+import { PaginatedResponse } from "utils/queryBuilder";
 
 export class ServiceController {
   static async addService(req: Request, res: Response, next: NextFunction) {
@@ -31,14 +32,14 @@ export class ServiceController {
 
   static async listActiveServices(
     req: Request,
-    res: Response,
+    res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
-      const result = await ServiceService.listActiveServices(req);
+      const result = await ServiceService.listActiveServices(req.query);
       res.status(200).json({
         success: true,
-        ...result,
+        data: result,
       });
     } catch (error) {
       next(error);
@@ -47,14 +48,14 @@ export class ServiceController {
 
   static async listAllServices(
     req: Request,
-    res: Response,
+    res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
-      const result = await ServiceService.listAllServices(req);
+      const result = await ServiceService.listAllServices(req.query);
       res.status(200).json({
         success: true,
-        ...result,
+        data: result,
       });
     } catch (error) {
       next(error);

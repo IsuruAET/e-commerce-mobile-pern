@@ -1,7 +1,9 @@
-import { Request } from "express";
-
-import { formatPaginationResponse } from "middleware/paginationHandler";
 import { BaseService } from "./baseService";
+import {
+  buildQueryOptions,
+  buildPagination,
+  PaginatedResponse,
+} from "utils/queryBuilder";
 
 export class ServiceService extends BaseService {
   static async createService(data: {
@@ -56,87 +58,75 @@ export class ServiceService extends BaseService {
     });
   }
 
-  static async listActiveServices(req: Request) {
+  static async listActiveServices(
+    queryParams: Record<string, any>
+  ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      const { skip, limit } = req.pagination;
-      const filters = req.filters || {};
-      const sortOptions = req.sortOptions || [
-        { field: "createdAt", order: "desc" },
-      ];
+      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+        categoryIds: { type: "array", field: "categoryId" },
+      });
 
-      const [services, total] = await Promise.all([
-        this.prisma.service.findMany({
-          where: {
-            isActive: true,
-            ...filters,
-          },
-          skip,
-          take: limit,
-          orderBy: sortOptions.map((option) => ({
-            [option.field]: option.order,
-          })),
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            price: true,
-            duration: true,
-            isActive: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        }),
-        this.prisma.service.count({
-          where: {
-            isActive: true,
-            ...filters,
-          },
-        }),
-      ]);
+      // Get the total count with the filters
+      const total = await this.prisma.service.count({
+        where: {
+          isActive: true,
+          ...filters,
+        },
+      });
+
+      const pagination = buildPagination(total, page, count);
+
+      // Apply pagination and sorting
+      const services = await this.prisma.service.findMany({
+        where: {
+          isActive: true,
+          ...filters,
+        },
+        include: {
+          images: true,
+          category: true,
+        },
+        skip: (page - 1) * count,
+        take: count,
+        orderBy,
+      });
 
       return {
         data: services,
-        pagination: formatPaginationResponse(req, total),
+        pagination,
       };
     });
   }
 
-  static async listAllServices(req: Request) {
+  static async listAllServices(
+    queryParams: Record<string, any>
+  ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      const { skip, limit } = req.pagination;
-      const filters = req.filters || {};
-      const sortOptions = req.sortOptions || [
-        { field: "createdAt", order: "desc" },
-      ];
+      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+        categoryIds: { type: "array", field: "categoryId" },
+        isActive: { type: "boolean" },
+      });
 
-      const [services, total] = await Promise.all([
-        this.prisma.service.findMany({
-          where: filters,
-          skip,
-          take: limit,
-          orderBy: sortOptions.map((option) => ({
-            [option.field]: option.order,
-          })),
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            price: true,
-            duration: true,
-            isActive: true,
-            createdAt: true,
-            updatedAt: true,
-            category: true,
-          },
-        }),
-        this.prisma.service.count({
-          where: filters,
-        }),
-      ]);
+      // Get the total count with the filters
+      const total = await this.prisma.service.count({ where: filters });
+
+      const pagination = buildPagination(total, page, count);
+
+      // Apply pagination and sorting
+      const services = await this.prisma.service.findMany({
+        where: filters,
+        include: {
+          images: true,
+          category: true,
+        },
+        skip: (page - 1) * count,
+        take: count,
+        orderBy,
+      });
 
       return {
         data: services,
-        pagination: formatPaginationResponse(req, total),
+        pagination,
       };
     });
   }

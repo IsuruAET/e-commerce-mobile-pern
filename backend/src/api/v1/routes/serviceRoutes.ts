@@ -5,13 +5,9 @@ import {
   updateServiceSchema,
   serviceIdSchema,
 } from "../schemas/serviceSchema";
-import { paginationSchema } from "../schemas/shared/paginationSchema";
 import { ServiceController } from "../controllers/serviceController";
 import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
-import { paginationHandler } from "middleware/paginationHandler";
-import { filterHandler } from "middleware/filterHandler";
-import { sortHandler } from "middleware/sortHandler";
 
 const router = Router();
 
@@ -26,9 +22,6 @@ router.post(
 router.get(
   "/active",
   requirePermission(["read_active_services"]),
-  validateRequest(paginationSchema),
-  filterHandler(["categoryId"]),
-  paginationHandler,
   ServiceController.listActiveServices
 );
 
@@ -42,10 +35,6 @@ router.get(
 router.get(
   "/",
   requirePermission(["read_services"]),
-  validateRequest(paginationSchema),
-  filterHandler(["categoryId", "isActive"]),
-  sortHandler(["name"]),
-  paginationHandler,
   ServiceController.listAllServices
 );
 

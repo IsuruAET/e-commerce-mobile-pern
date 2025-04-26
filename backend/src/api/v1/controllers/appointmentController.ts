@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 import { GetAppointmentStatsInput } from "../schemas/appointmentSchema";
 import { AppointmentService } from "../services/appointmentService";
+import { PaginatedResponse } from "utils/queryBuilder";
 
 export class AppointmentController {
   static async createAppointment(
@@ -112,9 +113,9 @@ export class AppointmentController {
     next: NextFunction
   ) {
     try {
-      const { stylistId, startDate, endDate } = req.query;
+      const { stylistIds, startDate, endDate } = req.query;
       const totalIncome = await AppointmentService.getTotalIncome(
-        stylistId,
+        stylistIds,
         startDate,
         endDate
       );
@@ -133,15 +134,31 @@ export class AppointmentController {
     next: NextFunction
   ) {
     try {
-      const { stylistId, startDate, endDate } = req.query;
+      const { stylistIds, startDate, endDate } = req.query;
       const totalServices = await AppointmentService.getTotalServices(
-        stylistId,
+        stylistIds,
         startDate,
         endDate
       );
       res.status(200).json({
         success: true,
         data: { totalServices },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async listAppointments(
+    req: Request,
+    res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
+    next: NextFunction
+  ) {
+    try {
+      const result = await AppointmentService.listAppointments(req.query);
+      res.status(200).json({
+        success: true,
+        data: result,
       });
     } catch (error) {
       next(error);

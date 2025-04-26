@@ -62,9 +62,48 @@ export const getAppointmentSchema = z.object({
 
 export const getAppointmentStatsSchema = z.object({
   query: z.object({
-    stylistId: z.string().uuid().optional(),
+    stylistIds: z
+      .string()
+      .optional()
+      .transform((val) => val?.split(",")),
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),
+  }),
+});
+
+export const listAppointmentsSchema = z.object({
+  query: z.object({
+    page: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .default("1"),
+    count: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .default("10"),
+    userIds: z
+      .string()
+      .optional()
+      .transform((val) => val?.split(",")),
+    stylistIds: z
+      .string()
+      .optional()
+      .transform((val) => val?.split(",")),
+    statuses: z
+      .string()
+      .optional()
+      .transform((val) => val?.split(",")),
+    startDate: z.string().datetime().optional(),
+    endDate: z.string().datetime().optional(),
+    sortBy: z
+      .string()
+      .transform((val) => val.split(","))
+      .optional(),
+    sortOrder: z
+      .string()
+      .transform((val) => val.split(","))
+      .optional()
+      .default("asc"),
   }),
 });
 
@@ -75,3 +114,4 @@ export type GetAppointmentInput = z.infer<typeof getAppointmentSchema>;
 export type GetAppointmentStatsInput = z.infer<
   typeof getAppointmentStatsSchema
 >;
+export type ListAppointmentsInput = z.infer<typeof listAppointmentsSchema>;
