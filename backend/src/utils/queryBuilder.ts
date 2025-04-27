@@ -178,6 +178,17 @@ function applyFilter(
 ): void {
   const fieldName = config.field || key;
 
+  // Skip filter if value is empty, '*', or 'all'
+  if (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    value === "*" ||
+    value === "all"
+  ) {
+    return;
+  }
+
   if (config.validate && !config.validate(value)) {
     throw new AppError(
       ErrorCode.INVALID_INPUT,
