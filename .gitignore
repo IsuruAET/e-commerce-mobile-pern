@@ -57,4 +57,9 @@ Thumbs.db
 
 # Build tools
 .eslintcache
-.stylelintcache 
+.stylelintcache
+
+# Backup and scripts
+backup/
+backups/
+scripts/ 

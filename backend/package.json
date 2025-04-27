@@ -18,7 +18,9 @@
     "seed:services": "ts-node -r tsconfig-paths/register src/seeds/serviceSeed.ts",
     "seed:appointments": "ts-node -r tsconfig-paths/register src/seeds/appointmentSeed.ts",
     "prisma:reset": "npx prisma migrate reset --force",
-    "seed:all": "npm run prisma:reset && npm run seed:roles && npm run seed:users && npm run seed:categories && npm run seed:services && npm run seed:appointments"
+    "seed:all": "npm run prisma:reset && npm run seed:roles && npm run seed:users && npm run seed:categories && npm run seed:services && npm run seed:appointments",
+    "db:backup": "bash scripts/db/backup.sh",
+    "db:restore": "bash scripts/db/restore.sh backups/ecommerce_latest.dump"
   },
   "keywords": [],
   "author": "",
