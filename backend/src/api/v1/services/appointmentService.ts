@@ -44,16 +44,14 @@ export class AppointmentService extends BaseService {
           0
         );
 
-        // Convert input date and time to DateTime and then to JS Date
-        const appointmentDate = DateTime.fromISO(input.date).toJSDate();
-        const appointmentTime = DateTime.fromISO(input.time).toJSDate();
+        // Convert input dateTime to JS Date
+        const appointmentDateTime = DateTime.fromISO(input.dateTime).toJSDate();
 
         return tx.appointment.create({
           data: {
             userId,
             stylistId: input.stylistId,
-            date: appointmentDate,
-            time: appointmentTime,
+            dateTime: appointmentDateTime,
             notes: input.notes,
             estimatedDuration,
             totalPrice,
@@ -130,11 +128,8 @@ export class AppointmentService extends BaseService {
           notes: input.notes,
         };
 
-        if (input.date) {
-          updateData.date = DateTime.fromISO(input.date).toJSDate();
-        }
-        if (input.time) {
-          updateData.time = DateTime.fromISO(input.time).toJSDate();
+        if (input.dateTime) {
+          updateData.dateTime = DateTime.fromISO(input.dateTime).toJSDate();
         }
 
         if (input.services) {
@@ -230,7 +225,7 @@ export class AppointmentService extends BaseService {
           },
         },
         orderBy: {
-          date: "asc",
+          dateTime: "asc",
         },
       });
     });
@@ -255,7 +250,7 @@ export class AppointmentService extends BaseService {
           },
         },
         orderBy: {
-          date: "asc",
+          dateTime: "asc",
         },
       });
     });
@@ -274,12 +269,12 @@ export class AppointmentService extends BaseService {
       };
 
       if (startDate || endDate) {
-        where.date = {};
+        where.dateTime = {};
         if (startDate) {
-          where.date.gte = DateTime.fromISO(startDate).toJSDate();
+          where.dateTime.gte = DateTime.fromISO(startDate).toJSDate();
         }
         if (endDate) {
-          where.date.lte = DateTime.fromISO(endDate).toJSDate();
+          where.dateTime.lte = DateTime.fromISO(endDate).toJSDate();
         }
       }
 
@@ -308,12 +303,13 @@ export class AppointmentService extends BaseService {
       };
 
       if (startDate || endDate) {
-        where.appointment.date = {};
+        where.appointment.dateTime = {};
         if (startDate) {
-          where.appointment.date.gte = DateTime.fromISO(startDate).toJSDate();
+          where.appointment.dateTime.gte =
+            DateTime.fromISO(startDate).toJSDate();
         }
         if (endDate) {
-          where.appointment.date.lte = DateTime.fromISO(endDate).toJSDate();
+          where.appointment.dateTime.lte = DateTime.fromISO(endDate).toJSDate();
         }
       }
 
@@ -339,7 +335,7 @@ export class AppointmentService extends BaseService {
           type: "dateRange",
           from: "startDate",
           to: "endDate",
-          field: "date",
+          field: "dateTime",
         },
       });
 

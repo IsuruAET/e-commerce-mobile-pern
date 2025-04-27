@@ -116,8 +116,7 @@ model Appointment {
   id              String              @id @default(uuid())
   userId          String
   stylistId       String
-  date            DateTime            @db.Date
-  time            DateTime            @db.Time
+  dateTime        DateTime
   status          AppointmentStatus   @default(PENDING)
   notes           String?
   estimatedDuration Int
@@ -130,8 +129,7 @@ model Appointment {
 
   @@index([userId])
   @@index([stylistId])
-  @@index([date])
-  @@index([time])
+  @@index([dateTime])
 }
 
 model AppointmentService {

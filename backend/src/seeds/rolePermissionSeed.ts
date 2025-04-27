@@ -8,6 +8,7 @@ const rolesAndPermissions = {
     "create_appointment",
     "read_appointment",
     "update_appointment",
+    "read_appointments",
     "read_user_appointments",
     "read_stylist_appointments",
     "read_appointment_stats",

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, AppointmentStatus } from "@prisma/client";
 import { DateTime } from "luxon";
 
 const prisma = new PrismaClient();
@@ -7,41 +7,57 @@ async function seedAppointments() {
   try {
     console.log("Starting appointment seeding...");
 
-    // Get users
-    const user = await prisma.user.findUnique({
-      where: { email: "user@example.com" },
+    // Get all users and stylists
+    const users = await prisma.user.findMany({
+      where: {
+        role: {
+          name: "user",
+        },
+      },
     });
 
-    const stylist = await prisma.user.findUnique({
-      where: { email: "stylist@example.com" },
+    const stylists = await prisma.user.findMany({
+      where: {
+        role: {
+          name: "stylist",
+        },
+      },
     });
 
-    if (!user || !stylist) {
-      throw new Error("Required users not found");
+    if (users.length === 0 || stylists.length === 0) {
+      throw new Error("No users or stylists found");
     }
 
     // Get all services
-    const services = await prisma.service.findMany();
+    const services = await prisma.service.findMany({
+      where: {
+        isActive: true,
+      },
+    });
     if (services.length === 0) {
       throw new Error("No services found");
     }
 
+    // Get all possible appointment statuses
+    const statuses = Object.values(AppointmentStatus);
+
     // Create 40 appointments
     for (let i = 0; i < 40; i++) {
+      // Randomly select a user and stylist
+      const randomUser = users[Math.floor(Math.random() * users.length)];
+      const randomStylist =
+        stylists[Math.floor(Math.random() * stylists.length)];
+
       // Generate random date within next 30 days
       const appointmentDateTime = DateTime.now()
         .plus({ days: Math.floor(Math.random() * 30) })
-        .set({ hour: 9 + Math.floor(Math.random() * 8), minute: 0 });
-
-      // Split into date and time
-      const date = appointmentDateTime.startOf("day").toJSDate();
-      const time = appointmentDateTime.toJSDate();
+        .set({ hour: 9 + Math.floor(Math.random() * 8), minute: 0 })
+        .toJSDate();
 
       // Randomly select 1-3 services
       const numServices = Math.floor(Math.random() * 3) + 1;
-      const selectedServices = services
-        .sort(() => Math.random() - 0.5)
-        .slice(0, numServices);
+      const shuffledServices = [...services].sort(() => Math.random() - 0.5);
+      const selectedServices = shuffledServices.slice(0, numServices);
 
       // Calculate total price and duration
       const totalPrice = selectedServices.reduce(
@@ -53,14 +69,17 @@ async function seedAppointments() {
         0
       );
 
+      // Randomly select a status
+      const randomStatus =
+        statuses[Math.floor(Math.random() * statuses.length)];
+
       // Create appointment
       await prisma.appointment.create({
         data: {
-          userId: user.id,
-          stylistId: stylist.id,
-          date,
-          time,
-          status: "PENDING",
+          userId: randomUser.id,
+          stylistId: randomStylist.id,
+          dateTime: appointmentDateTime,
+          status: randomStatus,
           notes: `Sample appointment ${i + 1}`,
           estimatedDuration,
           totalPrice,

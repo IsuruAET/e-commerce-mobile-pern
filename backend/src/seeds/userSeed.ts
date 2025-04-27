@@ -78,6 +78,8 @@ const users = [
     password: "password123",
     name: "Regular User 3",
     role: "user",
+    isDeactivated: true,
+    deactivatedAt: new Date(),
   },
 ];
 
@@ -105,6 +107,8 @@ async function seedUsers() {
           password: hashedPassword,
           name: userData.name,
           roleId: role.id,
+          isDeactivated: userData.isDeactivated || false,
+          deactivatedAt: userData.deactivatedAt || null,
         },
       });
 
