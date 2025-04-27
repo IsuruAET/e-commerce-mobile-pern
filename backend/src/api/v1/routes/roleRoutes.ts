@@ -21,6 +21,13 @@ router.post(
 // List all roles
 router.get("/", requirePermission(["manage_roles"]), RoleController.listRoles);
 
+// List all permissions
+router.get(
+  "/permissions",
+  requirePermission(["manage_roles"]),
+  RoleController.listPermissions
+);
+
 // Get role by id
 router.get(
   "/:id",
@@ -44,13 +51,6 @@ router.delete(
   requirePermission(["manage_roles"]),
   validateRequest(roleIdSchema),
   RoleController.deleteRole
-);
-
-// List all permissions
-router.get(
-  "/permissions",
-  requirePermission(["manage_roles"]),
-  RoleController.listPermissions
 );
 
 export default router;
