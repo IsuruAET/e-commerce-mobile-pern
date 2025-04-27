@@ -51,6 +51,7 @@ export enum ErrorCode {
   UNIQUE_CONSTRAINT_VIOLATION = "UNIQUE_CONSTRAINT_VIOLATION",
   FOREIGN_KEY_CONSTRAINT_VIOLATION = "FOREIGN_KEY_CONSTRAINT_VIOLATION",
   USER_HAS_APPOINTMENTS = "USER_HAS_APPOINTMENTS",
+  CATEGORY_HAS_SERVICES = "CATEGORY_HAS_SERVICES",
 
   // Rate Limit Errors (429)
   TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS",
@@ -132,6 +133,8 @@ export const ERROR_MESSAGES: ErrorMessages = {
     "A foreign key constraint was violated. Please check your input and try again.",
   [ErrorCode.USER_HAS_APPOINTMENTS]:
     "Cannot delete user. User has active appointments as either a client or stylist.",
+  [ErrorCode.CATEGORY_HAS_SERVICES]:
+    "Cannot delete category. Category has associated services.",
 
   // Rate Limit Errors
   [ErrorCode.TOO_MANY_REQUESTS]: "Too many requests. Please try again later.",
@@ -196,6 +199,7 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.UNIQUE_CONSTRAINT_VIOLATION]: 409,
   [ErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION]: 409,
   [ErrorCode.USER_HAS_APPOINTMENTS]: 409,
+  [ErrorCode.CATEGORY_HAS_SERVICES]: 409,
 
   // Rate Limit Errors
   [ErrorCode.TOO_MANY_REQUESTS]: 429,

@@ -1,14 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 
 import { CategoryService } from "../services/categoryService";
+import { PaginatedResponse } from "utils/queryBuilder";
 
 export class CategoryController {
   static async addCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await CategoryService.createCategory(req.body);
+      const category = await CategoryService.addCategory(req.body);
       res.status(201).json({
         success: true,
-        message: "Category created successfully",
+        message: "Category added successfully",
         data: category,
       });
     } catch (error) {
@@ -33,12 +34,16 @@ export class CategoryController {
     }
   }
 
-  static async listCategories(req: Request, res: Response, next: NextFunction) {
+  static async listCategories(
+    req: Request,
+    res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
+    next: NextFunction
+  ) {
     try {
-      const categories = await CategoryService.listCategories();
+      const result = await CategoryService.listCategories(req.query);
       res.status(200).json({
         success: true,
-        data: categories,
+        data: result,
       });
     } catch (error) {
       next(error);
@@ -66,6 +71,40 @@ export class CategoryController {
       res.status(200).json({
         success: true,
         message: "Category deleted successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deactivateCategory(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { id } = req.params;
+      await CategoryService.deactivateCategory(id);
+      res.status(200).json({
+        success: true,
+        message: "Category deactivated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async reactivateCategory(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { id } = req.params;
+      await CategoryService.reactivateCategory(id);
+      res.status(200).json({
+        success: true,
+        message: "Category reactivated successfully",
       });
     } catch (error) {
       next(error);

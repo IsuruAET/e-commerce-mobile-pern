@@ -56,7 +56,7 @@ router.delete(
 // Deactivate user
 router.patch(
   "/:id/deactivate",
-  requirePermission(["manage_users"]),
+  requirePermission(["manage_user"]),
   validateRequest(userIdSchema),
   UserController.deactivateUser
 );
@@ -64,7 +64,7 @@ router.patch(
 // Reactivate user
 router.patch(
   "/:id/reactivate",
-  requirePermission(["manage_users"]),
+  requirePermission(["manage_user"]),
   validateRequest(userIdSchema),
   UserController.reactivateUser
 );

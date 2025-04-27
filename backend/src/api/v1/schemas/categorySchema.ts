@@ -39,12 +39,40 @@ export const updateCategorySchema = z.object({
       .min(10, "Description must be at least 10 characters")
       .max(500, "Description must be less than 500 characters")
       .optional(),
+    image: imageSchema.optional(),
+    isActive: z.boolean().optional(),
   }),
 });
 
 export const categoryIdSchema = z.object({
   params: z.object({
     id: z.string().uuid(),
+  }),
+});
+
+export const listCategoriesSchema = z.object({
+  query: z.object({
+    page: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .default("1"),
+    count: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .default("10"),
+    isActive: z
+      .string()
+      .optional()
+      .transform((val) => val === "true"),
+    sortBy: z
+      .string()
+      .transform((val) => val.split(","))
+      .optional(),
+    sortOrder: z
+      .string()
+      .transform((val) => val.split(","))
+      .optional()
+      .default("asc"),
   }),
 });
 

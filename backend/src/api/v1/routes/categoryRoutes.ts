@@ -4,6 +4,7 @@ import {
   createCategorySchema,
   updateCategorySchema,
   categoryIdSchema,
+  listCategoriesSchema,
 } from "../schemas/categorySchema";
 import { CategoryController } from "../controllers/categoryController";
 import { requirePermission } from "middleware/authHandler";
@@ -29,6 +30,7 @@ router.get(
 router.get(
   "/",
   requirePermission(["read_categories"]),
+  validateRequest(listCategoriesSchema),
   CategoryController.listCategories
 );
 
@@ -45,6 +47,22 @@ router.delete(
   requirePermission(["delete_category"]),
   validateRequest(categoryIdSchema),
   CategoryController.deleteCategory
+);
+
+// Deactivate category
+router.patch(
+  "/:id/deactivate",
+  requirePermission(["manage_category"]),
+  validateRequest(categoryIdSchema),
+  CategoryController.deactivateCategory
+);
+
+// Reactivate category
+router.patch(
+  "/:id/reactivate",
+  requirePermission(["manage_category"]),
+  validateRequest(categoryIdSchema),
+  CategoryController.reactivateCategory
 );
 
 export default router;

@@ -20,6 +20,7 @@ const rolesAndPermissions = {
     "read_categories",
     "update_category",
     "delete_category",
+    "manage_category",
     // Role permissions
     "manage_roles",
     // Service permissions
@@ -35,7 +36,7 @@ const rolesAndPermissions = {
     "read_users",
     "update_user",
     "delete_user",
-    "manage_users",
+    "manage_user",
   ],
   stylist: [
     // Appointment permissions
