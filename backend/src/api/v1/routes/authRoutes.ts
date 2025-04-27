@@ -6,6 +6,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema,
+  updateProfileSchema,
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
 import { validateRequest } from "middleware/validateRequest";
@@ -50,7 +51,15 @@ router.post(
   AuthController.changePassword
 );
 
-// Deactivate user account
+// Update profile route
+router.patch(
+  "/profile",
+  requirePermission(["manage_auth"]),
+  validateRequest(updateProfileSchema),
+  AuthController.updateProfile
+);
+
+// Deactivate account route (can be used for both self-deactivation and admin deactivation)
 router.patch(
   "/deactivate",
   requirePermission(["manage_auth"]),

@@ -560,4 +560,37 @@ export class AuthService extends BaseService {
       });
     });
   }
+
+  static async updateUserProfile(
+    userId: string,
+    data: { name: string; phoneNumber?: string }
+  ) {
+    return await this.handleDatabaseError(async () => {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new AppError(ErrorCode.USER_NOT_FOUND);
+      }
+
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          name: data.name,
+          phone: data.phoneNumber,
+        },
+      });
+
+      return {
+        message: "Profile updated successfully",
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          name: updatedUser.name,
+          phoneNumber: updatedUser.phone,
+        },
+      };
+    });
+  }
 }

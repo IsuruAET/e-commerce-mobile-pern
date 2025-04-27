@@ -239,4 +239,22 @@ export class AuthController {
       next(error);
     }
   }
+
+  static async updateProfile(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const userId = req.auth?.userId as string;
+      const { name, phoneNumber } = req.body;
+      const result = await AuthService.updateUserProfile(userId, {
+        name,
+        phoneNumber,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
