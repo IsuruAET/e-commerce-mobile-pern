@@ -3,11 +3,22 @@
   "version": "1.0.0",
   "description": "Backend for E-commerce Mobile PERN App",
   "main": "dist/index.js",
+  "prisma": {
+    "seed": "ts-node -r tsconfig-paths/register src/seeds/rolePermissionSeed.ts"
+  },
   "scripts": {
     "start": "node -r tsconfig-paths/register dist/index.js",
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prisma:seed": "ts-node -r tsconfig-paths/register src/seeds/rolePermissionSeed.ts",
+    "seed:roles": "ts-node -r tsconfig-paths/register src/seeds/rolePermissionSeed.ts",
+    "seed:users": "ts-node -r tsconfig-paths/register src/seeds/userSeed.ts",
+    "seed:categories": "ts-node -r tsconfig-paths/register src/seeds/categorySeed.ts",
+    "seed:services": "ts-node -r tsconfig-paths/register src/seeds/serviceSeed.ts",
+    "seed:appointments": "ts-node -r tsconfig-paths/register src/seeds/appointmentSeed.ts",
+    "prisma:reset": "npx prisma migrate reset --force",
+    "seed:all": "npm run prisma:reset && npm run seed:roles && npm run seed:users && npm run seed:categories && npm run seed:services && npm run seed:appointments"
   },
   "keywords": [],
   "author": "",
@@ -46,7 +57,7 @@
     "@types/cors": "^2.8.13",
     "@types/express": "^4.17.17",
     "@types/luxon": "^3.6.2",
-    "@types/node": "^18.15.11",
+    "@types/node": "^18.19.87",
     "nodemon": "^3.1.9",
     "prisma": "^6.6.0",
     "ts-node": "^10.9.1",

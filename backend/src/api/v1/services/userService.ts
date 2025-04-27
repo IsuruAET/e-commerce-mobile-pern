@@ -2,13 +2,17 @@ import { Request } from "express";
 import { DateTime } from "luxon";
 
 import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
-import { formatPaginationResponse } from "middleware/paginationHandler";
 import { PasswordUtils } from "utils/passwordUtils";
 import { BaseService } from "./baseService";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import { sendEmail } from "utils/emailUtils";
 import { JwtUtils } from "utils/jwtUtils";
+import {
+  buildQueryOptions,
+  buildPagination,
+  PaginatedResponse,
+} from "utils/queryBuilder";
 
 export class UserService extends BaseService {
   static async generateAndSendPasswordCreationToken(
@@ -78,7 +82,7 @@ export class UserService extends BaseService {
           email: data.email,
           name: data.name,
           phone: data.phone,
-          role: data.role,
+          roleId: data.roleId,
         },
         select: {
           id: true,
@@ -99,7 +103,6 @@ export class UserService extends BaseService {
 
   static async createPassword(token: string, password: string) {
     return await this.handleTransaction(async (tx) => {
-      console.log("user", token);
       if (!token) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
       }
@@ -202,29 +205,34 @@ export class UserService extends BaseService {
     });
   }
 
-  static async listUsers(req: Request) {
+  static async listUsers(
+    queryParams: Record<string, any>
+  ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      const { skip, limit } = req.pagination;
+      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+        roleIds: { type: "array", field: "roleId" },
+        isDeactivated: { type: "boolean" },
+      });
 
-      const [users, total] = await Promise.all([
-        this.prisma.user.findMany({
-          skip,
-          take: limit,
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            role: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        }),
-        this.prisma.user.count(),
-      ]);
+      // Get the total count with the filters
+      const total = await this.prisma.user.count({ where: filters });
+
+      const pagination = buildPagination(total, page, count);
+
+      // Apply pagination and sorting
+      const users = await this.prisma.user.findMany({
+        where: filters,
+        include: {
+          role: true,
+        },
+        skip: (page - 1) * count,
+        take: count,
+        orderBy,
+      });
 
       return {
         data: users,
-        pagination: formatPaginationResponse(req, total),
+        pagination,
       };
     });
   }
@@ -239,7 +247,9 @@ export class UserService extends BaseService {
           email: updateData.email,
           name: updateData.name,
           phone: updateData.phone,
-          role: updateData.role,
+          role: {
+            connect: { id: updateData.role },
+          },
         },
         select: {
           id: true,

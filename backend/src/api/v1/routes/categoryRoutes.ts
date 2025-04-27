@@ -6,42 +6,43 @@ import {
   categoryIdSchema,
 } from "../schemas/categorySchema";
 import { CategoryController } from "../controllers/categoryController";
-import { requireRole } from "middleware/authHandler";
+import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 
 const router = Router();
 
-// Add category
+// Private routes
 router.post(
   "/",
-  requireRole(["ADMIN"]),
+  requirePermission(["create_category"]),
   validateRequest(createCategorySchema),
   CategoryController.addCategory
 );
 
-// Get category by id
 router.get(
   "/:id",
+  requirePermission(["read_category"]),
   validateRequest(categoryIdSchema),
   CategoryController.getCategoryById
 );
 
-// List categories
-router.get("/", CategoryController.listCategories);
+router.get(
+  "/",
+  requirePermission(["read_categories"]),
+  CategoryController.listCategories
+);
 
-// Update category
 router.put(
   "/:id",
-  requireRole(["ADMIN"]),
+  requirePermission(["update_category"]),
   validateRequest(updateCategorySchema),
   validateRequest(categoryIdSchema),
   CategoryController.updateCategory
 );
 
-// Delete category
 router.delete(
   "/:id",
-  requireRole(["ADMIN"]),
+  requirePermission(["delete_category"]),
   validateRequest(categoryIdSchema),
   CategoryController.deleteCategory
 );

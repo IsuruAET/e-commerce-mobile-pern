@@ -3,6 +3,8 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { PrismaClient } from "@prisma/client";
 
 import { JwtUtils } from "../utils/jwtUtils";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
 
 const prisma = new PrismaClient();
 
@@ -18,22 +20,38 @@ passport.use(
         // Check if user exists
         let user = await prisma.user.findUnique({
           where: { email: profile.emails?.[0].value },
+          include: { role: true },
         });
 
         if (!user) {
+          // Get the default USER role
+          const userRole = await prisma.role.findUnique({
+            where: { name: "user" },
+          });
+
+          if (!userRole) {
+            throw new AppError(
+              ErrorCode.INTERNAL_SERVER_ERROR,
+              "Default role not found"
+            );
+          }
+
           // Create new user if doesn't exist
           user = await prisma.user.create({
             data: {
               email: profile.emails?.[0].value!,
               name: profile.displayName,
               googleId: profile.id,
+              roleId: userRole.id,
             },
+            include: { role: true },
           });
         } else if (!user.googleId) {
           // Update existing user with Google ID if not set
           user = await prisma.user.update({
             where: { id: user.id },
             data: { googleId: profile.id },
+            include: { role: true },
           });
         }
 
@@ -41,7 +59,7 @@ passport.use(
         const tokens = JwtUtils.generateTokens({
           userId: user.id,
           email: user.email || "",
-          role: user.role || "USER",
+          role: user.role.name,
           isDeactivated: user.isDeactivated || false,
         });
 

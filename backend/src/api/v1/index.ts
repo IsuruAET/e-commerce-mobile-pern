@@ -4,6 +4,7 @@ import categoryRoutes from "./routes/categoryRoutes";
 import serviceRoutes from "./routes/serviceRoutes";
 import userRoutes from "./routes/userRoutes";
 import appointmentRoutes from "./routes/appointmentRoutes";
+import roleRoutes from "./routes/roleRoutes";
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use("/categories", categoryRoutes);
 router.use("/services", serviceRoutes);
 router.use("/users", userRoutes);
 router.use("/appointments", appointmentRoutes);
+router.use("/roles", roleRoutes);
 
 export default router;

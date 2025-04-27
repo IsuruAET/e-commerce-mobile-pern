@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 import { UserService } from "../services/userService";
+import { PaginatedResponse } from "utils/queryBuilder";
 
 export class UserController {
   static async createUser(req: Request, res: Response, next: NextFunction) {
@@ -29,12 +30,16 @@ export class UserController {
     }
   }
 
-  static async listUsers(req: Request, res: Response, next: NextFunction) {
+  static async listUsers(
+    req: Request,
+    res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
+    next: NextFunction
+  ) {
     try {
-      const result = await UserService.listUsers(req);
+      const result = await UserService.listUsers(req.query);
       res.status(200).json({
         success: true,
-        ...result,
+        data: result,
       });
     } catch (error) {
       next(error);

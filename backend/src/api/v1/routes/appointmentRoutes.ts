@@ -5,56 +5,67 @@ import {
   updateAppointmentSchema,
   getAppointmentSchema,
   getAppointmentStatsSchema,
+  listAppointmentsSchema,
 } from "../schemas/appointmentSchema";
 import { AppointmentController } from "../controllers/appointmentController";
-import { requireRole } from "middleware/authHandler";
+import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
-import { filterHandler } from "middleware/filterHandler";
 
 const router = Router();
 
 // Private routes
 router.post(
   "/",
+  requirePermission(["create_appointment"]),
   validateRequest(createAppointmentSchema),
   AppointmentController.createAppointment
 );
 
 router.get(
   "/:id",
+  requirePermission(["read_appointment"]),
   validateRequest(getAppointmentSchema),
   AppointmentController.getAppointment
 );
 
 router.put(
   "/:id",
-  requireRole(["ADMIN"]),
+  requirePermission(["update_appointment"]),
   validateRequest(updateAppointmentSchema),
   AppointmentController.updateAppointment
 );
 
-router.get("/user/appointments", AppointmentController.getUserAppointments);
+router.get(
+  "/user/appointments",
+  requirePermission(["read_user_appointments"]),
+  AppointmentController.getUserAppointments
+);
 
 router.get(
   "/stylist/appointments",
-  requireRole(["STYLIST"]),
+  requirePermission(["read_stylist_appointments"]),
   AppointmentController.getStylistAppointments
 );
 
 router.get(
   "/stats/income",
-  requireRole(["ADMIN"]),
+  requirePermission(["read_appointment_stats"]),
   validateRequest(getAppointmentStatsSchema),
-  filterHandler(["stylistId", "startDate", "endDate"]),
   AppointmentController.getTotalIncome
 );
 
 router.get(
   "/stats/services",
-  requireRole(["ADMIN"]),
+  requirePermission(["read_appointment_stats"]),
   validateRequest(getAppointmentStatsSchema),
-  filterHandler(["stylistId", "startDate", "endDate"]),
   AppointmentController.getTotalServices
+);
+
+router.get(
+  "/",
+  requirePermission(["read_appointments"]),
+  validateRequest(listAppointmentsSchema),
+  AppointmentController.listAppointments
 );
 
 export default router;

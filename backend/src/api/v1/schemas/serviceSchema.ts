@@ -68,6 +68,38 @@ export const serviceIdSchema = z.object({
   }),
 });
 
+export const listServicesSchema = z.object({
+  query: z.object({
+    page: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .default("1"),
+    count: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .default("10"),
+    categoryIds: z
+      .string()
+      .optional()
+      .transform((val) => val?.split(",")),
+    isActive: z
+      .string()
+      .optional()
+      .transform((val) => val === "true"),
+    sortBy: z
+      .string()
+      .transform((val) => val.split(","))
+      .optional(),
+    sortOrder: z
+      .string()
+      .transform((val) => val.split(","))
+      .optional()
+      .default("asc"),
+  }),
+});
+
 export type Service = z.infer<typeof serviceSchema>;
-export type CreateServiceInput = z.infer<typeof createServiceSchema>["body"];
-export type UpdateServiceInput = z.infer<typeof updateServiceSchema>["body"];
+export type CreateServiceInput = z.infer<typeof createServiceSchema>;
+export type UpdateServiceInput = z.infer<typeof updateServiceSchema>;
+export type ServiceIdInput = z.infer<typeof serviceIdSchema>;
+export type ListServicesInput = z.infer<typeof listServicesSchema>;

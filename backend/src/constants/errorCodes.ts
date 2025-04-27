@@ -59,6 +59,11 @@ export enum ErrorCode {
   // Internal Server Errors (500)
   INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR",
   DATABASE_ERROR = "DATABASE_ERROR",
+
+  // New error codes
+  ROLE_EXISTS = "ROLE_EXISTS",
+  ROLE_NOT_FOUND = "ROLE_NOT_FOUND",
+  ROLE_IN_USE = "ROLE_IN_USE",
 }
 
 type ErrorMessages = {
@@ -138,6 +143,11 @@ export const ERROR_MESSAGES: ErrorMessages = {
     "Something went wrong on our end. Please try again later.",
   [ErrorCode.DATABASE_ERROR]:
     "A database error occurred. Please try again later.",
+
+  // New error messages
+  [ErrorCode.ROLE_EXISTS]: "A role with this name already exists",
+  [ErrorCode.ROLE_NOT_FOUND]: "Role not found",
+  [ErrorCode.ROLE_IN_USE]: "Cannot delete role that is assigned to users",
 };
 
 type ErrorStatusCodes = {
@@ -194,4 +204,9 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   // Internal Server Errors
   [ErrorCode.INTERNAL_SERVER_ERROR]: 500,
   [ErrorCode.DATABASE_ERROR]: 500,
+
+  // New status codes
+  [ErrorCode.ROLE_EXISTS]: 409,
+  [ErrorCode.ROLE_NOT_FOUND]: 404,
+  [ErrorCode.ROLE_IN_USE]: 409,
 };

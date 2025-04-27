@@ -7,12 +7,6 @@ datasource db {
   url      = env("DB_URL")
 }
 
-enum UserRole {
-  ADMIN
-  USER
-  STYLIST
-}
-
 enum AppointmentStatus {
   PENDING
   CONFIRMED
@@ -26,7 +20,7 @@ model User {
   password      String?
   name          String
   phone         String?              @unique
-  role          UserRole             @default(USER)
+  roleId        String
   googleId      String?              @unique
   isDeactivated Boolean              @default(false)
   deactivatedAt DateTime?
@@ -37,6 +31,9 @@ model User {
   userAppointments      Appointment[] @relation("UserAppointments")
   stylistAppointments   Appointment[] @relation("StylistAppointments")
   passwordCreationTokens PasswordCreationToken[]
+  role          Role                 @relation(fields: [roleId], references: [id])
+
+  @@index([roleId])
 }
 
 model RefreshToken {
@@ -89,7 +86,7 @@ model Category {
 
 model Service {
   id          String         @id @default(uuid())
-  name        String
+  name        String         @unique
   description String
   price       Decimal        @db.Decimal(10, 2)
   duration    Int            @default(30) // in minutes
@@ -101,7 +98,6 @@ model Service {
   images      ServiceImage[]
   appointments AppointmentService[]
 
-  @@index([name])
   @@index([categoryId])
 }
 
@@ -120,7 +116,7 @@ model Appointment {
   id              String              @id @default(uuid())
   userId          String
   stylistId       String
-  date            DateTime
+  dateTime        DateTime
   status          AppointmentStatus   @default(PENDING)
   notes           String?
   estimatedDuration Int
@@ -133,7 +129,7 @@ model Appointment {
 
   @@index([userId])
   @@index([stylistId])
-  @@index([date])
+  @@index([dateTime])
 }
 
 model AppointmentService {
@@ -148,4 +144,39 @@ model AppointmentService {
 
   @@index([appointmentId])
   @@index([serviceId])
+}
+
+model Role {
+  id          String         @id @default(uuid())
+  name        String         @unique
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  permissions RolePermission[]
+  users       User[]
+
+  @@index([name])
+}
+
+model Permission {
+  id          String         @id @default(uuid())
+  name        String         @unique
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  roles       RolePermission[]
+
+  @@index([name])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
 }

@@ -5,64 +5,50 @@ import {
   updateServiceSchema,
   serviceIdSchema,
 } from "../schemas/serviceSchema";
-import { paginationSchema } from "../schemas/shared/paginationSchema";
 import { ServiceController } from "../controllers/serviceController";
-import { requireRole } from "middleware/authHandler";
+import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
-import { paginationHandler } from "middleware/paginationHandler";
-import { filterHandler } from "middleware/filterHandler";
-import { sortHandler } from "middleware/sortHandler";
 
 const router = Router();
 
-// Add service
+// Private routes
 router.post(
   "/",
-  requireRole(["ADMIN"]),
+  requirePermission(["create_service"]),
   validateRequest(createServiceSchema),
   ServiceController.addService
 );
 
-// List active services
 router.get(
   "/active",
-  validateRequest(paginationSchema),
-  filterHandler(["categoryId"]),
-  paginationHandler,
+  requirePermission(["read_active_services"]),
   ServiceController.listActiveServices
 );
 
-// Get service by id
 router.get(
   "/:id",
+  requirePermission(["read_service"]),
   validateRequest(serviceIdSchema),
   ServiceController.getServiceById
 );
 
-// List all services
 router.get(
   "/",
-  requireRole(["ADMIN"]),
-  validateRequest(paginationSchema),
-  filterHandler(["categoryId", "isActive"]),
-  sortHandler(["name"]),
-  paginationHandler,
+  requirePermission(["read_services"]),
   ServiceController.listAllServices
 );
 
-// Update service
 router.put(
   "/:id",
-  requireRole(["ADMIN"]),
+  requirePermission(["update_service"]),
   validateRequest(updateServiceSchema),
   validateRequest(serviceIdSchema),
   ServiceController.updateService
 );
 
-// Delete service
 router.delete(
   "/:id",
-  requireRole(["ADMIN"]),
+  requirePermission(["delete_service"]),
   validateRequest(serviceIdSchema),
   ServiceController.deleteService
 );

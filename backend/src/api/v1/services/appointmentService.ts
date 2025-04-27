@@ -4,6 +4,11 @@ import {
 } from "../schemas/appointmentSchema";
 import { BaseService } from "./baseService";
 import { DateTime } from "luxon";
+import {
+  buildQueryOptions,
+  buildPagination,
+  PaginatedResponse,
+} from "../../../utils/queryBuilder";
 
 export class AppointmentService extends BaseService {
   static async createAppointment(
@@ -39,14 +44,14 @@ export class AppointmentService extends BaseService {
           0
         );
 
-        // Convert input date to DateTime and then to JS Date
-        const appointmentDate = DateTime.fromISO(input.date).toJSDate();
+        // Convert input dateTime to JS Date
+        const appointmentDateTime = DateTime.fromISO(input.dateTime).toJSDate();
 
         return tx.appointment.create({
           data: {
             userId,
             stylistId: input.stylistId,
-            date: appointmentDate,
+            dateTime: appointmentDateTime,
             notes: input.notes,
             estimatedDuration,
             totalPrice,
@@ -123,8 +128,8 @@ export class AppointmentService extends BaseService {
           notes: input.notes,
         };
 
-        if (input.date) {
-          updateData.date = DateTime.fromISO(input.date).toJSDate();
+        if (input.dateTime) {
+          updateData.dateTime = DateTime.fromISO(input.dateTime).toJSDate();
         }
 
         if (input.services) {
@@ -220,7 +225,7 @@ export class AppointmentService extends BaseService {
           },
         },
         orderBy: {
-          date: "asc",
+          dateTime: "asc",
         },
       });
     });
@@ -245,30 +250,31 @@ export class AppointmentService extends BaseService {
           },
         },
         orderBy: {
-          date: "asc",
+          dateTime: "asc",
         },
       });
     });
   }
 
   static async getTotalIncome(
-    stylistId?: string,
+    stylistIds?: string[],
     startDate?: string,
     endDate?: string
   ): Promise<number> {
     return await this.handleDatabaseError(async () => {
       const where: any = {
         status: "COMPLETED",
-        ...(stylistId && { stylistId }),
+        ...(stylistIds &&
+          stylistIds.length > 0 && { stylistId: { in: stylistIds } }),
       };
 
       if (startDate || endDate) {
-        where.date = {};
+        where.dateTime = {};
         if (startDate) {
-          where.date.gte = DateTime.fromISO(startDate).toJSDate();
+          where.dateTime.gte = DateTime.fromISO(startDate).toJSDate();
         }
         if (endDate) {
-          where.date.lte = DateTime.fromISO(endDate).toJSDate();
+          where.dateTime.lte = DateTime.fromISO(endDate).toJSDate();
         }
       }
 
@@ -283,7 +289,7 @@ export class AppointmentService extends BaseService {
   }
 
   static async getTotalServices(
-    stylistId?: string,
+    stylistIds?: string[],
     startDate?: string,
     endDate?: string
   ): Promise<number> {
@@ -291,17 +297,19 @@ export class AppointmentService extends BaseService {
       const where: any = {
         appointment: {
           status: "COMPLETED",
-          ...(stylistId && { stylistId }),
+          ...(stylistIds &&
+            stylistIds.length > 0 && { stylistId: { in: stylistIds } }),
         },
       };
 
       if (startDate || endDate) {
-        where.appointment.date = {};
+        where.appointment.dateTime = {};
         if (startDate) {
-          where.appointment.date.gte = DateTime.fromISO(startDate).toJSDate();
+          where.appointment.dateTime.gte =
+            DateTime.fromISO(startDate).toJSDate();
         }
         if (endDate) {
-          where.appointment.date.lte = DateTime.fromISO(endDate).toJSDate();
+          where.appointment.dateTime.lte = DateTime.fromISO(endDate).toJSDate();
         }
       }
 
@@ -312,6 +320,63 @@ export class AppointmentService extends BaseService {
         },
       });
       return Number(result._sum?.numberOfPeople || 0);
+    });
+  }
+
+  static async listAppointments(
+    queryParams: Record<string, any>
+  ): Promise<PaginatedResponse<any>> {
+    return await this.handleDatabaseError(async () => {
+      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+        userIds: { type: "array", field: "userId" },
+        stylistIds: { type: "array", field: "stylistId" },
+        statuses: { type: "array", field: "status" },
+        dateRange: {
+          type: "dateRange",
+          from: "startDate",
+          to: "endDate",
+          field: "dateTime",
+        },
+      });
+
+      // Get the total count with the filters
+      const total = await this.prisma.appointment.count({ where: filters });
+
+      const pagination = buildPagination(total, page, count);
+
+      // Apply pagination and sorting
+      const appointments = await this.prisma.appointment.findMany({
+        where: filters,
+        include: {
+          services: {
+            include: {
+              service: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          stylist: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        skip: (page - 1) * count,
+        take: count,
+        orderBy,
+      });
+
+      return {
+        data: appointments,
+        pagination,
+      };
     });
   }
 }
