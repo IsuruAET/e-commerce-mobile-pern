@@ -2,7 +2,7 @@ import { setInterval } from "timers";
 import { DateTime } from "luxon";
 import jwt from "jsonwebtoken";
 
-import { BaseService } from "./baseService";
+import { BaseService } from "./shared/baseService";
 import { AppError } from "middleware/errorHandler";
 import { sendEmail } from "utils/emailUtils";
 import { PasswordUtils } from "utils/passwordUtils";

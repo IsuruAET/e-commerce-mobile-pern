@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 
 import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
-import { BaseService } from "./baseService";
+import { BaseService } from "./shared/baseService";
 import { PasswordService } from "./shared/passwordService";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";

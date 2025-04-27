@@ -1,4 +1,4 @@
-import { BaseService } from "./baseService";
+import { BaseService } from "./shared/baseService";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 

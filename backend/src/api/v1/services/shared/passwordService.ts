@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
 
-import { BaseService } from "../baseService";
+import { BaseService } from "./baseService";
 import { AppError } from "middleware/errorHandler";
 import { sendEmail } from "utils/emailUtils";
 import { JwtUtils } from "utils/jwtUtils";

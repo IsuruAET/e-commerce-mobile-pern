@@ -2,7 +2,7 @@ import {
   CreateAppointmentInput,
   UpdateAppointmentInput,
 } from "../schemas/appointmentSchema";
-import { BaseService } from "./baseService";
+import { BaseService } from "./shared/baseService";
 import { DateTime } from "luxon";
 import {
   buildQueryOptions,
