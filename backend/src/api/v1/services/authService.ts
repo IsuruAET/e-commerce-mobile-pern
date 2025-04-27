@@ -9,6 +9,7 @@ import { PasswordUtils } from "utils/passwordUtils";
 import { JwtUtils, TokenPayload } from "utils/jwtUtils";
 import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 import { logger } from "middleware/logger";
+import { PasswordService } from "./shared/passwordService";
 
 export class AuthService extends BaseService {
   static async storeRefreshToken(token: string, userId: string) {
@@ -563,7 +564,7 @@ export class AuthService extends BaseService {
 
   static async updateUserProfile(
     userId: string,
-    data: { name: string; phoneNumber?: string }
+    data: { name: string; phone?: string }
   ) {
     return await this.handleDatabaseError(async () => {
       const user = await this.prisma.user.findUnique({
@@ -578,7 +579,7 @@ export class AuthService extends BaseService {
         where: { id: userId },
         data: {
           name: data.name,
-          phone: data.phoneNumber,
+          phone: data.phone,
         },
       });
 
@@ -588,8 +589,99 @@ export class AuthService extends BaseService {
           id: updatedUser.id,
           email: updatedUser.email,
           name: updatedUser.name,
-          phoneNumber: updatedUser.phone,
+          phone: updatedUser.phone,
         },
+      };
+    });
+  }
+
+  static async createPassword(token: string, password: string) {
+    return await this.handleTransaction(async (tx) => {
+      if (!token) {
+        throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
+      }
+
+      const { userId } = JwtUtils.verifyPasswordToken(token);
+
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new AppError(ErrorCode.USER_NOT_FOUND);
+      }
+
+      // Check if user is deactivated
+      if (user.isDeactivated) {
+        throw new AppError(
+          ErrorCode.ACCOUNT_DEACTIVATED,
+          "Your account has been deactivated. Please contact support for assistance."
+        );
+      }
+
+      const passwordToken = await tx.passwordCreationToken.findFirst({
+        where: {
+          token: token,
+          userId: userId,
+          expiresAt: { gt: DateTime.now().toJSDate() },
+        },
+      });
+
+      if (!passwordToken) {
+        throw new AppError(ErrorCode.INVALID_PASSWORD_CREATION_TOKEN);
+      }
+
+      const hashedPassword = await PasswordUtils.hashPassword(password);
+
+      await Promise.all([
+        tx.user.update({
+          where: { id: passwordToken.userId },
+          data: { password: hashedPassword },
+        }),
+        tx.passwordCreationToken.deleteMany({
+          where: { userId: passwordToken.userId },
+        }),
+      ]);
+
+      return { message: "Password created successfully" };
+    });
+  }
+
+  static async requestNewPasswordCreationToken(email: string) {
+    return await this.handleTransaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        return {
+          message:
+            "If an account exists with this email, you will receive a password creation link",
+        };
+      }
+
+      // Check if user is deactivated
+      if (user.isDeactivated) {
+        throw new AppError(
+          ErrorCode.ACCOUNT_DEACTIVATED,
+          "Your account has been deactivated. Please contact support for assistance."
+        );
+      }
+
+      // Check if user already has a password
+      if (user.password) {
+        throw new AppError(ErrorCode.PASSWORD_ALREADY_SET);
+      }
+
+      // Generate and send new token
+      await PasswordService.generateAndSendPasswordCreationToken(
+        user.id,
+        email
+      );
+
+      return {
+        message:
+          "If an account exists with this email, you will receive a password creation link",
       };
     });
   }

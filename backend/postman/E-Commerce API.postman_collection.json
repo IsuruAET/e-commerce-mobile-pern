@@ -1,1770 +1,1594 @@
 {
-	"info": {
-		"_postman_id": "0e245448-daed-4f1b-8630-ba78effd5666",
-		"name": "E-Commerce API",
-		"description": "API collection for E-Commerce mobile application with comprehensive testing and documentation",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "9828330",
-		"_collection_link": "https://web888-6736.postman.co/workspace/ecommerce-postman-workspace~4c2852f9-3434-46a4-a1b7-cfb42961ecb9/collection/9828330-0e245448-daed-4f1b-8630-ba78effd5666?action=share&source=collection_link&creator=9828330"
-	},
-	"item": [
-		{
-			"name": "Authentication",
-			"item": [
-				{
-					"name": "Register",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response time",
-									"pm.test('Response time is less than 500ms', function () {",
-									"    pm.expect(pm.response.responseTime).to.be.below(500);",
-									"});",
-									"",
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Set environment variables",
-									"pm.environment.set('access_token', jsonData.accessToken);",
-									"pm.environment.set('user_id', jsonData.user.id);",
-									"",
-									"// Extract CSRF token from response headers or cookies",
-									"const csrfToken = pm.response.headers.get('X-CSRF-Token') || pm.cookies.get('csrf_token');",
-									"if (csrfToken) {",
-									"    pm.environment.set('csrf_token', csrfToken);",
-									"}",
-									"",
-									"// Test response structure",
-									"pm.test('Response has required fields', function () {",
-									"    pm.expect(jsonData).to.have.property('accessToken');",
-									"    pm.expect(jsonData).to.have.property('user');",
-									"    pm.expect(jsonData.user).to.have.property('id');",
-									"    pm.expect(jsonData.user).to.have.property('email');",
-									"    pm.expect(jsonData.user).to.have.property('name');",
-									"});",
-									"",
-									"// Test response status",
-									"pm.test('Status code is 201', function () {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"// Test data types",
-									"pm.test('Data types are correct', function () {",
-									"    pm.expect(typeof jsonData.accessToken).to.equal('string');",
-									"    pm.expect(typeof jsonData.user.id).to.equal('string');",
-									"    pm.expect(typeof jsonData.user.email).to.equal('string');",
-									"    pm.expect(typeof jsonData.user.name).to.equal('string');",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\",\n    \"name\": \"Test User\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"register"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Login",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response time",
-									"pm.test('Response time is less than 500ms', function () {",
-									"    pm.expect(pm.response.responseTime).to.be.below(500);",
-									"});",
-									"",
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Set environment variables",
-									"pm.environment.set('access_token', jsonData.accessToken);",
-									"pm.environment.set('user_id', jsonData.user.id);",
-									"",
-									"// Extract CSRF token from response headers or cookies",
-									"const csrfToken = pm.response.headers.get('X-CSRF-Token') || pm.cookies.get('csrf_token');",
-									"if (csrfToken) {",
-									"    pm.environment.set('csrf_token', csrfToken);",
-									"}",
-									"",
-									"// Test response structure",
-									"pm.test('Response has required fields', function () {",
-									"    pm.expect(jsonData).to.have.property('accessToken');",
-									"    pm.expect(jsonData).to.have.property('user');",
-									"    pm.expect(jsonData.user).to.have.property('id');",
-									"    pm.expect(jsonData.user).to.have.property('email');",
-									"});",
-									"",
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// Test data types",
-									"pm.test('Data types are correct', function () {",
-									"    pm.expect(typeof jsonData.accessToken).to.equal('string');",
-									"    pm.expect(typeof jsonData.user.id).to.equal('string');",
-									"    pm.expect(typeof jsonData.user.email).to.equal('string');",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"{{test_email}}\",\n    \"password\": \"{{test_password}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"login"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Change Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"currentPassword\": \"password123\",\n    \"newPassword\": \"newpassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/change-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"change-password"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Refresh Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Set environment variables",
-									"pm.environment.set('access_token', jsonData.accessToken);",
-									"",
-									"// Test if tokens are present",
-									"pm.test('Access token is present', function () {",
-									"    pm.expect(jsonData.accessToken).to.exist;",
-									"});",
-									"",
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/refresh-token",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"refresh-token"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Logout",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// Clear access token and user ID after successful logout",
-									"pm.environment.unset('access_token');",
-									"pm.environment.unset('user_id');",
-									"pm.environment.unset('csrf_token');",
-									"",
-									"// Verify tokens are cleared",
-									"pm.test('Access token is cleared', function () {",
-									"    pm.expect(pm.environment.get('access_token')).to.be.undefined;",
-									"});",
-									"pm.test('CSRF token is cleared', function () {",
-									"    pm.expect(pm.environment.get('csrf_token')).to.be.undefined;",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/logout",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"logout"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Google OAuth",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/google",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"google"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Google OAuth Callback",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/google/callback",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"google",
-								"callback"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Forgot Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"{{test_email}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/forgot-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"forgot-password"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Reset Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"token\": \"{{reset_token}}\",\n    \"password\": \"new-password123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/reset-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"reset-password"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Deactivate Account",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/deactivate",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"auth",
-								"deactivate"
-							]
-						}
-					},
-					"response": []
-				}
-			],
-			"description": "Authentication endpoints for user registration, login, and token management"
-		},
-		{
-			"name": "Categories",
-			"item": [
-				{
-					"name": "Add Category",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Set category_id environment variable",
-									"pm.environment.set('category_id', jsonData.id);",
-									"",
-									"// Test response status",
-									"pm.test('Status code is 201', function () {",
-									"    pm.response.to.have.status(201);",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Hair Services\",\n    \"description\": \"Professional hair cutting, styling, and treatment services\",\n    \"image\": \"https://example.com/hair-services.jpg\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/categories",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"categories"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Category by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/categories/{{category_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"categories",
-								"{{category_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "List Categories",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/categories",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"categories"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Category",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Hair Services\",\n    \"description\": \"Updated description for hair services\",\n    \"image\": \"https://example.com/updated-hair-services.jpg\",\n    \"isActive\": true\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/categories/{{category_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"categories",
-								"{{category_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Category",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/categories/{{category_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"categories",
-								"{{category_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Services",
-			"item": [
-				{
-					"name": "Add Service",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Set service_id environment variable",
-									"pm.environment.set('service_id', jsonData.id);",
-									"",
-									"// Test response status",
-									"pm.test('Status code is 201', function () {",
-									"    pm.response.to.have.status(201);",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Hair Cut\",\n    \"description\": \"Professional hair cutting service with styling\",\n    \"price\": 25.99,\n    \"duration\": 30,\n    \"categoryId\": \"{{category_id}}\",\n    \"images\": [\n        \"https://example.com/haircut1.jpg\"\n    ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/services",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"services"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Service by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/services/{{service_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"services",
-								"{{service_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "List Active Services",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/services/active?count=10&page=1&categoryId={{category_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"services",
-								"active"
-							],
-							"query": [
-								{
-									"key": "count",
-									"value": "10",
-									"description": "Number of items per page"
-								},
-								{
-									"key": "page",
-									"value": "1",
-									"description": "Page number"
-								},
-								{
-									"key": "categoryId",
-									"value": "{{category_id}}",
-									"description": "Filter by category ID"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "List All Services",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/services?count=10&page=1&categoryId={{category_id}}&isActive=true&sortBy=name&sortOrder=asc",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"services"
-							],
-							"query": [
-								{
-									"key": "count",
-									"value": "10",
-									"description": "Number of items per page"
-								},
-								{
-									"key": "page",
-									"value": "1",
-									"description": "Page number"
-								},
-								{
-									"key": "categoryId",
-									"value": "{{category_id}}",
-									"description": "Filter by category ID"
-								},
-								{
-									"key": "isActive",
-									"value": "true",
-									"description": "Filter by active status"
-								},
-								{
-									"key": "sortBy",
-									"value": "name",
-									"description": "Sort field"
-								},
-								{
-									"key": "sortOrder",
-									"value": "asc",
-									"description": "Sort order"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Service",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Hair Cut\",\n    \"description\": \"Updated description for hair cutting service\",\n    \"price\": 29.99,\n    \"duration\": 45,\n    \"categoryId\": \"{{category_id}}\",\n    \"isActive\": true,\n    \"images\": [\n        \"https://example.com/updated-haircut.jpg\"\n    ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/services/{{service_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"services",
-								"{{service_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Service",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/services/{{service_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"services",
-								"{{service_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Users",
-			"item": [
-				{
-					"name": "Create User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"role\": \"USER\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/users",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"token\": \"{{password_token}}\",\n    \"password\": \"password123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/users/create-password",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users",
-								"create-password"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Request Password Creation Link",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Set password_token environment variable if token is present in response",
-									"if (jsonData && jsonData.token) {",
-									"    pm.environment.set('password_token', jsonData.token);",
-									"    console.log('Password token has been set in environment');",
-									"} else {",
-									"    console.log('No token found in response');",
-									"}"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"john.doe@example.com\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/users/request-password-creation",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users",
-								"request-password-creation"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get User by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/users/{{user_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users",
-								"{{user_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "List Users",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/users?count=10&page=1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users"
-							],
-							"query": [
-								{
-									"key": "count",
-									"value": "10",
-									"description": "Number of items per page"
-								},
-								{
-									"key": "page",
-									"value": "1",
-									"description": "Page number"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update User",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated.email@example.com\",\n    \"phone\": \"+1987654321\",\n    \"role\": \"USER\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/users/{{user_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users",
-								"{{user_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete User",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/users/{{user_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users",
-								"{{user_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Deactivate User",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/users/{{user_id}}/deactivate",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users",
-								"{{user_id}}",
-								"deactivate"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Reactivate User",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/users/{{user_id}}/reactivate",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"users",
-								"{{user_id}}",
-								"reactivate"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Appointments",
-			"item": [
-				{
-					"name": "Create Appointment",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Set appointment_id environment variable",
-									"pm.environment.set('appointment_id', jsonData.id);",
-									"",
-									"// Test response status",
-									"pm.test('Status code is 201', function () {",
-									"    pm.response.to.have.status(201);",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20\",\n    \"time\": \"10:00\",\n    \"notes\": \"Please provide a haircut with styling\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/appointments",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"appointments"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Appointment by ID",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/appointments/{{appointment_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"appointments",
-								"{{appointment_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Appointment",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20\",\n    \"time\": \"11:00\",\n    \"notes\": \"Updated appointment notes\",\n    \"status\": \"confirmed\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/appointments/{{appointment_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"appointments",
-								"{{appointment_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get User Appointments",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/appointments/user/appointments",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"appointments",
-								"user",
-								"appointments"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Stylist Appointments",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/appointments/stylist/appointments",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"appointments",
-								"stylist",
-								"appointments"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "List Appointments",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Test response time",
-									"pm.test('Response time is less than 500ms', function () {",
-									"    pm.expect(pm.response.responseTime).to.be.below(500);",
-									"});",
-									"",
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Test response structure",
-									"pm.test('Response has required fields', function () {",
-									"    pm.expect(jsonData).to.have.property('appointments');",
-									"    pm.expect(jsonData).to.have.property('total');",
-									"    pm.expect(jsonData).to.have.property('page');",
-									"    pm.expect(jsonData).to.have.property('totalPages');",
-									"});",
-									"",
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// Test data types",
-									"pm.test('Data types are correct', function () {",
-									"    pm.expect(Array.isArray(jsonData.appointments)).to.be.true;",
-									"    pm.expect(typeof jsonData.total).to.equal('number');",
-									"    pm.expect(typeof jsonData.page).to.equal('number');",
-									"    pm.expect(typeof jsonData.totalPages).to.equal('number');",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/appointments?statuses=PENDING,CONFIRMED&startDate={{start_date}}&endDate={{end_date}}&stylistIds={{stylist_ids}}&userIds={{user_ids}}&sortBy=date&sortOrder=desc",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"appointments"
-							],
-							"query": [
-								{
-									"key": "count",
-									"value": "40",
-									"description": "Number of items per page"
-								},
-								{
-									"key": "page",
-									"value": "1",
-									"description": "Page number"
-								},
-								{
-									"key": "statuses",
-									"value": "PENDING,CONFIRMED",
-									"description": "Filter by appointment status (pending, confirmed, completed, cancelled)"
-								},
-								{
-									"key": "startDate",
-									"value": "{{start_date}}",
-									"description": "Start date for filtering"
-								},
-								{
-									"key": "endDate",
-									"value": "{{end_date}}",
-									"description": "End date for filtering"
-								},
-								{
-									"key": "stylistIds",
-									"value": "{{stylist_ids}}",
-									"description": "Filter by stylist ID"
-								},
-								{
-									"key": "userIds",
-									"value": "{{user_ids}}",
-									"description": "Filter by user ID"
-								},
-								{
-									"key": "sortBy",
-									"value": "date",
-									"description": "Sort field (date, status, etc.)"
-								},
-								{
-									"key": "sortOrder",
-									"value": "desc",
-									"description": "Sort order (asc or desc)"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Total Income",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Test response structure",
-									"pm.test('Response has totalIncome field', function () {",
-									"    pm.expect(jsonData).to.have.property('totalIncome');",
-									"});",
-									"",
-									"// Test data type",
-									"pm.test('totalIncome is a number', function () {",
-									"    pm.expect(typeof jsonData.totalIncome).to.equal('number');",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/appointments/stats/income",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"appointments",
-								"stats",
-								"income"
-							],
-							"query": [
-								{
-									"key": "stylistId",
-									"value": "{{stylist_id}}",
-									"description": "Filter by stylist ID (optional)",
-									"disabled": true
-								},
-								{
-									"key": "startDate",
-									"value": "{{start_date}}",
-									"description": "Start date for filtering (optional)",
-									"disabled": true
-								},
-								{
-									"key": "endDate",
-									"value": "{{end_date}}",
-									"description": "End date for filtering (optional)",
-									"disabled": true
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Total Services",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"// Test response status",
-									"pm.test('Status code is 200', function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// Parse the response body",
-									"var jsonData = pm.response.json();",
-									"",
-									"// Test response structure",
-									"pm.test('Response has totalServices field', function () {",
-									"    pm.expect(jsonData).to.have.property('totalServices');",
-									"});",
-									"",
-									"// Test data type",
-									"pm.test('totalServices is a number', function () {",
-									"    pm.expect(typeof jsonData.totalServices).to.equal('number');",
-									"});"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "X-CSRF-Token",
-								"value": "{{csrf_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/v1/appointments/stats/services",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"appointments",
-								"stats",
-								"services"
-							],
-							"query": [
-								{
-									"key": "stylistId",
-									"value": "{{stylist_id}}",
-									"description": "Filter by stylist ID (optional)",
-									"disabled": true
-								},
-								{
-									"key": "startDate",
-									"value": "{{start_date}}",
-									"description": "Start date for filtering (optional)",
-									"disabled": true
-								},
-								{
-									"key": "endDate",
-									"value": "{{end_date}}",
-									"description": "End date for filtering (optional)",
-									"disabled": true
-								}
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://localhost:5000",
-			"type": "string"
-		},
-		{
-			"key": "access_token",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "user_id",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "test_email",
-			"value": "admin@example.com",
-			"type": "string"
-		},
-		{
-			"key": "test_password",
-			"value": "password123",
-			"type": "string"
-		},
-		{
-			"key": "reset_token",
-			"value": "your-reset-token",
-			"type": "string"
-		},
-		{
-			"key": "category_id",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "service_id",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "appointment_id",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "stylist_id",
-			"value": "your-stylist-id",
-			"type": "string"
-		},
-		{
-			"key": "csrf_token",
-			"value": "",
-			"type": "string"
-		}
-	]
+  "info": {
+    "_postman_id": "6c494449-f155-420f-9292-1844299d837f",
+    "name": "E-Commerce API",
+    "description": "API collection for E-Commerce mobile application with comprehensive testing and documentation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "9828330",
+    "_collection_link": "https://web888-6736.postman.co/workspace/ecommerce-postman-workspace~4c2852f9-3434-46a4-a1b7-cfb42961ecb9/collection/9828330-6c494449-f155-420f-9292-1844299d837f?action=share&source=collection_link&creator=9828330"
+  },
+  "item": [
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Authentication",
+          "item": [
+            {
+              "name": "Register",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response time",
+                      "pm.test('Response time is less than 500ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                      "});",
+                      "",
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Set environment variables",
+                      "pm.environment.set('access_token', jsonData.accessToken);",
+                      "pm.environment.set('user_id', jsonData.user.id);",
+                      "",
+                      "// Extract CSRF token from response headers or cookies",
+                      "const csrfToken = pm.response.headers.get('X-CSRF-Token') || pm.cookies.get('csrf_token');",
+                      "if (csrfToken) {",
+                      "    pm.environment.set('csrf_token', csrfToken);",
+                      "}",
+                      "",
+                      "// Test response structure",
+                      "pm.test('Response has required fields', function () {",
+                      "    pm.expect(jsonData).to.have.property('accessToken');",
+                      "    pm.expect(jsonData).to.have.property('user');",
+                      "    pm.expect(jsonData.user).to.have.property('id');",
+                      "    pm.expect(jsonData.user).to.have.property('email');",
+                      "    pm.expect(jsonData.user).to.have.property('name');",
+                      "});",
+                      "",
+                      "// Test response status",
+                      "pm.test('Status code is 201', function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});",
+                      "",
+                      "// Test data types",
+                      "pm.test('Data types are correct', function () {",
+                      "    pm.expect(typeof jsonData.accessToken).to.equal('string');",
+                      "    pm.expect(typeof jsonData.user.id).to.equal('string');",
+                      "    pm.expect(typeof jsonData.user.email).to.equal('string');",
+                      "    pm.expect(typeof jsonData.user.name).to.equal('string');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\",\n    \"name\": \"Test User\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/register",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response time",
+                      "pm.test('Response time is less than 500ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                      "});",
+                      "",
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Set environment variables",
+                      "pm.environment.set('access_token', jsonData.accessToken);",
+                      "pm.environment.set('user_id', jsonData.user.id);",
+                      "",
+                      "// Extract CSRF token from response headers or cookies",
+                      "const csrfToken = pm.response.headers.get('X-CSRF-Token') || pm.cookies.get('csrf_token');",
+                      "if (csrfToken) {",
+                      "    pm.environment.set('csrf_token', csrfToken);",
+                      "}",
+                      "",
+                      "// Test response structure",
+                      "pm.test('Response has required fields', function () {",
+                      "    pm.expect(jsonData).to.have.property('accessToken');",
+                      "    pm.expect(jsonData).to.have.property('user');",
+                      "    pm.expect(jsonData.user).to.have.property('id');",
+                      "    pm.expect(jsonData.user).to.have.property('email');",
+                      "});",
+                      "",
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "// Test data types",
+                      "pm.test('Data types are correct', function () {",
+                      "    pm.expect(typeof jsonData.accessToken).to.equal('string');",
+                      "    pm.expect(typeof jsonData.user.id).to.equal('string');",
+                      "    pm.expect(typeof jsonData.user.email).to.equal('string');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"{{test_email}}\",\n    \"password\": \"{{test_password}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change Password",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"currentPassword\": \"password123\",\n    \"newPassword\": \"newpassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/change-password",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "change-password"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refresh Token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Set environment variables",
+                      "pm.environment.set('access_token', jsonData.accessToken);",
+                      "",
+                      "// Test if tokens are present",
+                      "pm.test('Access token is present', function () {",
+                      "    pm.expect(jsonData.accessToken).to.exist;",
+                      "});",
+                      "",
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/refresh-token",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "refresh-token"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Logout",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "// Clear access token and user ID after successful logout",
+                      "pm.environment.unset('access_token');",
+                      "pm.environment.unset('user_id');",
+                      "pm.environment.unset('csrf_token');",
+                      "",
+                      "// Verify tokens are cleared",
+                      "pm.test('Access token is cleared', function () {",
+                      "    pm.expect(pm.environment.get('access_token')).to.be.undefined;",
+                      "});",
+                      "pm.test('CSRF token is cleared', function () {",
+                      "    pm.expect(pm.environment.get('csrf_token')).to.be.undefined;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/logout",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "logout"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Google OAuth",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/google",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "google"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Google OAuth Callback",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/google/callback",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "google", "callback"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Forgot Password",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"{{test_email}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/forgot-password",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "forgot-password"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reset Password",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"token\": \"{{reset_token}}\",\n    \"password\": \"new-password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/reset-password",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "reset-password"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Request Password Creation Link",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Set password_token environment variable if token is present in response",
+                      "if (jsonData && jsonData.token) {",
+                      "    pm.environment.set('password_token', jsonData.token);",
+                      "    console.log('Password token has been set in environment');",
+                      "} else {",
+                      "    console.log('No token found in response');",
+                      "}"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"john.doe@example.com\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/request-password-creation",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "request-password-creation"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Password",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"token\": \"{{password_token}}\",\n    \"password\": \"password123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/create-password",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "create-password"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Deactivate Account",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/deactivate",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "deactivate"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Profile",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response time",
+                      "pm.test('Response time is less than 500ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                      "});",
+                      "",
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Test response structure",
+                      "pm.test('Response has required fields', function () {",
+                      "    pm.expect(jsonData).to.have.property('user');",
+                      "    pm.expect(jsonData.user).to.have.property('id');",
+                      "    pm.expect(jsonData.user).to.have.property('email');",
+                      "    pm.expect(jsonData.user).to.have.property('name');",
+                      "});",
+                      "",
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Name\",\n    \"phone\": \"+1987654321\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/profile",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "profile"]
+                }
+              },
+              "response": []
+            }
+          ],
+          "description": "Authentication endpoints for user registration, login, and token management"
+        },
+        {
+          "name": "Categories",
+          "item": [
+            {
+              "name": "Add Category",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Set category_id environment variable",
+                      "pm.environment.set('category_id', jsonData.id);",
+                      "",
+                      "// Test response status",
+                      "pm.test('Status code is 201', function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Hair Services\",\n    \"description\": \"Professional hair cutting, styling, and treatment services\",\n    \"image\": \"https://example.com/hair-services.jpg\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/categories",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "categories"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Category by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/categories/{{category_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "categories", "{{category_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Categories",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/categories",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "categories"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Category",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Hair Services\",\n    \"description\": \"Updated description for hair services\",\n    \"image\": \"https://example.com/updated-hair-services.jpg\",\n    \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/categories/{{category_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "categories", "{{category_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Category",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/categories/{{category_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "categories", "{{category_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Appointments",
+          "item": [
+            {
+              "name": "Create Appointment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Set appointment_id environment variable",
+                      "pm.environment.set('appointment_id', jsonData.id);",
+                      "",
+                      "// Test response status",
+                      "pm.test('Status code is 201', function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20\",\n    \"time\": \"10:00\",\n    \"notes\": \"Please provide a haircut with styling\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/appointments",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "appointments"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Appointment by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/appointments/{{appointment_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "appointments", "{{appointment_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Appointment",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"stylistId\": \"{{stylist_id}}\",\n    \"date\": \"2024-03-20\",\n    \"time\": \"11:00\",\n    \"notes\": \"Updated appointment notes\",\n    \"status\": \"confirmed\",\n    \"services\": [\n        {\n            \"serviceId\": \"{{service_id}}\",\n            \"numberOfPeople\": 2\n        }\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/appointments/{{appointment_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "appointments", "{{appointment_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get User Appointments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/appointments/user/appointments",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "appointments", "user", "appointments"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Stylist Appointments",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/appointments/stylist/appointments",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "appointments",
+                    "stylist",
+                    "appointments"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Appointments",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "// Test response time",
+                      "pm.test('Response time is less than 500ms', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                      "});",
+                      "",
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Test response structure",
+                      "pm.test('Response has required fields', function () {",
+                      "    pm.expect(jsonData).to.have.property('appointments');",
+                      "    pm.expect(jsonData).to.have.property('total');",
+                      "    pm.expect(jsonData).to.have.property('page');",
+                      "    pm.expect(jsonData).to.have.property('totalPages');",
+                      "});",
+                      "",
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "// Test data types",
+                      "pm.test('Data types are correct', function () {",
+                      "    pm.expect(Array.isArray(jsonData.appointments)).to.be.true;",
+                      "    pm.expect(typeof jsonData.total).to.equal('number');",
+                      "    pm.expect(typeof jsonData.page).to.equal('number');",
+                      "    pm.expect(typeof jsonData.totalPages).to.equal('number');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/appointments",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "appointments"],
+                  "query": [
+                    {
+                      "key": "count",
+                      "value": "10",
+                      "description": "Number of items per page"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "statuses",
+                      "value": "COMPLETED",
+                      "description": "Filter by appointment status (pending, confirmed, completed, cancelled)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "startDate",
+                      "value": "{{start_date}}",
+                      "description": "Start date for filtering",
+                      "disabled": true
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "{{end_date}}",
+                      "description": "End date for filtering",
+                      "disabled": true
+                    },
+                    {
+                      "key": "stylistIds",
+                      "value": "{{stylist_ids}}",
+                      "description": "Filter by stylist ID",
+                      "disabled": true
+                    },
+                    {
+                      "key": "userIds",
+                      "value": "{{user_ids}}",
+                      "description": "Filter by user ID",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "dateTime",
+                      "description": "Sort field (date, status, etc.)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "asc",
+                      "description": "Sort order (asc or desc)",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Total Income",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Test response structure",
+                      "pm.test('Response has totalIncome field', function () {",
+                      "    pm.expect(jsonData).to.have.property('totalIncome');",
+                      "});",
+                      "",
+                      "// Test data type",
+                      "pm.test('totalIncome is a number', function () {",
+                      "    pm.expect(typeof jsonData.totalIncome).to.equal('number');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/appointments/stats/income",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "appointments", "stats", "income"],
+                  "query": [
+                    {
+                      "key": "stylistId",
+                      "value": "{{stylist_id}}",
+                      "description": "Filter by stylist ID (optional)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "startDate",
+                      "value": "{{start_date}}",
+                      "description": "Start date for filtering (optional)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "{{end_date}}",
+                      "description": "End date for filtering (optional)",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Total Services",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Test response structure",
+                      "pm.test('Response has totalServices field', function () {",
+                      "    pm.expect(jsonData).to.have.property('totalServices');",
+                      "});",
+                      "",
+                      "// Test data type",
+                      "pm.test('totalServices is a number', function () {",
+                      "    pm.expect(typeof jsonData.totalServices).to.equal('number');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/appointments/stats/services",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "appointments", "stats", "services"],
+                  "query": [
+                    {
+                      "key": "stylistId",
+                      "value": "{{stylist_id}}",
+                      "description": "Filter by stylist ID (optional)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "startDate",
+                      "value": "{{start_date}}",
+                      "description": "Start date for filtering (optional)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "{{end_date}}",
+                      "description": "End date for filtering (optional)",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Services",
+          "item": [
+            {
+              "name": "Add Service",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Parse the response body",
+                      "var jsonData = pm.response.json();",
+                      "",
+                      "// Set service_id environment variable",
+                      "pm.environment.set('service_id', jsonData.id);",
+                      "",
+                      "// Test response status",
+                      "pm.test('Status code is 201', function () {",
+                      "    pm.response.to.have.status(201);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Hair Cut\",\n    \"description\": \"Professional hair cutting service with styling\",\n    \"price\": 25.99,\n    \"duration\": 30,\n    \"categoryId\": \"{{category_id}}\",\n    \"images\": [\n        \"https://example.com/haircut1.jpg\"\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/services",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "services"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Service by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/services/{{service_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "services", "{{service_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Active Services",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/services/active?count=10&page=1&categoryId={{category_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "services", "active"],
+                  "query": [
+                    {
+                      "key": "count",
+                      "value": "10",
+                      "description": "Number of items per page"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "categoryId",
+                      "value": "{{category_id}}",
+                      "description": "Filter by category ID"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List All Services",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/services",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "services"],
+                  "query": [
+                    {
+                      "key": "count",
+                      "value": "10",
+                      "description": "Number of items per page"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number"
+                    },
+                    {
+                      "key": "categoryId",
+                      "value": "{{category_id}}",
+                      "description": "Filter by category ID"
+                    },
+                    {
+                      "key": "isActive",
+                      "value": "true",
+                      "description": "Filter by active status"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "name",
+                      "description": "Sort field"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "asc",
+                      "description": "Sort order"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Service",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Hair Cut\",\n    \"description\": \"Updated description for hair cutting service\",\n    \"price\": 29.99,\n    \"duration\": 45,\n    \"categoryId\": \"{{category_id}}\",\n    \"isActive\": true,\n    \"images\": [\n        \"https://example.com/updated-haircut.jpg\"\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/services/{{service_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "services", "{{service_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Service",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/services/{{service_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "services", "{{service_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Users",
+          "item": [
+            {
+              "name": "Create User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+1234567890\",\n    \"role\": \"USER\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get User by ID",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users", "{{user_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List Users",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users?count=10&page=1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users"],
+                  "query": [
+                    {
+                      "key": "count",
+                      "value": "10",
+                      "description": "Number of items per page"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Page number"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update User",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Name\",\n    \"email\": \"updated.email@example.com\",\n    \"phone\": \"+1987654321\",\n    \"role\": \"USER\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users", "{{user_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete User",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users", "{{user_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Deactivate User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users/{{user_id}}/deactivate",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users", "{{user_id}}", "deactivate"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reactivate User",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Test response status",
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  },
+                  {
+                    "key": "X-CSRF-Token",
+                    "value": "{{csrf_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/users/{{user_id}}/reactivate",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "users", "{{user_id}}", "reactivate"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "test_email",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "test_password",
+      "value": "password123",
+      "type": "string"
+    },
+    {
+      "key": "reset_token",
+      "value": "your-reset-token",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "service_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "stylist_id",
+      "value": "your-stylist-id",
+      "type": "string"
+    },
+    {
+      "key": "csrf_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
 }

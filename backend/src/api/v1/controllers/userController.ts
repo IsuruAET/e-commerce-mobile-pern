@@ -98,32 +98,4 @@ export class UserController {
       next(error);
     }
   }
-
-  static async createPassword(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { token, password } = req.body;
-      const result = await UserService.createPassword(token, password);
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  static async requestNewPasswordCreationToken(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const { email } = req.body;
-      const result = await UserService.requestNewPasswordCreationToken(email);
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
-  }
 }

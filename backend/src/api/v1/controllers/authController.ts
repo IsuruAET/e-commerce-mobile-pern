@@ -247,11 +247,39 @@ export class AuthController {
   ): Promise<void> {
     try {
       const userId = req.auth?.userId as string;
-      const { name, phoneNumber } = req.body;
+      const { name, phone } = req.body;
       const result = await AuthService.updateUserProfile(userId, {
         name,
-        phoneNumber,
+        phone,
       });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async createPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { token, password } = req.body;
+      const result = await AuthService.createPassword(token, password);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async requestNewPasswordCreationToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { email } = req.body;
+      const result = await AuthService.requestNewPasswordCreationToken(email);
       res.status(200).json(result);
     } catch (error) {
       next(error);

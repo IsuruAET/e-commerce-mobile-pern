@@ -23,19 +23,6 @@ export const createUserSchema = z.object({
   }),
 });
 
-export const createPasswordSchema = z.object({
-  body: z.object({
-    token: z.string(),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-  }),
-});
-
-export const requestPasswordCreationSchema = z.object({
-  body: z.object({
-    email: z.string().email("Invalid email format"),
-  }),
-});
-
 export const updateUserSchema = z.object({
   body: z.object({
     email: z.string().email("Invalid email address").optional(),
@@ -87,10 +74,6 @@ export const listUsersSchema = z.object({
 
 export type User = z.infer<typeof userSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>["body"];
-export type CreatePasswordInput = z.infer<typeof createPasswordSchema>["body"];
-export type RequestPasswordCreationInput = z.infer<
-  typeof requestPasswordCreationSchema
->["body"];
 export type UpdateUserInput = z.infer<typeof updateUserSchema>["body"];
 export type UserIdParams = z.infer<typeof userIdSchema>["params"];
 export type ListUsersInput = z.infer<typeof listUsersSchema>;

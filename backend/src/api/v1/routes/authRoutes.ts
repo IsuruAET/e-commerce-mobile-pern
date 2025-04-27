@@ -7,6 +7,8 @@ import {
   resetPasswordSchema,
   changePasswordSchema,
   updateProfileSchema,
+  createPasswordSchema,
+  requestPasswordCreationSchema,
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
 import { validateRequest } from "middleware/validateRequest";
@@ -64,6 +66,20 @@ router.patch(
   "/deactivate",
   requirePermission(["manage_auth"]),
   AuthController.deactivateAccount
+);
+
+// Create password with token
+router.post(
+  "/create-password",
+  validateRequest(createPasswordSchema),
+  AuthController.createPassword
+);
+
+// Request new password creation token
+router.post(
+  "/request-password-creation",
+  validateRequest(requestPasswordCreationSchema),
+  AuthController.requestNewPasswordCreationToken
 );
 
 export default router;
