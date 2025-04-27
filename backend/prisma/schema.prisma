@@ -64,7 +64,7 @@ model PasswordCreationToken {
   id        String   @id @default(uuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
   expiresAt DateTime
   createdAt DateTime @default(now())
 
@@ -94,7 +94,7 @@ model Service {
   isActive    Boolean        @default(true)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
-  category    Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category    Category       @relation(fields: [categoryId], references: [id])
   images      ServiceImage[]
   appointments AppointmentService[]
 
@@ -107,7 +107,7 @@ model ServiceImage {
   serviceId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  service   Service  @relation(fields: [serviceId], references: [id])
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@index([serviceId])
 }
@@ -123,8 +123,8 @@ model Appointment {
   totalPrice      Decimal             @db.Decimal(10, 2)
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
-  user            User                @relation("UserAppointments", fields: [userId], references: [id], onDelete: Cascade)
-  stylist         User                @relation("StylistAppointments", fields: [stylistId], references: [id], onDelete: Cascade)
+  user            User                @relation("UserAppointments", fields: [userId], references: [id])
+  stylist         User                @relation("StylistAppointments", fields: [stylistId], references: [id])
   services        AppointmentService[]
 
   @@index([userId])
