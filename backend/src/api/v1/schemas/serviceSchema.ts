@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import { imageSchema } from "./shared/imageSchema";
+import { paginationSchema } from "./shared/paginationSchema";
+import { createSortingSchema } from "./shared/sortingSchema";
 
 export const serviceSchema = z.object({
   id: z.string().uuid(),
@@ -68,16 +70,11 @@ export const serviceIdSchema = z.object({
   }),
 });
 
+export const sortingServicesSchema = createSortingSchema(["name"] as const);
+
 export const listServicesSchema = z.object({
   query: z.object({
-    page: z
-      .string()
-      .transform((val) => parseInt(val, 10))
-      .default("1"),
-    count: z
-      .string()
-      .transform((val) => parseInt(val, 10))
-      .default("10"),
+    ...paginationSchema.shape,
     categoryIds: z
       .string()
       .optional()
@@ -86,15 +83,18 @@ export const listServicesSchema = z.object({
       .string()
       .optional()
       .transform((val) => val === "true"),
-    sortBy: z
+    ...sortingServicesSchema.shape,
+  }),
+});
+
+export const listActiveServicesSchema = z.object({
+  query: z.object({
+    ...paginationSchema.shape,
+    categoryIds: z
       .string()
-      .transform((val) => val.split(","))
-      .optional(),
-    sortOrder: z
-      .string()
-      .transform((val) => val.split(","))
       .optional()
-      .default("asc"),
+      .transform((val) => val?.split(",")),
+    ...sortingServicesSchema.shape,
   }),
 });
 

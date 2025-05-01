@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { paginationSchema } from "./shared/paginationSchema";
+import { createSortingSchema } from "./shared/sortingSchema";
 
 const appointmentServiceSchema = z.object({
   serviceId: z.string().uuid(),
@@ -68,16 +70,13 @@ export const getAppointmentStatsSchema = z.object({
   }),
 });
 
+export const sortingAppointmentsSchema = createSortingSchema([
+  "dateTime",
+] as const);
+
 export const listAppointmentsSchema = z.object({
   query: z.object({
-    page: z
-      .string()
-      .transform((val) => parseInt(val, 10))
-      .default("1"),
-    count: z
-      .string()
-      .transform((val) => parseInt(val, 10))
-      .default("10"),
+    ...paginationSchema.shape,
     userIds: z
       .string()
       .optional()
@@ -92,15 +91,7 @@ export const listAppointmentsSchema = z.object({
       .transform((val) => val?.split(",")),
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),
-    sortBy: z
-      .string()
-      .transform((val) => val.split(","))
-      .optional(),
-    sortOrder: z
-      .string()
-      .transform((val) => val.split(","))
-      .optional()
-      .default("asc"),
+    ...sortingAppointmentsSchema.shape,
   }),
 });
 

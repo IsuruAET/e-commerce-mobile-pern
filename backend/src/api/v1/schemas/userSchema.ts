@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { paginationSchema } from "./shared/paginationSchema";
+import { createSortingSchema } from "./shared/sortingSchema";
 
 export const userSchema = z.object({
   id: z.string().uuid(),
@@ -42,16 +44,11 @@ export const userIdSchema = z.object({
   }),
 });
 
+export const sortingUsersSchema = createSortingSchema(["name"] as const);
+
 export const listUsersSchema = z.object({
   query: z.object({
-    page: z
-      .string()
-      .transform((val) => parseInt(val, 10))
-      .default("1"),
-    count: z
-      .string()
-      .transform((val) => parseInt(val, 10))
-      .default("10"),
+    ...paginationSchema.shape,
     roleIds: z
       .string()
       .optional()
@@ -60,15 +57,7 @@ export const listUsersSchema = z.object({
       .string()
       .optional()
       .transform((val) => val === "true"),
-    sortBy: z
-      .string()
-      .transform((val) => val.split(","))
-      .optional(),
-    sortOrder: z
-      .string()
-      .transform((val) => val.split(","))
-      .optional()
-      .default("asc"),
+    ...sortingUsersSchema.shape,
   }),
 });
 

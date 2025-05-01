@@ -4,6 +4,8 @@ import {
   createServiceSchema,
   updateServiceSchema,
   serviceIdSchema,
+  listActiveServicesSchema,
+  listServicesSchema,
 } from "../schemas/serviceSchema";
 import { ServiceController } from "../controllers/serviceController";
 import { requirePermission } from "middleware/authHandler";
@@ -22,6 +24,7 @@ router.post(
 router.get(
   "/active",
   requirePermission(["read_active_services"]),
+  validateRequest(listActiveServicesSchema),
   ServiceController.listActiveServices
 );
 
@@ -35,6 +38,7 @@ router.get(
 router.get(
   "/",
   requirePermission(["read_services"]),
+  validateRequest(listServicesSchema),
   ServiceController.listAllServices
 );
 
