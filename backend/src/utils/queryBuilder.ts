@@ -1,5 +1,6 @@
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
+import { DateTime } from "luxon";
 
 // Constants
 const DEFAULT_PAGE_SIZE = 10;
@@ -10,8 +11,6 @@ type FilterConfig = {
   from?: string;
   to?: string;
   field?: string;
-  validate?: (value: any) => boolean;
-  transform?: (value: any) => any;
 };
 
 type QueryOptions = {
@@ -51,15 +50,19 @@ export function buildPagination(
 }
 
 /**
- * Parses date string into Date object
+ * Parses date string into DateTime object
  * Supports both MM/DD/YYYY and ISO format
  */
-function parseDate(dateStr: string): Date {
+function parseDate(dateStr: string): DateTime {
   if (dateStr.includes("/")) {
     const [month, day, year] = dateStr.split("/");
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return DateTime.fromObject({
+      year: parseInt(year),
+      month: parseInt(month),
+      day: parseInt(day),
+    });
   }
-  return new Date(dateStr);
+  return DateTime.fromISO(dateStr);
 }
 
 /**
@@ -80,14 +83,12 @@ function handleDateRangeFilter(
         filters[fieldName] = {};
 
         if (fromValue) {
-          const fromDate = parseDate(fromValue);
-          fromDate.setHours(0, 0, 0, 0);
+          const fromDate = parseDate(fromValue).startOf("day").toJSDate();
           filters[fieldName].gte = fromDate;
         }
 
         if (toValue) {
-          const toDate = parseDate(toValue);
-          toDate.setHours(23, 59, 59, 999);
+          const toDate = parseDate(toValue).endOf("day").toJSDate();
           filters[fieldName].lte = toDate;
         }
       }
@@ -95,10 +96,6 @@ function handleDateRangeFilter(
   });
 }
 
-/**
- * Applies a single filter based on its configuration
- * @throws {AppError} If filter validation fails
- */
 function applyFilter(
   key: string,
   value: any,
@@ -118,35 +115,24 @@ function applyFilter(
     return;
   }
 
-  if (config.validate && !config.validate(value)) {
-    throw new AppError(
-      ErrorCode.INVALID_INPUT,
-      `Invalid value for filter ${key}: ${value}`
-    );
-  }
-
-  const transformedValue = config.transform ? config.transform(value) : value;
-
   switch (config.type) {
     case "string":
-      filters[fieldName] = transformedValue;
+      filters[fieldName] = value;
       break;
     case "number":
-      filters[fieldName] = Number(transformedValue);
+      filters[fieldName] = Number(value);
       break;
     case "boolean":
-      filters[fieldName] = transformedValue === "true";
+      filters[fieldName] = value === "true";
       break;
     case "date":
-      filters[fieldName] = new Date(transformedValue);
+      filters[fieldName] = DateTime.fromISO(value).toJSDate();
       break;
     case "dateRange":
       // Date range is handled separately in handleDateRangeFilter
       break;
     case "array":
-      const values = Array.isArray(transformedValue)
-        ? transformedValue
-        : transformedValue.split(",");
+      const values = Array.isArray(value) ? value : value.split(",");
       filters[fieldName] = { in: values };
       break;
   }
