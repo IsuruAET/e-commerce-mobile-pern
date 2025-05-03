@@ -73,29 +73,33 @@ export const serviceIdSchema = z.object({
 export const sortingServicesSchema = createSortingSchema(["name"] as const);
 
 export const listServicesSchema = z.object({
-  query: z.object({
-    ...paginationSchema.shape,
-    categoryIds: z
-      .string()
-      .optional()
-      .transform((val) => val?.split(",")),
-    isActive: z
-      .string()
-      .optional()
-      .transform((val) => val === "true"),
-    ...sortingServicesSchema.shape,
-  }),
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      categoryIds: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+      isActive: z
+        .string()
+        .optional()
+        .transform((val) => val === "true"),
+      ...sortingServicesSchema.shape,
+    })
+    .strict(),
 });
 
 export const listActiveServicesSchema = z.object({
-  query: z.object({
-    ...paginationSchema.shape,
-    categoryIds: z
-      .string()
-      .optional()
-      .transform((val) => val?.split(",")),
-    ...sortingServicesSchema.shape,
-  }),
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      categoryIds: z
+        .string()
+        .optional()
+        .transform((val) => val?.split(",")),
+      ...sortingServicesSchema.shape,
+    })
+    .strict(),
 });
 
 export type Service = z.infer<typeof serviceSchema>;
@@ -103,3 +107,5 @@ export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 export type UpdateServiceInput = z.infer<typeof updateServiceSchema>;
 export type ServiceIdInput = z.infer<typeof serviceIdSchema>;
 export type ListServicesInput = z.infer<typeof listServicesSchema>;
+export type ListActiveServicesInput = z.infer<typeof listActiveServicesSchema>;
+export type SortingServicesInput = z.infer<typeof sortingServicesSchema>;

@@ -75,24 +75,28 @@ export const sortingAppointmentsSchema = createSortingSchema([
 ] as const);
 
 export const listAppointmentsSchema = z.object({
-  query: z.object({
-    ...paginationSchema.shape,
-    userIds: z
-      .string()
-      .optional()
-      .transform((val) => val?.split(",")),
-    stylistIds: z
-      .string()
-      .optional()
-      .transform((val) => val?.split(",")),
-    statuses: z
-      .string()
-      .optional()
-      .transform((val) => val?.split(",")),
-    startDate: z.string().datetime().optional(),
-    endDate: z.string().datetime().optional(),
-    ...sortingAppointmentsSchema.shape,
-  }),
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      userIds: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+
+      stylistIds: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+
+      statuses: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+      startDate: z.string().datetime().optional(),
+      endDate: z.string().datetime().optional(),
+      ...sortingAppointmentsSchema.shape,
+    })
+    .strict(),
 });
 
 export type Appointment = z.infer<typeof appointmentSchema>;

@@ -47,18 +47,20 @@ export const userIdSchema = z.object({
 export const sortingUsersSchema = createSortingSchema(["name"] as const);
 
 export const listUsersSchema = z.object({
-  query: z.object({
-    ...paginationSchema.shape,
-    roleIds: z
-      .string()
-      .optional()
-      .transform((val) => val?.split(",")),
-    isDeactivated: z
-      .string()
-      .optional()
-      .transform((val) => val === "true"),
-    ...sortingUsersSchema.shape,
-  }),
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      roleIds: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+      isDeactivated: z
+        .string()
+        .optional()
+        .transform((val) => val === "true"),
+      ...sortingUsersSchema.shape,
+    })
+    .strict(),
 });
 
 export type User = z.infer<typeof userSchema>;

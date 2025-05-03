@@ -55,16 +55,19 @@ export const categoryIdSchema = z.object({
 export const sortingCategoriesSchema = createSortingSchema(["name"] as const);
 
 export const listCategoriesSchema = z.object({
-  query: z.object({
-    ...paginationSchema.shape,
-    isActive: z
-      .string()
-      .optional()
-      .transform((val) => val === "true"),
-    ...sortingCategoriesSchema.shape,
-  }),
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      isActive: z
+        .string()
+        .optional()
+        .transform((val) => val === "true"),
+      ...sortingCategoriesSchema.shape,
+    })
+    .strict(),
 });
 
 export type Category = z.infer<typeof categorySchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>["body"];
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>["body"];
+export type ListCategoriesInput = z.infer<typeof listCategoriesSchema>;
