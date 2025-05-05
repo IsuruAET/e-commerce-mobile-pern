@@ -4,7 +4,7 @@ import { ServiceService } from "../services/serviceService";
 import { PaginatedResponse } from "utils/queryBuilder";
 
 export class ServiceController {
-  static async addService(req: Request, res: Response, next: NextFunction) {
+  static async createService(req: Request, res: Response, next: NextFunction) {
     try {
       const service = await ServiceService.createService(req.body);
       res.status(201).json({

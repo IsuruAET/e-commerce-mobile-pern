@@ -17,7 +17,7 @@ router.post(
   "/",
   requirePermission(["create_category"]),
   validateRequest(createCategorySchema),
-  CategoryController.addCategory
+  CategoryController.createCategory
 );
 
 router.get(

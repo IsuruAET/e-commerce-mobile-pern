@@ -18,7 +18,7 @@ router.post(
   "/",
   requirePermission(["create_service"]),
   validateRequest(createServiceSchema),
-  ServiceController.addService
+  ServiceController.createService
 );
 
 router.get(

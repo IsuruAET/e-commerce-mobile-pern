@@ -18,50 +18,54 @@ export const serviceSchema = z.object({
 });
 
 export const createServiceSchema = z.object({
-  body: z.object({
-    name: z
-      .string()
-      .min(3, "Name must be at least 3 characters")
-      .max(50, "Name must be less than 50 characters"),
-    description: z
-      .string()
-      .min(10, "Description must be at least 10 characters")
-      .max(500, "Description must be less than 500 characters"),
-    price: z.number().positive("Price must be positive"),
-    duration: z
-      .number()
-      .int("Duration must be an integer")
-      .positive("Duration must be positive")
-      .min(30, "Duration must be at least 30 minutes"),
-    categoryId: z.string().uuid(),
-    isActive: z.boolean().default(true),
-    images: z.array(imageSchema).min(1),
-  }),
+  body: z
+    .object({
+      name: z
+        .string()
+        .min(3, "Name must be at least 3 characters")
+        .max(50, "Name must be less than 50 characters"),
+      description: z
+        .string()
+        .min(10, "Description must be at least 10 characters")
+        .max(500, "Description must be less than 500 characters"),
+      price: z.number().positive("Price must be positive"),
+      duration: z
+        .number()
+        .int("Duration must be an integer")
+        .positive("Duration must be positive")
+        .min(30, "Duration must be at least 30 minutes"),
+      categoryId: z.string().uuid(),
+      isActive: z.boolean().default(true),
+      images: z.array(imageSchema).min(1),
+    })
+    .strict(),
 });
 
 export const updateServiceSchema = z.object({
-  body: z.object({
-    name: z
-      .string()
-      .min(3, "Name must be at least 3 characters")
-      .max(50, "Name must be less than 50 characters")
-      .optional(),
-    description: z
-      .string()
-      .min(10, "Description must be at least 10 characters")
-      .max(500, "Description must be less than 500 characters")
-      .optional(),
-    price: z.number().positive("Price must be positive").optional(),
-    duration: z
-      .number()
-      .int("Duration must be an integer")
-      .positive("Duration must be positive")
-      .min(30, "Duration must be at least 30 minutes")
-      .optional(),
-    categoryId: z.string().uuid().optional(),
-    isActive: z.boolean().optional(),
-    images: z.array(imageSchema).optional(),
-  }),
+  body: z
+    .object({
+      name: z
+        .string()
+        .min(3, "Name must be at least 3 characters")
+        .max(50, "Name must be less than 50 characters")
+        .optional(),
+      description: z
+        .string()
+        .min(10, "Description must be at least 10 characters")
+        .max(500, "Description must be less than 500 characters")
+        .optional(),
+      price: z.number().positive("Price must be positive").optional(),
+      duration: z
+        .number()
+        .int("Duration must be an integer")
+        .positive("Duration must be positive")
+        .min(30, "Duration must be at least 30 minutes")
+        .optional(),
+      categoryId: z.string().uuid().optional(),
+      isActive: z.boolean().optional(),
+      images: z.array(imageSchema).optional(),
+    })
+    .strict(),
 });
 
 export const serviceIdSchema = z.object({

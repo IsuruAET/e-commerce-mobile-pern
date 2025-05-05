@@ -1,6 +1,5 @@
 import { setInterval } from "timers";
 import { DateTime } from "luxon";
-import jwt from "jsonwebtoken";
 
 import { BaseService } from "./shared/baseService";
 import { AppError } from "middleware/errorHandler";
@@ -10,40 +9,30 @@ import { JwtUtils, TokenPayload } from "utils/jwtUtils";
 import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 import { logger } from "middleware/logger";
 import { PasswordService } from "./shared/passwordService";
+import { AuthRepository } from "../repositories/authRepository";
 
 export class AuthService extends BaseService {
+  private static authRepository = new AuthRepository(BaseService.prisma);
+
   static async storeRefreshToken(token: string, userId: string) {
     return await this.handleDatabaseError(async () => {
-      await this.prisma.refreshToken.create({
-        data: {
-          token,
-          userId,
-          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
-        },
+      await this.authRepository.createRefreshToken({
+        token,
+        userId,
+        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
       });
     });
   }
 
   static async cleanupExpiredTokens(userId?: string) {
     return await this.handleDatabaseError(async () => {
-      const whereClause = {
-        expiresAt: { lt: DateTime.now().toJSDate() },
-        ...(userId ? { userId } : {}),
-      };
-
-      await this.prisma.refreshToken.deleteMany({
-        where: whereClause,
-      });
+      await this.authRepository.deleteExpiredRefreshTokens(userId);
     });
   }
 
   static async cleanupExpiredPasswordResetTokens() {
     return await this.handleDatabaseError(async () => {
-      await this.prisma.passwordResetToken.deleteMany({
-        where: {
-          expiresAt: { lt: DateTime.now().toJSDate() },
-        },
-      });
+      await this.authRepository.deleteExpiredPasswordResetTokens();
     });
   }
 
@@ -61,12 +50,9 @@ export class AuthService extends BaseService {
 
   static async registerUser(email: string, password: string, name: string) {
     return await this.handleTransaction(async (tx) => {
-      const existingUser = await tx.user.findUnique({
-        where: { email },
-      });
+      const existingUser = await this.authRepository.findUserByEmail(email);
 
       if (existingUser) {
-        // If user exists but has no password or Google ID, guide them to set password
         if (!existingUser.password && !existingUser.googleId) {
           throw new AppError(
             ErrorCode.PASSWORD_NOT_SET,
@@ -74,18 +60,15 @@ export class AuthService extends BaseService {
           );
         }
 
-        // If user exists with Google ID, suggest using Google login
         if (!existingUser.password && existingUser.googleId) {
           throw new AppError(ErrorCode.SOCIAL_AUTH_REQUIRED);
         }
 
-        // If user exists with password, show regular email exists message
         throw new AppError(ErrorCode.EMAIL_EXISTS);
       }
 
       const hashedPassword = await PasswordUtils.hashPassword(password);
 
-      // Get the default USER role
       const userRole = await tx.role.findFirst({
         where: { name: "user" },
       });
@@ -97,13 +80,11 @@ export class AuthService extends BaseService {
         );
       }
 
-      const user = await tx.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          name,
-          roleId: userRole.id,
-        },
+      const user = await this.authRepository.createUser({
+        email,
+        password: hashedPassword,
+        name,
+        roleId: userRole.id,
       });
 
       const { accessToken, refreshToken } = JwtUtils.generateTokens({
@@ -113,12 +94,10 @@ export class AuthService extends BaseService {
         isDeactivated: user.isDeactivated || false,
       });
 
-      await tx.refreshToken.create({
-        data: {
-          token: refreshToken,
-          userId: user.id,
-          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
-        },
+      await this.authRepository.createRefreshToken({
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
       });
 
       return {
@@ -135,18 +114,12 @@ export class AuthService extends BaseService {
 
   static async loginUser(email: string, password: string) {
     return await this.handleTransaction(async (tx) => {
-      const user = await tx.user.findUnique({
-        where: { email },
-        include: {
-          role: true,
-        },
-      });
+      const user = await this.authRepository.findUserByEmail(email);
 
       if (!user) {
         throw new AppError(ErrorCode.INVALID_CREDENTIALS);
       }
 
-      // Check if user is deactivated
       if (user.isDeactivated) {
         throw new AppError(
           ErrorCode.ACCOUNT_DEACTIVATED,
@@ -154,22 +127,15 @@ export class AuthService extends BaseService {
         );
       }
 
-      // Check if user needs to set password
       if (!user.password && !user.googleId) {
         throw new AppError(ErrorCode.PASSWORD_NOT_SET);
       }
 
-      // If user has no password but has Google ID, suggest using Google login
       if (!user.password && user.googleId) {
         throw new AppError(ErrorCode.SOCIAL_AUTH_REQUIRED);
       }
 
-      await tx.refreshToken.deleteMany({
-        where: {
-          userId: user.id,
-          expiresAt: { lt: DateTime.now().toJSDate() },
-        },
-      });
+      await this.authRepository.deleteExpiredRefreshTokens(user.id);
 
       const isPasswordValid = await PasswordUtils.comparePassword(
         password,
@@ -186,12 +152,10 @@ export class AuthService extends BaseService {
         isDeactivated: user.isDeactivated || false,
       });
 
-      await tx.refreshToken.create({
-        data: {
-          token: refreshToken,
-          userId: user.id,
-          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
-        },
+      await this.authRepository.createRefreshToken({
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
       });
 
       return {
@@ -218,7 +182,6 @@ export class AuthService extends BaseService {
       throw new AppError(ErrorCode.INVALID_REFRESH_TOKEN);
     }
 
-    // Verify that access token belongs to the same user, even if expired
     let decodedAccess: TokenPayload;
     try {
       decodedAccess = JwtUtils.decodeToken(accessToken);
@@ -230,18 +193,14 @@ export class AuthService extends BaseService {
     }
 
     return await this.handleTransaction(async (tx) => {
-      const user = await tx.user.findUnique({
-        where: { id: decodedRefresh.userId },
-        include: {
-          role: true,
-        },
-      });
+      const user = await this.authRepository.findUserById(
+        decodedRefresh.userId
+      );
 
       if (!user) {
         throw new AppError(ErrorCode.USER_NOT_FOUND);
       }
 
-      // Check if user is deactivated
       if (user.isDeactivated) {
         throw new AppError(
           ErrorCode.ACCOUNT_DEACTIVATED,
@@ -249,26 +208,19 @@ export class AuthService extends BaseService {
         );
       }
 
-      const storedToken = await tx.refreshToken.findFirst({
-        where: {
-          token: refreshToken,
-          userId: decodedRefresh.userId,
-          expiresAt: { gt: DateTime.now().toJSDate() },
-        },
-      });
+      const storedToken = await this.authRepository.findRefreshToken(
+        refreshToken
+      );
 
       if (!storedToken) {
         throw new AppError(ErrorCode.INVALID_REFRESH_TOKEN);
       }
 
-      // Check if access token is expired using Luxon
       const currentTime = DateTime.now().toSeconds();
       if (decodedAccess.exp && decodedAccess.exp > currentTime) {
-        // If access token is not expired, return existing tokens
         return { accessToken, refreshToken };
       }
 
-      // Generate new tokens if access token is expired
       const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
         JwtUtils.generateTokens({
           userId: decodedRefresh.userId,
@@ -277,13 +229,10 @@ export class AuthService extends BaseService {
           isDeactivated: user.isDeactivated || false,
         });
 
-      // Update refresh token in database
-      await tx.refreshToken.update({
-        where: { id: storedToken.id },
-        data: {
-          token: newRefreshToken,
-          expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
-        },
+      await this.authRepository.createRefreshToken({
+        token: newRefreshToken,
+        userId: user.id,
+        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
       });
 
       return {
@@ -299,9 +248,7 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
       }
 
-      await this.prisma.refreshToken.deleteMany({
-        where: { token: refreshToken },
-      });
+      await this.authRepository.deleteRefreshToken(refreshToken);
     });
   }
 
@@ -324,7 +271,6 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_USER_DATA);
       }
 
-      // Check if user is deactivated
       if (user.isDeactivated) {
         throw new AppError(
           ErrorCode.ACCOUNT_DEACTIVATED,
@@ -332,12 +278,10 @@ export class AuthService extends BaseService {
         );
       }
 
-      await this.prisma.refreshToken.create({
-        data: {
-          token: tokens.refreshToken,
-          userId: user.id,
-          expiresAt: JwtUtils.getRefreshTokenExpirationDate(), // 7 days
-        },
+      await this.authRepository.createRefreshToken({
+        token: tokens.refreshToken,
+        userId: user.id,
+        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
       });
 
       return {
@@ -358,10 +302,7 @@ export class AuthService extends BaseService {
     newPassword: string
   ) {
     return await this.handleDatabaseError(async () => {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { password: true },
-      });
+      const user = await this.authRepository.findUserById(userId);
 
       if (!user || !user.password) {
         throw new AppError(ErrorCode.USER_NOT_FOUND);
@@ -378,9 +319,8 @@ export class AuthService extends BaseService {
 
       const hashedPassword = await PasswordUtils.hashPassword(newPassword);
 
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { password: hashedPassword },
+      await this.authRepository.updateUser(userId, {
+        password: hashedPassword,
       });
 
       return { message: "Password changed successfully" };
@@ -390,9 +330,7 @@ export class AuthService extends BaseService {
   static async requestPasswordReset(email: string) {
     return await this.handleWithTimeout(async () => {
       return await this.handleTransaction(async (tx) => {
-        const user = await tx.user.findUnique({
-          where: { email },
-        });
+        const user = await this.authRepository.findUserByEmail(email);
 
         if (!user) {
           return {
@@ -401,7 +339,6 @@ export class AuthService extends BaseService {
           };
         }
 
-        // Check if user is deactivated
         if (user.isDeactivated) {
           throw new AppError(
             ErrorCode.ACCOUNT_DEACTIVATED,
@@ -425,12 +362,10 @@ export class AuthService extends BaseService {
         const resetToken = JwtUtils.generatePasswordToken(user.id, "1h");
         const expiresAt = DateTime.now().plus({ hours: 1 }).toJSDate();
 
-        await tx.passwordResetToken.create({
-          data: {
-            token: resetToken,
-            userId: user.id,
-            expiresAt, // 1 hour
-          },
+        await this.authRepository.createPasswordResetToken({
+          token: resetToken,
+          userId: user.id,
+          expiresAt,
         });
 
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
@@ -461,7 +396,7 @@ export class AuthService extends BaseService {
             "If an account exists with this email, you will receive a password reset link",
         };
       });
-    }, 15000); // 15 second timeout due to email sending
+    }, 15000);
   }
 
   static async resetUserPassword(token: string, newPassword: string) {
@@ -472,15 +407,12 @@ export class AuthService extends BaseService {
 
       const { userId } = JwtUtils.verifyPasswordToken(token);
 
-      const user = await tx.user.findUnique({
-        where: { id: userId },
-      });
+      const user = await this.authRepository.findUserById(userId);
 
       if (!user) {
         throw new AppError(ErrorCode.USER_NOT_FOUND);
       }
 
-      // Check if user is deactivated
       if (user.isDeactivated) {
         throw new AppError(
           ErrorCode.ACCOUNT_DEACTIVATED,
@@ -488,13 +420,9 @@ export class AuthService extends BaseService {
         );
       }
 
-      const resetToken = await tx.passwordResetToken.findFirst({
-        where: {
-          token: token,
-          userId: userId,
-          expiresAt: { gt: DateTime.now().toJSDate() },
-        },
-      });
+      const resetToken = await this.authRepository.findPasswordResetToken(
+        token
+      );
 
       if (!resetToken) {
         throw new AppError(ErrorCode.INVALID_RESET_TOKEN);
@@ -503,13 +431,8 @@ export class AuthService extends BaseService {
       const hashedPassword = await PasswordUtils.hashPassword(newPassword);
 
       await Promise.all([
-        tx.user.update({
-          where: { id: userId },
-          data: { password: hashedPassword },
-        }),
-        tx.passwordResetToken.deleteMany({
-          where: { userId: userId },
-        }),
+        this.authRepository.updateUser(userId, { password: hashedPassword }),
+        this.authRepository.deletePasswordResetTokens(userId),
       ]);
 
       return { message: "Password reset successful" };
@@ -518,7 +441,6 @@ export class AuthService extends BaseService {
 
   static async deactivateUserAccount(userId: string) {
     return await this.handleTransaction(async (tx) => {
-      // Find all active appointments
       const activeAppointments = await tx.appointment.findMany({
         where: {
           OR: [{ userId }, { stylistId: userId }],
@@ -526,7 +448,6 @@ export class AuthService extends BaseService {
         },
       });
 
-      // Update all active appointments to CANCELLED with a note
       if (activeAppointments.length > 0) {
         await tx.appointment.updateMany({
           where: {
@@ -541,24 +462,11 @@ export class AuthService extends BaseService {
         });
       }
 
-      // Delete all refresh tokens
-      await tx.refreshToken.deleteMany({
-        where: { userId },
-      });
-
-      // Delete all password reset tokens
-      await tx.passwordResetToken.deleteMany({
-        where: { userId },
-      });
-
-      // Deactivate the user
-      await tx.user.update({
-        where: { id: userId },
-        data: {
-          isDeactivated: true,
-          deactivatedAt: DateTime.now().toJSDate(),
-        },
-      });
+      await Promise.all([
+        this.authRepository.deleteExpiredRefreshTokens(userId),
+        this.authRepository.deletePasswordResetTokens(userId),
+        this.authRepository.deactivateUser(userId),
+      ]);
     });
   }
 
@@ -567,20 +475,15 @@ export class AuthService extends BaseService {
     data: { name: string; phone?: string }
   ) {
     return await this.handleDatabaseError(async () => {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-      });
+      const user = await this.authRepository.findUserById(userId);
 
       if (!user) {
         throw new AppError(ErrorCode.USER_NOT_FOUND);
       }
 
-      const updatedUser = await this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          name: data.name,
-          phone: data.phone,
-        },
+      const updatedUser = await this.authRepository.updateUser(userId, {
+        name: data.name,
+        phone: data.phone,
       });
 
       return {
@@ -595,63 +498,9 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async createPassword(token: string, password: string) {
-    return await this.handleTransaction(async (tx) => {
-      if (!token) {
-        throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
-      }
-
-      const { userId } = JwtUtils.verifyPasswordToken(token);
-
-      const user = await tx.user.findUnique({
-        where: { id: userId },
-      });
-
-      if (!user) {
-        throw new AppError(ErrorCode.USER_NOT_FOUND);
-      }
-
-      // Check if user is deactivated
-      if (user.isDeactivated) {
-        throw new AppError(
-          ErrorCode.ACCOUNT_DEACTIVATED,
-          "Your account has been deactivated. Please contact support for assistance."
-        );
-      }
-
-      const passwordToken = await tx.passwordCreationToken.findFirst({
-        where: {
-          token: token,
-          userId: userId,
-          expiresAt: { gt: DateTime.now().toJSDate() },
-        },
-      });
-
-      if (!passwordToken) {
-        throw new AppError(ErrorCode.INVALID_PASSWORD_CREATION_TOKEN);
-      }
-
-      const hashedPassword = await PasswordUtils.hashPassword(password);
-
-      await Promise.all([
-        tx.user.update({
-          where: { id: passwordToken.userId },
-          data: { password: hashedPassword },
-        }),
-        tx.passwordCreationToken.deleteMany({
-          where: { userId: passwordToken.userId },
-        }),
-      ]);
-
-      return { message: "Password created successfully" };
-    });
-  }
-
   static async requestNewPasswordCreationToken(email: string) {
     return await this.handleTransaction(async (tx) => {
-      const user = await tx.user.findUnique({
-        where: { email },
-      });
+      const user = await this.authRepository.findUserByEmail(email);
 
       if (!user) {
         return {
@@ -660,7 +509,6 @@ export class AuthService extends BaseService {
         };
       }
 
-      // Check if user is deactivated
       if (user.isDeactivated) {
         throw new AppError(
           ErrorCode.ACCOUNT_DEACTIVATED,
@@ -668,12 +516,10 @@ export class AuthService extends BaseService {
         );
       }
 
-      // Check if user already has a password
       if (user.password) {
         throw new AppError(ErrorCode.PASSWORD_ALREADY_SET);
       }
 
-      // Generate and send new token
       await PasswordService.generateAndSendPasswordCreationToken(
         user.id,
         email
@@ -683,6 +529,48 @@ export class AuthService extends BaseService {
         message:
           "If an account exists with this email, you will receive a password creation link",
       };
+    });
+  }
+
+  static async createPassword(token: string, password: string) {
+    return await this.handleTransaction(async (tx) => {
+      if (!token) {
+        throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
+      }
+
+      const { userId } = JwtUtils.verifyPasswordToken(token);
+
+      const user = await this.authRepository.findUserById(userId);
+
+      if (!user) {
+        throw new AppError(ErrorCode.USER_NOT_FOUND);
+      }
+
+      if (user.isDeactivated) {
+        throw new AppError(
+          ErrorCode.ACCOUNT_DEACTIVATED,
+          "Your account has been deactivated. Please contact support for assistance."
+        );
+      }
+
+      const passwordToken = await this.authRepository.findPasswordCreationToken(
+        token
+      );
+
+      if (!passwordToken) {
+        throw new AppError(ErrorCode.INVALID_PASSWORD_CREATION_TOKEN);
+      }
+
+      const hashedPassword = await PasswordUtils.hashPassword(password);
+
+      await Promise.all([
+        this.authRepository.updateUser(passwordToken.userId, {
+          password: hashedPassword,
+        }),
+        this.authRepository.deletePasswordCreationTokens(passwordToken.userId),
+      ]);
+
+      return { message: "Password created successfully" };
     });
   }
 }

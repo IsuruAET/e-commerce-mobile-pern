@@ -24,19 +24,23 @@ export const roleSchema = z.object({
 });
 
 export const createRoleSchema = z.object({
-  body: z.object({
-    name: z.string().min(1, "Role name is required"),
-    description: z.string().optional(),
-    permissions: z.array(z.string().uuid()),
-  }),
+  body: z
+    .object({
+      name: z.string().min(1, "Role name is required"),
+      description: z.string().optional(),
+      permissions: z.array(z.string().uuid()),
+    })
+    .strict(),
 });
 
 export const updateRoleSchema = z.object({
-  body: z.object({
-    name: z.string().min(1, "Role name is required").optional(),
-    description: z.string().optional(),
-    permissions: z.array(z.string().uuid()).optional(),
-  }),
+  body: z
+    .object({
+      name: z.string().min(1, "Role name is required").optional(),
+      description: z.string().optional(),
+      permissions: z.array(z.string().uuid()).optional(),
+    })
+    .strict(),
 });
 
 export const roleIdSchema = z.object({
@@ -46,8 +50,8 @@ export const roleIdSchema = z.object({
 });
 
 export type Role = z.infer<typeof roleSchema>;
+export type RolePermission = z.infer<typeof rolePermissionSchema>;
+export type Permission = z.infer<typeof permissionSchema>;
 export type CreateRoleInput = z.infer<typeof createRoleSchema>["body"];
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>["body"];
 export type RoleIdParams = z.infer<typeof roleIdSchema>["params"];
-export type Permission = z.infer<typeof permissionSchema>;
-export type RolePermission = z.infer<typeof rolePermissionSchema>;

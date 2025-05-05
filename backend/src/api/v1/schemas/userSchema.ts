@@ -17,25 +17,29 @@ export const userSchema = z.object({
 });
 
 export const createUserSchema = z.object({
-  body: z.object({
-    email: z.string().email("Invalid email address"),
-    name: z.string().min(1, "Name is required"),
-    phone: z.string().optional(),
-    roleId: z.string().uuid("Invalid role ID"),
-  }),
+  body: z
+    .object({
+      email: z.string().email("Invalid email address"),
+      name: z.string().min(1, "Name is required"),
+      phone: z.string().optional(),
+      roleId: z.string().uuid("Invalid role ID"),
+    })
+    .strict(),
 });
 
 export const updateUserSchema = z.object({
-  body: z.object({
-    email: z.string().email("Invalid email address").optional(),
-    name: z
-      .string()
-      .min(3, "Name must be at least 3 characters")
-      .max(50, "Name must be less than 50 characters")
-      .optional(),
-    phone: z.string().optional(),
-    roleId: z.string().uuid("Invalid role ID").optional(),
-  }),
+  body: z
+    .object({
+      email: z.string().email("Invalid email address").optional(),
+      name: z
+        .string()
+        .min(3, "Name must be at least 3 characters")
+        .max(50, "Name must be less than 50 characters")
+        .optional(),
+      phone: z.string().optional(),
+      roleId: z.string().uuid("Invalid role ID").optional(),
+    })
+    .strict(),
 });
 
 export const userIdSchema = z.object({
@@ -44,7 +48,11 @@ export const userIdSchema = z.object({
   }),
 });
 
-export const sortingUsersSchema = createSortingSchema(["name"] as const);
+export const sortingUsersSchema = createSortingSchema([
+  "name",
+  "email",
+  "createdAt",
+] as const);
 
 export const listUsersSchema = z.object({
   query: z

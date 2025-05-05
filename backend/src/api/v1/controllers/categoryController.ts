@@ -4,9 +4,9 @@ import { CategoryService } from "../services/categoryService";
 import { PaginatedResponse } from "utils/queryBuilder";
 
 export class CategoryController {
-  static async addCategory(req: Request, res: Response, next: NextFunction) {
+  static async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await CategoryService.addCategory(req.body);
+      const category = await CategoryService.createCategory(req.body);
       res.status(201).json({
         success: true,
         message: "Category added successfully",

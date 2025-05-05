@@ -28,7 +28,7 @@ type Pagination = {
 };
 
 export type PaginatedResponse<T> = {
-  data: T[];
+  list: T[];
   pagination: Pagination;
 };
 
