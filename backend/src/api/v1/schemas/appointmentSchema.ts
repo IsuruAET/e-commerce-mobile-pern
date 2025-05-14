@@ -93,15 +93,57 @@ export const listAppointmentsSchema = z.object({
     .strict(),
 });
 
+export const listUserAppointmentsSchema = z.object({
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      stylistIds: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+
+      statuses: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+      startDate: z.string().datetime().optional(),
+      endDate: z.string().datetime().optional(),
+      ...sortingAppointmentsSchema.shape,
+    })
+    .strict(),
+});
+
+export const listStylistAppointmentsSchema = z.object({
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      userIds: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+
+      statuses: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+      startDate: z.string().datetime().optional(),
+      endDate: z.string().datetime().optional(),
+      ...sortingAppointmentsSchema.shape,
+    })
+    .strict(),
+});
+
 export const getAppointmentStatsSchema = z.object({
-  query: z.object({
-    stylistIds: z
-      .string()
-      .optional()
-      .transform((val) => val?.split(",")),
-    startDate: z.string().datetime().optional(),
-    endDate: z.string().datetime().optional(),
-  }),
+  query: z
+    .object({
+      stylistIds: z
+        .string()
+        .optional()
+        .transform((val) => val?.split(",")),
+      startDate: z.string().datetime().optional(),
+      endDate: z.string().datetime().optional(),
+    })
+    .strict(),
 });
 
 export type Appointment = z.infer<typeof appointmentSchema>;
@@ -109,6 +151,12 @@ export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
 export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>;
 export type GetAppointmentInput = z.infer<typeof getAppointmentSchema>;
 export type ListAppointmentsInput = z.infer<typeof listAppointmentsSchema>;
+export type ListUserAppointmentsInput = z.infer<
+  typeof listUserAppointmentsSchema
+>;
+export type ListStylistAppointmentsInput = z.infer<
+  typeof listStylistAppointmentsSchema
+>;
 export type GetAppointmentStatsInput = z.infer<
   typeof getAppointmentStatsSchema
 >;

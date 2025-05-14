@@ -14,6 +14,12 @@ import {
   PrismaTransaction,
 } from "../repositories/appointmentRepository";
 
+interface AppointmentQueryOptions {
+  statuses?: string[];
+  dateRange?: { from?: string; to?: string };
+  // Add other potential filter fields relevant to user/stylist appointments
+}
+
 export class AppointmentService extends BaseService {
   private static appointmentRepository = new AppointmentRepository(
     BaseService.prisma
@@ -142,15 +148,88 @@ export class AppointmentService extends BaseService {
     }, 10000); // 10 second timeout
   }
 
-  static async getUserAppointments(userId: string) {
+  static async getUserAppointments(
+    userId: string,
+    queryParams: Record<string, any>
+  ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      return this.appointmentRepository.findUserAppointments(userId);
+      const { page, count, filters, orderBy } = buildQueryOptions(
+        queryParams,
+        {
+          stylistIds: { type: "array", field: "stylistId" },
+          statuses: { type: "array", field: "status" },
+          dateRange: {
+            type: "dateRange",
+            from: "startDate",
+            to: "endDate",
+            field: "dateTime",
+          },
+        },
+        { dateTime: "desc" } // Default sort order
+      );
+
+      const total = await this.appointmentRepository.countUserAppointments(
+        userId,
+        filters // Pass original filters, userId is handled by the specific repo method
+      );
+
+      const pagination = buildPagination(total, page, count);
+
+      const appointments =
+        await this.appointmentRepository.findUserAppointments(
+          userId,
+          (page - 1) * count,
+          count,
+          orderBy,
+          filters // Pass original filters
+        );
+
+      return {
+        list: appointments,
+        pagination,
+      };
     });
   }
 
-  static async getStylistAppointments(stylistId: string) {
+  static async getStylistAppointments(
+    stylistId: string,
+    queryParams: Record<string, any>
+  ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      return this.appointmentRepository.findStylistAppointments(stylistId);
+      const { page, count, filters, orderBy } = buildQueryOptions(
+        queryParams,
+        {
+          userIds: { type: "array", field: "userId" },
+          statuses: { type: "array", field: "status" },
+          dateRange: {
+            type: "dateRange",
+            from: "startDate",
+            to: "endDate",
+            field: "dateTime",
+          },
+        },
+        { dateTime: "desc" } // Default sort order
+      );
+
+      const total = await this.appointmentRepository.countStylistAppointments(
+        stylistId,
+        filters // Pass original filters, stylistId is handled by the specific repo method
+      );
+      const pagination = buildPagination(total, page, count);
+
+      const appointments =
+        await this.appointmentRepository.findStylistAppointments(
+          stylistId,
+          (page - 1) * count,
+          count,
+          orderBy,
+          filters // Pass original filters
+        );
+
+      return {
+        list: appointments,
+        pagination,
+      };
     });
   }
 

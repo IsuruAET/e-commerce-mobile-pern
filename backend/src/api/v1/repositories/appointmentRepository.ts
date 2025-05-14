@@ -92,6 +92,10 @@ export interface IAppointmentRepository {
 
   findUserAppointments(
     userId: string,
+    skip: number,
+    take: number,
+    orderBy: any,
+    filters: any,
     tx?: PrismaTransaction
   ): Promise<
     (Appointment & {
@@ -108,6 +112,10 @@ export interface IAppointmentRepository {
 
   findStylistAppointments(
     stylistId: string,
+    skip: number,
+    take: number,
+    orderBy: any,
+    filters: any,
     tx?: PrismaTransaction
   ): Promise<
     (Appointment & {
@@ -157,6 +165,18 @@ export interface IAppointmentRepository {
   >;
 
   countAppointments(where: any, tx?: PrismaTransaction): Promise<number>;
+
+  countUserAppointments(
+    userId: string,
+    filters: any,
+    tx?: PrismaTransaction
+  ): Promise<number>;
+
+  countStylistAppointments(
+    stylistId: string,
+    filters: any,
+    tx?: PrismaTransaction
+  ): Promise<number>;
 }
 
 export class AppointmentRepository implements IAppointmentRepository {
@@ -275,10 +295,23 @@ export class AppointmentRepository implements IAppointmentRepository {
     });
   }
 
-  async findUserAppointments(userId: string, tx?: PrismaTransaction) {
+  async findUserAppointments(
+    userId: string,
+    skip: number,
+    take: number,
+    orderBy: any,
+    filters: any,
+    tx?: PrismaTransaction
+  ) {
     const client = this.getClient(tx);
     return client.appointment.findMany({
-      where: { userId },
+      where: {
+        userId,
+        ...filters,
+      },
+      skip,
+      take,
+      orderBy,
       include: {
         services: {
           include: {
@@ -293,16 +326,40 @@ export class AppointmentRepository implements IAppointmentRepository {
           },
         },
       },
-      orderBy: {
-        dateTime: "desc",
+    });
+  }
+
+  async countUserAppointments(
+    userId: string,
+    filters: any,
+    tx?: PrismaTransaction
+  ): Promise<number> {
+    const client = this.getClient(tx);
+    return client.appointment.count({
+      where: {
+        userId,
+        ...filters,
       },
     });
   }
 
-  async findStylistAppointments(stylistId: string, tx?: PrismaTransaction) {
+  async findStylistAppointments(
+    stylistId: string,
+    skip: number,
+    take: number,
+    orderBy: any,
+    filters: any,
+    tx?: PrismaTransaction
+  ) {
     const client = this.getClient(tx);
     return client.appointment.findMany({
-      where: { stylistId },
+      where: {
+        stylistId,
+        ...filters,
+      },
+      skip,
+      take,
+      orderBy,
       include: {
         services: {
           include: {
@@ -317,8 +374,19 @@ export class AppointmentRepository implements IAppointmentRepository {
           },
         },
       },
-      orderBy: {
-        dateTime: "desc",
+    });
+  }
+
+  async countStylistAppointments(
+    stylistId: string,
+    filters: any,
+    tx?: PrismaTransaction
+  ): Promise<number> {
+    const client = this.getClient(tx);
+    return client.appointment.count({
+      where: {
+        stylistId,
+        ...filters,
       },
     });
   }

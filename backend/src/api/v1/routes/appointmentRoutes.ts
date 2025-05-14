@@ -6,6 +6,8 @@ import {
   getAppointmentSchema,
   getAppointmentStatsSchema,
   listAppointmentsSchema,
+  listUserAppointmentsSchema,
+  listStylistAppointmentsSchema,
 } from "../schemas/appointmentSchema";
 import { AppointmentController } from "../controllers/appointmentController";
 import { requirePermission } from "middleware/authHandler";
@@ -38,12 +40,14 @@ router.put(
 router.get(
   "/user/appointments",
   requirePermission(["read_user_appointments"]),
+  validateRequest(listUserAppointmentsSchema),
   AppointmentController.getUserAppointments
 );
 
 router.get(
   "/stylist/appointments",
   requirePermission(["read_stylist_appointments"]),
+  validateRequest(listStylistAppointmentsSchema),
   AppointmentController.getStylistAppointments
 );
 

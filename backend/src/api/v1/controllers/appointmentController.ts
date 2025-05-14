@@ -73,15 +73,18 @@ export class AppointmentController {
 
   static async getUserAppointments(
     req: Request,
-    res: Response<{ success: boolean; data: any[] }>,
+    res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
       const userId = req.auth?.userId as string;
-      const appointments = await AppointmentService.getUserAppointments(userId);
+      const result = await AppointmentService.getUserAppointments(
+        userId,
+        req.query
+      );
       res.status(200).json({
         success: true,
-        data: appointments,
+        data: result,
       });
     } catch (error) {
       next(error);
@@ -90,17 +93,19 @@ export class AppointmentController {
 
   static async getStylistAppointments(
     req: Request,
-    res: Response<{ success: boolean; data: any[] }>,
+    res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
       const userId = req.auth?.userId as string;
-      const appointments = await AppointmentService.getStylistAppointments(
-        userId
+      const stylistId = req.auth?.userId as string;
+      const result = await AppointmentService.getStylistAppointments(
+        stylistId,
+        req.query
       );
       res.status(200).json({
         success: true,
-        data: appointments,
+        data: result,
       });
     } catch (error) {
       next(error);
