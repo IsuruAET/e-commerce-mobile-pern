@@ -26,22 +26,11 @@ export class AppointmentController {
     }
   }
 
-  static async getAppointment(
-    req: Request,
-    res: Response<{ success: boolean; message?: string; data?: any }>,
-    next: NextFunction
-  ) {
+  static async getAppointment(req: Request, res: Response, next: NextFunction) {
     try {
       const appointment = await AppointmentService.getAppointment(
         req.params.id
       );
-      if (!appointment) {
-        res.status(404).json({
-          success: false,
-          message: "Appointment not found",
-        });
-        return;
-      }
       res.status(200).json({
         success: true,
         data: appointment,
@@ -172,7 +161,7 @@ export class AppointmentController {
 
   static async getUserAppointmentById(
     req: Request,
-    res: Response<{ success: boolean; message?: string; data?: any }>,
+    res: Response,
     next: NextFunction
   ) {
     try {
@@ -181,13 +170,6 @@ export class AppointmentController {
         req.params.id,
         userId
       );
-      if (!appointment) {
-        res.status(404).json({
-          success: false,
-          message: "Appointment not found",
-        });
-        return;
-      }
       res.status(200).json({
         success: true,
         data: appointment,
@@ -199,7 +181,7 @@ export class AppointmentController {
 
   static async getStylistAppointmentById(
     req: Request,
-    res: Response<{ success: boolean; message?: string; data?: any }>,
+    res: Response,
     next: NextFunction
   ) {
     try {
@@ -208,13 +190,6 @@ export class AppointmentController {
         req.params.id,
         stylistId
       );
-      if (!appointment) {
-        res.status(404).json({
-          success: false,
-          message: "Appointment not found",
-        });
-        return;
-      }
       res.status(200).json({
         success: true,
         data: appointment,
