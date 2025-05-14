@@ -72,4 +72,18 @@ router.get(
   AppointmentController.listAppointments
 );
 
+router.get(
+  "/user/appointments/:id",
+  requirePermission(["read_user_appointment"]),
+  validateRequest(getAppointmentSchema),
+  AppointmentController.getUserAppointmentById
+);
+
+router.get(
+  "/stylist/appointments/:id",
+  requirePermission(["read_stylist_appointment"]),
+  validateRequest(getAppointmentSchema),
+  AppointmentController.getStylistAppointmentById
+);
+
 export default router;

@@ -325,4 +325,19 @@ export class AppointmentService extends BaseService {
       };
     });
   }
+
+  static async getUserAppointmentById(id: string, userId: string) {
+    return await this.handleNotFound(async () => {
+      return this.appointmentRepository.findUserAppointmentById(id, userId);
+    });
+  }
+
+  static async getStylistAppointmentById(id: string, stylistId: string) {
+    return await this.handleNotFound(async () => {
+      return this.appointmentRepository.findStylistAppointmentById(
+        id,
+        stylistId
+      );
+    });
+  }
 }

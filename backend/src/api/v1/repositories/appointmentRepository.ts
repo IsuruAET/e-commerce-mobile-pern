@@ -177,6 +177,52 @@ export interface IAppointmentRepository {
     filters: any,
     tx?: PrismaTransaction
   ): Promise<number>;
+
+  findUserAppointmentById(
+    id: string,
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<
+    | (Appointment & {
+        services: (AppointmentService & {
+          service: any;
+        })[];
+        user: {
+          id: string;
+          name: string;
+          email: string;
+        };
+        stylist: {
+          id: string;
+          name: string;
+          email: string;
+        };
+      })
+    | null
+  >;
+
+  findStylistAppointmentById(
+    id: string,
+    stylistId: string,
+    tx?: PrismaTransaction
+  ): Promise<
+    | (Appointment & {
+        services: (AppointmentService & {
+          service: any;
+        })[];
+        user: {
+          id: string;
+          name: string;
+          email: string;
+        };
+        stylist: {
+          id: string;
+          name: string;
+          email: string;
+        };
+      })
+    | null
+  >;
 }
 
 export class AppointmentRepository implements IAppointmentRepository {
@@ -451,5 +497,37 @@ export class AppointmentRepository implements IAppointmentRepository {
   async countAppointments(where: any, tx?: PrismaTransaction) {
     const client = this.getClient(tx);
     return client.appointment.count({ where });
+  }
+
+  async findUserAppointmentById(
+    id: string,
+    userId: string,
+    tx?: PrismaTransaction
+  ) {
+    const client = this.getClient(tx);
+    return client.appointment.findFirst({
+      where: { id, userId },
+      include: {
+        services: { include: { service: true } },
+        user: { select: { id: true, name: true, email: true } },
+        stylist: { select: { id: true, name: true, email: true } },
+      },
+    });
+  }
+
+  async findStylistAppointmentById(
+    id: string,
+    stylistId: string,
+    tx?: PrismaTransaction
+  ) {
+    const client = this.getClient(tx);
+    return client.appointment.findFirst({
+      where: { id, stylistId },
+      include: {
+        services: { include: { service: true } },
+        user: { select: { id: true, name: true, email: true } },
+        stylist: { select: { id: true, name: true, email: true } },
+      },
+    });
   }
 }
