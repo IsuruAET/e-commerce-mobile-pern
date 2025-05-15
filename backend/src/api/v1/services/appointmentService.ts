@@ -153,20 +153,16 @@ export class AppointmentService extends BaseService {
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(
-        queryParams,
-        {
-          stylistIds: { type: "array", field: "stylistId" },
-          statuses: { type: "array", field: "status" },
-          dateRange: {
-            type: "dateRange",
-            from: "startDate",
-            to: "endDate",
-            field: "dateTime",
-          },
+      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+        stylistIds: { type: "array", field: "stylistId" },
+        statuses: { type: "array", field: "status" },
+        dateRange: {
+          type: "dateRange",
+          from: "startDate",
+          to: "endDate",
+          field: "dateTime",
         },
-        { dateTime: "desc" } // Default sort order
-      );
+      });
 
       const total = await this.appointmentRepository.countUserAppointments(
         userId,
@@ -196,20 +192,16 @@ export class AppointmentService extends BaseService {
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(
-        queryParams,
-        {
-          userIds: { type: "array", field: "userId" },
-          statuses: { type: "array", field: "status" },
-          dateRange: {
-            type: "dateRange",
-            from: "startDate",
-            to: "endDate",
-            field: "dateTime",
-          },
+      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+        userIds: { type: "array", field: "userId" },
+        statuses: { type: "array", field: "status" },
+        dateRange: {
+          type: "dateRange",
+          from: "startDate",
+          to: "endDate",
+          field: "dateTime",
         },
-        { dateTime: "desc" } // Default sort order
-      );
+      });
 
       const total = await this.appointmentRepository.countStylistAppointments(
         stylistId,

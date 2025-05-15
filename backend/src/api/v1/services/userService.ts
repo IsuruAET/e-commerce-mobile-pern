@@ -44,10 +44,14 @@ export class UserService extends BaseService {
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
-        roleIds: { type: "array", field: "roleId" },
-        isDeactivated: { type: "boolean" },
-      });
+      const { page, count, filters, orderBy } = buildQueryOptions(
+        queryParams,
+        {
+          roleIds: { type: "array", field: "roleId" },
+          isDeactivated: { type: "boolean" },
+        },
+        ["email", "name"]
+      );
 
       // Get the total count with the filters
       const total = await this.userRepository.countUsers(filters);

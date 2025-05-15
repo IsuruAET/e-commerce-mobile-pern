@@ -67,6 +67,7 @@ export const listUsersSchema = z.object({
         .optional()
         .transform((val) => val === "true"),
       ...sortingUsersSchema.shape,
+      search: z.string().optional(),
     })
     .strict(),
 });
