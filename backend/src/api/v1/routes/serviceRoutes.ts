@@ -28,6 +28,13 @@ router.get(
   ServiceController.listActiveServices
 );
 
+// Get services for dropdown
+router.get(
+  "/options",
+  requirePermission(["read_services"]),
+  ServiceController.getServicesForDropdown
+);
+
 router.get(
   "/:id",
   requirePermission(["read_service"]),

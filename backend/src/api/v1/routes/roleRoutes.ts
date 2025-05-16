@@ -28,6 +28,13 @@ router.get(
   RoleController.listPermissions
 );
 
+// Get roles for dropdown
+router.get(
+  "/options",
+  requirePermission(["manage_roles"]),
+  RoleController.getRolesForDropdown
+);
+
 // Get role by id
 router.get(
   "/:id",

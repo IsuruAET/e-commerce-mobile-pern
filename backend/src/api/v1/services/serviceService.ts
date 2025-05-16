@@ -183,4 +183,23 @@ export class ServiceService extends BaseService {
       await this.serviceRepository.deleteService(id, tx);
     });
   }
+
+  static async getServicesForDropdown() {
+    return await this.handleDatabaseError(async () => {
+      const services = await this.serviceRepository.findServices(
+        { isActive: true },
+        {
+          category: true,
+        },
+        0,
+        1000,
+        { name: "asc" }
+      );
+
+      return services.map((service) => ({
+        id: service.id,
+        name: service.name,
+      }));
+    });
+  }
 }

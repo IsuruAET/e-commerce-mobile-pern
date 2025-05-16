@@ -93,4 +93,20 @@ export class RoleController {
       next(error);
     }
   }
+
+  static async getRolesForDropdown(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const roles = await RoleService.getRolesForDropdown();
+      res.status(200).json({
+        success: true,
+        data: roles,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

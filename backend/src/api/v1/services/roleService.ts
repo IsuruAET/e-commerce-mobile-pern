@@ -97,4 +97,14 @@ export class RoleService extends BaseService {
       return this.roleRepository.getAllPermissions();
     });
   }
+
+  static async getRolesForDropdown() {
+    return await this.handleDatabaseError(async () => {
+      const roles = await this.roleRepository.getAllRoles();
+      return roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+      }));
+    });
+  }
 }

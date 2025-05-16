@@ -110,4 +110,20 @@ export class CategoryController {
       next(error);
     }
   }
+
+  static async getCategoriesForDropdown(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const categories = await CategoryService.getCategoriesForDropdown();
+      res.status(200).json({
+        success: true,
+        data: categories,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

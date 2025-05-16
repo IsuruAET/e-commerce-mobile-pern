@@ -1302,6 +1302,63 @@
 							"response": []
 						},
 						{
+							"name": "List Role Options",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Test response time",
+											"pm.test('Response time is less than 500ms', function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(500);",
+											"});",
+											"",
+											"// Parse the response body",
+											"var jsonData = pm.response.json();",
+											"",
+											"// Test response structure",
+											"pm.test('Response has required fields', function () {",
+											"    pm.expect(Array.isArray(jsonData.data)).to.be.true;",
+											"});",
+											"",
+											"// Test response status",
+											"pm.test('Status code is 200', function () {",
+											"    pm.response.to.have.status(200);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "X-CSRF-Token",
+										"value": "{{csrf_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/roles/options",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"roles",
+										"options"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Get Role by ID",
 							"event": [
 								{
@@ -2327,6 +2384,63 @@
 							"response": []
 						},
 						{
+							"name": "List Category Options",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Test response time",
+											"pm.test('Response time is less than 500ms', function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(500);",
+											"});",
+											"",
+											"// Parse the response body",
+											"var jsonData = pm.response.json();",
+											"",
+											"// Test response structure",
+											"pm.test('Response has required fields', function () {",
+											"    pm.expect(Array.isArray(jsonData.data)).to.be.true;",
+											"});",
+											"",
+											"// Test response status",
+											"pm.test('Status code is 200', function () {",
+											"    pm.response.to.have.status(200);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "X-CSRF-Token",
+										"value": "{{csrf_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/categories/options",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"categories",
+										"options"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Get Category by ID",
 							"event": [
 								{
@@ -2814,6 +2928,63 @@
 											"value": "asc",
 											"disabled": true
 										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "List Service Options",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Test response time",
+											"pm.test('Response time is less than 500ms', function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(500);",
+											"});",
+											"",
+											"// Parse the response body",
+											"var jsonData = pm.response.json();",
+											"",
+											"// Test response structure",
+											"pm.test('Response has required fields', function () {",
+											"    pm.expect(Array.isArray(jsonData.data)).to.be.true;",
+											"});",
+											"",
+											"// Test response status",
+											"pm.test('Status code is 200', function () {",
+											"    pm.response.to.have.status(200);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "X-CSRF-Token",
+										"value": "{{csrf_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/services/options",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"services",
+										"options"
 									]
 								}
 							},

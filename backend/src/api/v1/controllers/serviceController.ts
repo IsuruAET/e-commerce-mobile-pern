@@ -88,4 +88,20 @@ export class ServiceController {
       next(error);
     }
   }
+
+  static async getServicesForDropdown(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const services = await ServiceService.getServicesForDropdown();
+      res.status(200).json({
+        success: true,
+        data: services,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

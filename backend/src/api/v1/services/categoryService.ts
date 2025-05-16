@@ -115,4 +115,20 @@ export class CategoryService extends BaseService {
       });
     });
   }
+
+  static async getCategoriesForDropdown() {
+    return await this.handleDatabaseError(async () => {
+      const categories = await this.categoryRepository.findCategories(
+        { isActive: true },
+        0,
+        1000,
+        { name: "asc" }
+      );
+
+      return categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+      }));
+    });
+  }
 }
