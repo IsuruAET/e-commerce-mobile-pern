@@ -52,6 +52,8 @@ export enum ErrorCode {
   FOREIGN_KEY_CONSTRAINT_VIOLATION = "FOREIGN_KEY_CONSTRAINT_VIOLATION",
   USER_HAS_APPOINTMENTS = "USER_HAS_APPOINTMENTS",
   CATEGORY_HAS_SERVICES = "CATEGORY_HAS_SERVICES",
+  SERVICE_HAS_APPOINTMENTS = "SERVICE_HAS_APPOINTMENTS",
+  CATEGORY_HAS_APPOINTMENTS = "CATEGORY_HAS_APPOINTMENTS",
 
   // Rate Limit Errors (429)
   TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS",
@@ -135,6 +137,10 @@ export const ERROR_MESSAGES: ErrorMessages = {
     "Cannot delete user. User has active appointments as either a client or stylist.",
   [ErrorCode.CATEGORY_HAS_SERVICES]:
     "Cannot delete category. Category has associated services.",
+  [ErrorCode.SERVICE_HAS_APPOINTMENTS]:
+    "Cannot delete service. Service has associated appointments.",
+  [ErrorCode.CATEGORY_HAS_APPOINTMENTS]:
+    "Cannot deactivate category. Category has services with pending or confirmed appointments.",
 
   // Rate Limit Errors
   [ErrorCode.TOO_MANY_REQUESTS]: "Too many requests. Please try again later.",
@@ -200,6 +206,8 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.FOREIGN_KEY_CONSTRAINT_VIOLATION]: 409,
   [ErrorCode.USER_HAS_APPOINTMENTS]: 409,
   [ErrorCode.CATEGORY_HAS_SERVICES]: 409,
+  [ErrorCode.SERVICE_HAS_APPOINTMENTS]: 409,
+  [ErrorCode.CATEGORY_HAS_APPOINTMENTS]: 409,
 
   // Rate Limit Errors
   [ErrorCode.TOO_MANY_REQUESTS]: 429,

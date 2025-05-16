@@ -1,11 +1,7 @@
-import { PrismaClient, Category } from "@prisma/client";
-import { DateTime } from "luxon";
+import { PrismaClient, Category, Prisma } from "@prisma/client";
 
 // Define a type for the Prisma transaction
-export type PrismaTransaction = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use"
->;
+export type PrismaTransaction = Prisma.TransactionClient;
 
 export interface ICategoryRepository {
   // Category operations

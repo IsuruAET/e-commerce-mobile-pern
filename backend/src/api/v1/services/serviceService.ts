@@ -5,6 +5,8 @@ import {
   PaginatedResponse,
 } from "utils/queryBuilder";
 import { ServiceRepository } from "../repositories/serviceRepository";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "../../../constants/errorCodes";
 
 export class ServiceService extends BaseService {
   private static serviceRepository = new ServiceRepository(BaseService.prisma);
@@ -176,6 +178,14 @@ export class ServiceService extends BaseService {
 
   static async deleteService(id: string) {
     return await this.handleTransaction(async (tx) => {
+      // Check if service has any appointments
+      const appointments =
+        await this.serviceRepository.findAppointmentsByServiceId(id, tx);
+
+      if (appointments.length > 0) {
+        throw new AppError(ErrorCode.SERVICE_HAS_APPOINTMENTS);
+      }
+
       // First delete all service images
       await this.serviceRepository.deleteServiceImages(id, tx);
 

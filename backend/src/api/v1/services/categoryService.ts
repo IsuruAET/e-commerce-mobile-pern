@@ -11,11 +11,13 @@ import {
   PaginatedResponse,
 } from "utils/queryBuilder";
 import { CategoryRepository } from "../repositories/categoryRepository";
+import { ServiceRepository } from "../repositories/serviceRepository";
 
 export class CategoryService extends BaseService {
   private static categoryRepository = new CategoryRepository(
     BaseService.prisma
   );
+  private static serviceRepository = new ServiceRepository(BaseService.prisma);
 
   static async createCategory(data: CreateCategoryInput) {
     return await this.handleDatabaseError(async () => {
@@ -94,13 +96,59 @@ export class CategoryService extends BaseService {
 
   static async deactivateCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
+      // Get all services in this category
+      const services = await this.categoryRepository.findServicesByCategoryId(
+        id,
+        tx
+      );
+
+      if (services.length === 0) {
+        return;
+      }
+
+      // Get all appointments for all services in a single query
+      const serviceIds = services.map((service) => service.id);
+      const allAppointments =
+        await this.serviceRepository.findAppointmentsByServiceIds(
+          serviceIds,
+          tx
+        );
+
+      // Check if any appointments are active
+      const hasActiveAppointments = allAppointments.some(
+        (appointment) =>
+          appointment.appointment.status === "PENDING" ||
+          appointment.appointment.status === "CONFIRMED"
+      );
+
+      if (hasActiveAppointments) {
+        const activeAppointments = allAppointments.filter(
+          (appointment) =>
+            appointment.appointment.status === "PENDING" ||
+            appointment.appointment.status === "CONFIRMED"
+        );
+
+        const appointmentIds = activeAppointments
+          .map((appointment) => appointment.appointment.id)
+          .join(", ");
+
+        throw new AppError(
+          ErrorCode.CATEGORY_HAS_APPOINTMENTS,
+          `Cannot deactivate category because there are pending or confirmed appointments with IDs: ${appointmentIds}`
+        );
+      }
+
       // Deactivate all services in this category
-      await this.categoryRepository.updateCategoryServices(id, false);
+      await this.categoryRepository.updateCategoryServices(id, false, tx);
 
       // Deactivate the category
-      await this.categoryRepository.updateCategory(id, {
-        isActive: false,
-      });
+      await this.categoryRepository.updateCategory(
+        id,
+        {
+          isActive: false,
+        },
+        tx
+      );
     });
   }
 

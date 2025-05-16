@@ -4,13 +4,12 @@ import {
   ServiceImage,
   Category,
   Prisma,
+  AppointmentService,
+  Appointment,
 } from "@prisma/client";
 
 // Define a type for the Prisma transaction
-export type PrismaTransaction = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
+export type PrismaTransaction = Prisma.TransactionClient;
 
 export interface IServiceRepository {
   // Service operations
@@ -66,6 +65,16 @@ export interface IServiceRepository {
   ): Promise<ServiceImage[]>;
 
   deleteService(id: string, tx?: PrismaTransaction): Promise<void>;
+
+  findAppointmentsByServiceId(
+    id: string,
+    tx?: PrismaTransaction
+  ): Promise<(AppointmentService & { appointment: Appointment })[]>;
+
+  findAppointmentsByServiceIds(
+    ids: string[],
+    tx?: PrismaTransaction
+  ): Promise<(AppointmentService & { appointment: Appointment })[]>;
 }
 
 export class ServiceRepository implements IServiceRepository {
@@ -186,6 +195,26 @@ export class ServiceRepository implements IServiceRepository {
     const client = this.getClient(tx);
     await client.service.delete({
       where: { id },
+    });
+  }
+
+  async findAppointmentsByServiceId(id: string, tx?: PrismaTransaction) {
+    const client = this.getClient(tx);
+    return client.appointmentService.findMany({
+      where: { serviceId: id },
+      include: {
+        appointment: true,
+      },
+    });
+  }
+
+  async findAppointmentsByServiceIds(ids: string[], tx?: PrismaTransaction) {
+    const client = this.getClient(tx);
+    return client.appointmentService.findMany({
+      where: { serviceId: { in: ids } },
+      include: {
+        appointment: true,
+      },
     });
   }
 }
