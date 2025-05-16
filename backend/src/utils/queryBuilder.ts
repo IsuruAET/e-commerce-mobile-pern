@@ -28,7 +28,7 @@ type Pagination = {
 };
 
 export type PaginatedResponse<T> = {
-  data: T[];
+  list: T[];
   pagination: Pagination;
 };
 
@@ -145,7 +145,7 @@ function applyFilter(
 export function buildQueryOptions(
   queryParams: Record<string, any>,
   filterConfig: Record<string, FilterConfig> = {},
-  defaultSort?: Record<string, "asc" | "desc">
+  searchFields?: string[]
 ): QueryOptions {
   try {
     const page = parseInt(queryParams.page) || DEFAULT_PAGE;
@@ -159,8 +159,6 @@ export function buildQueryOptions(
       const sortOrder = queryParams.sortOrder.toLowerCase();
 
       orderBy = { [sortField]: sortOrder };
-    } else if (defaultSort) {
-      orderBy = { ...defaultSort };
     }
 
     // Handle filters
@@ -177,6 +175,18 @@ export function buildQueryOptions(
         applyFilter(key, value, config, filters);
       }
     });
+
+    // Handle multi-column search
+    if (
+      searchFields &&
+      queryParams.search &&
+      queryParams.search.trim() !== ""
+    ) {
+      const search = queryParams.search.trim();
+      filters.OR = searchFields.map((field) => ({
+        [field]: { contains: search, mode: "insensitive" },
+      }));
+    }
 
     return {
       page,

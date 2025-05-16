@@ -12,6 +12,9 @@ const rolesAndPermissions = {
     "read_user_appointments",
     "read_stylist_appointments",
     "read_appointment_stats",
+    "read_user_appointment",
+    "read_stylist_appointment",
+    "manage_appointment",
     // Auth permissions
     "manage_auth",
     // Category permissions
@@ -30,6 +33,7 @@ const rolesAndPermissions = {
     "read_services",
     "update_service",
     "delete_service",
+    "manage_service",
     // User permissions
     "create_user",
     "read_user",
@@ -44,6 +48,7 @@ const rolesAndPermissions = {
     "read_appointment",
     "update_appointment",
     "read_stylist_appointments",
+    "read_stylist_appointment",
     // Auth permissions
     "manage_auth",
     // Category permissions
@@ -59,6 +64,7 @@ const rolesAndPermissions = {
     "read_appointment",
     "update_appointment",
     "read_user_appointments",
+    "read_user_appointment",
     // Auth permissions
     "manage_auth",
     // Category permissions

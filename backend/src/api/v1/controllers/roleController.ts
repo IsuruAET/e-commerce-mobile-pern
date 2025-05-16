@@ -69,7 +69,10 @@ export class RoleController {
     try {
       const { id } = req.params;
       await RoleService.deleteRole(id);
-      res.status(204).send();
+      res.status(200).json({
+        success: true,
+        message: "Role deleted successfully",
+      });
     } catch (error) {
       next(error);
     }
@@ -85,6 +88,22 @@ export class RoleController {
       res.status(200).json({
         success: true,
         data: permissions,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getRolesForDropdown(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const roles = await RoleService.getRolesForDropdown();
+      res.status(200).json({
+        success: true,
+        data: roles,
       });
     } catch (error) {
       next(error);

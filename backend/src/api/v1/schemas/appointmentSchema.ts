@@ -22,51 +22,45 @@ export const appointmentSchema = z.object({
 });
 
 export const createAppointmentSchema = z.object({
-  body: z.object({
-    stylistId: z.string().uuid(),
-    dateTime: z.string().datetime(),
-    notes: z.string().optional(),
-    services: z
-      .array(appointmentServiceSchema)
-      .min(1, "At least one service is required"),
-  }),
+  body: z
+    .object({
+      stylistId: z.string().uuid(),
+      dateTime: z.string().datetime(),
+      notes: z.string().optional(),
+      services: z
+        .array(appointmentServiceSchema)
+        .min(1, "At least one service is required"),
+    })
+    .strict(),
 });
 
 export const updateAppointmentSchema = z.object({
   params: z.object({
     id: z.string().uuid(),
   }),
-  body: z.object({
-    dateTime: z.string().datetime().optional(),
-    status: z
-      .enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"], {
-        errorMap: () => ({
-          message: "Invalid status",
-        }),
-      })
-      .optional(),
-    notes: z.string().optional(),
-    services: z
-      .array(appointmentServiceSchema)
-      .min(1, "At least one service is required")
-      .optional(),
-  }),
+  body: z
+    .object({
+      stylistId: z.string().uuid().optional(),
+      dateTime: z.string().datetime().optional(),
+      status: z
+        .enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"], {
+          errorMap: () => ({
+            message: "Invalid status",
+          }),
+        })
+        .optional(),
+      notes: z.string().optional(),
+      services: z
+        .array(appointmentServiceSchema)
+        .min(1, "At least one service is required")
+        .optional(),
+    })
+    .strict(),
 });
 
 export const getAppointmentSchema = z.object({
   params: z.object({
     id: z.string().uuid(),
-  }),
-});
-
-export const getAppointmentStatsSchema = z.object({
-  query: z.object({
-    stylistIds: z
-      .string()
-      .optional()
-      .transform((val) => val?.split(",")),
-    startDate: z.string().datetime().optional(),
-    endDate: z.string().datetime().optional(),
   }),
 });
 
@@ -99,11 +93,88 @@ export const listAppointmentsSchema = z.object({
     .strict(),
 });
 
+export const listUserAppointmentsSchema = z.object({
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      stylistIds: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+
+      statuses: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+      startDate: z.string().datetime().optional(),
+      endDate: z.string().datetime().optional(),
+      ...sortingAppointmentsSchema.shape,
+    })
+    .strict(),
+});
+
+export const listStylistAppointmentsSchema = z.object({
+  query: z
+    .object({
+      ...paginationSchema.shape,
+      userIds: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+
+      statuses: z
+        .string()
+        .optional()
+        .transform((val) => (val ? val.split(",") : [])),
+      startDate: z.string().datetime().optional(),
+      endDate: z.string().datetime().optional(),
+      ...sortingAppointmentsSchema.shape,
+    })
+    .strict(),
+});
+
+export const getAppointmentStatsSchema = z.object({
+  query: z
+    .object({
+      stylistIds: z
+        .string()
+        .optional()
+        .transform((val) => val?.split(",")),
+      startDate: z.string().datetime().optional(),
+      endDate: z.string().datetime().optional(),
+    })
+    .strict(),
+});
+
+export const updateAppointmentStatusSchema = z.object({
+  params: z.object({
+    id: z.string().uuid(),
+  }),
+  body: z
+    .object({
+      status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"], {
+        errorMap: () => ({
+          message: "Invalid status",
+        }),
+      }),
+    })
+    .strict(),
+});
+
 export type Appointment = z.infer<typeof appointmentSchema>;
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
 export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>;
 export type GetAppointmentInput = z.infer<typeof getAppointmentSchema>;
+export type ListAppointmentsInput = z.infer<typeof listAppointmentsSchema>;
+export type ListUserAppointmentsInput = z.infer<
+  typeof listUserAppointmentsSchema
+>;
+export type ListStylistAppointmentsInput = z.infer<
+  typeof listStylistAppointmentsSchema
+>;
 export type GetAppointmentStatsInput = z.infer<
   typeof getAppointmentStatsSchema
 >;
-export type ListAppointmentsInput = z.infer<typeof listAppointmentsSchema>;
+export type UpdateAppointmentStatusInput = z.infer<
+  typeof updateAppointmentStatusSchema
+>;

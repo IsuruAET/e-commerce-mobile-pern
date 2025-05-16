@@ -17,14 +17,14 @@ router.post(
   "/",
   requirePermission(["create_category"]),
   validateRequest(createCategorySchema),
-  CategoryController.addCategory
+  CategoryController.createCategory
 );
 
+// Get categories for dropdown
 router.get(
-  "/:id",
-  requirePermission(["read_category"]),
-  validateRequest(categoryIdSchema),
-  CategoryController.getCategoryById
+  "/options",
+  requirePermission(["read_categories"]),
+  CategoryController.getCategoriesForDropdown
 );
 
 router.get(
@@ -32,6 +32,13 @@ router.get(
   requirePermission(["read_categories"]),
   validateRequest(listCategoriesSchema),
   CategoryController.listCategories
+);
+
+router.get(
+  "/:id",
+  requirePermission(["read_category"]),
+  validateRequest(categoryIdSchema),
+  CategoryController.getCategoryById
 );
 
 router.put(

@@ -18,7 +18,7 @@ router.post(
   "/",
   requirePermission(["create_service"]),
   validateRequest(createServiceSchema),
-  ServiceController.addService
+  ServiceController.createService
 );
 
 router.get(
@@ -26,6 +26,13 @@ router.get(
   requirePermission(["read_active_services"]),
   validateRequest(listActiveServicesSchema),
   ServiceController.listActiveServices
+);
+
+// Get services for dropdown
+router.get(
+  "/options",
+  requirePermission(["read_services"]),
+  ServiceController.getServicesForDropdown
 );
 
 router.get(
@@ -55,6 +62,20 @@ router.delete(
   requirePermission(["delete_service"]),
   validateRequest(serviceIdSchema),
   ServiceController.deleteService
+);
+
+router.patch(
+  "/:id/deactivate",
+  requirePermission(["manage_service"]),
+  validateRequest(serviceIdSchema),
+  ServiceController.deactivateService
+);
+
+router.patch(
+  "/:id/reactivate",
+  requirePermission(["manage_service"]),
+  validateRequest(serviceIdSchema),
+  ServiceController.reactivateService
 );
 
 export default router;

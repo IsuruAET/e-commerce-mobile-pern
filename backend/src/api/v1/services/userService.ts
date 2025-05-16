@@ -10,25 +10,18 @@ import {
   buildPagination,
   PaginatedResponse,
 } from "utils/queryBuilder";
+import { UserRepository } from "../repositories/userRepository";
 
 export class UserService extends BaseService {
+  private static userRepository = new UserRepository(BaseService.prisma);
+
   static async createUser(data: CreateUserInput) {
     return await this.handleDatabaseError(async () => {
-      const user = await this.prisma.user.create({
-        data: {
-          email: data.email,
-          name: data.name,
-          phone: data.phone,
-          roleId: data.roleId,
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+      const user = await this.userRepository.createUser({
+        email: data.email,
+        name: data.name,
+        phone: data.phone,
+        roleId: data.roleId,
       });
 
       // Generate and send password creation token
@@ -43,17 +36,7 @@ export class UserService extends BaseService {
 
   static async getUserById(id: string) {
     return await this.handleNotFound(async () => {
-      return await this.prisma.user.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
+      return await this.userRepository.findUserById(id);
     });
   }
 
@@ -61,29 +44,29 @@ export class UserService extends BaseService {
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
-        roleIds: { type: "array", field: "roleId" },
-        isDeactivated: { type: "boolean" },
-      });
+      const { page, count, filters, orderBy } = buildQueryOptions(
+        queryParams,
+        {
+          roleIds: { type: "array", field: "roleId" },
+          isDeactivated: { type: "boolean" },
+        },
+        ["email", "name"]
+      );
 
       // Get the total count with the filters
-      const total = await this.prisma.user.count({ where: filters });
+      const total = await this.userRepository.countUsers(filters);
 
       const pagination = buildPagination(total, page, count);
 
       // Apply pagination and sorting
-      const users = await this.prisma.user.findMany({
-        where: filters,
-        include: {
-          role: true,
-        },
-        skip: (page - 1) * count,
-        take: count,
-        orderBy,
-      });
+      const users = await this.userRepository.findUsers(
+        filters,
+        { skip: (page - 1) * count, take: count },
+        orderBy
+      );
 
       return {
-        data: users,
+        list: users,
         pagination,
       };
     });
@@ -93,67 +76,42 @@ export class UserService extends BaseService {
     return await this.handleNotFound(async () => {
       const updateData: any = { ...data };
 
-      const user = await this.prisma.user.update({
-        where: { id },
-        data: {
-          email: updateData.email,
-          name: updateData.name,
-          phone: updateData.phone,
-          role: {
-            connect: { id: updateData.role },
-          },
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+      return await this.userRepository.updateUser(id, {
+        email: updateData.email,
+        name: updateData.name,
+        phone: updateData.phone,
+        roleId: updateData.roleId,
       });
-
-      return user;
     });
   }
 
   static async deleteUser(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if user has any appointments as client or stylist
-      const appointments = await tx.appointment.findFirst({
-        where: {
-          OR: [{ userId: id }, { stylistId: id }],
-        },
-      });
+      const appointments = await this.userRepository.findUserAppointments(
+        id,
+        tx
+      );
 
-      if (appointments) {
+      if (appointments.length > 0) {
         throw new AppError(ErrorCode.USER_HAS_APPOINTMENTS);
       }
 
-      // First delete all related refresh tokens and password reset tokens
-      await tx.refreshToken.deleteMany({
-        where: { userId: id },
-      });
+      // Delete all related tokens
+      await this.userRepository.deleteUserTokens(id, tx);
 
-      await tx.passwordResetToken.deleteMany({
-        where: { userId: id },
-      });
-
-      await tx.user.delete({
-        where: { id },
-      });
+      // Delete the user
+      await this.userRepository.deleteUser(id, tx);
     });
   }
 
   static async deactivateUser(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Find all active appointments
-      const activeAppointments = await tx.appointment.findMany({
-        where: {
-          OR: [{ userId: id }, { stylistId: id }],
-          status: { in: ["PENDING", "CONFIRMED"] },
-        },
-      });
+      const activeAppointments = await this.userRepository.findUserAppointments(
+        id,
+        tx
+      );
 
       // Update all active appointments to CANCELLED with a note
       if (activeAppointments.length > 0) {
@@ -170,37 +128,17 @@ export class UserService extends BaseService {
         });
       }
 
-      // Delete all refresh tokens
-      await tx.refreshToken.deleteMany({
-        where: { userId: id },
-      });
+      // Delete all tokens
+      await this.userRepository.deleteUserTokens(id, tx);
 
-      // Delete all password reset tokens
-      await tx.passwordResetToken.deleteMany({
-        where: { userId: id },
-      });
-
-      // Soft delete the user
-      await tx.user.update({
-        where: { id },
-        data: {
-          isDeactivated: true,
-          deactivatedAt: DateTime.now().toJSDate(),
-        },
-      });
+      // Deactivate the user
+      await this.userRepository.deactivateUser(id, tx);
     });
   }
 
   static async reactivateUser(id: string) {
     return await this.handleDatabaseError(async () => {
-      // Reactivate the user by setting isDeactivated to false and clearing deactivatedAt
-      await this.prisma.user.update({
-        where: { id },
-        data: {
-          isDeactivated: false,
-          deactivatedAt: null,
-        },
-      });
+      return await this.userRepository.reactivateUser(id);
     });
   }
 }

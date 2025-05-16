@@ -4,8 +4,13 @@ import {
   buildPagination,
   PaginatedResponse,
 } from "utils/queryBuilder";
+import { ServiceRepository } from "../repositories/serviceRepository";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "../../../constants/errorCodes";
 
 export class ServiceService extends BaseService {
+  private static serviceRepository = new ServiceRepository(BaseService.prisma);
+
   static async createService(data: {
     name: string;
     description: string;
@@ -16,8 +21,8 @@ export class ServiceService extends BaseService {
   }) {
     return await this.handleTransaction(async (tx) => {
       // First create the service
-      const service = await tx.service.create({
-        data: {
+      const service = await this.serviceRepository.createService(
+        {
           name: data.name,
           description: data.description,
           price: data.price,
@@ -25,18 +30,16 @@ export class ServiceService extends BaseService {
           categoryId: data.categoryId,
           isActive: true,
         },
-      });
+        tx
+      );
 
       // Then create the service images
-      const serviceImages = await Promise.all(
-        data.images.map((url) =>
-          tx.serviceImage.create({
-            data: {
-              url,
-              serviceId: service.id,
-            },
-          })
-        )
+      const serviceImages = await this.serviceRepository.createServiceImages(
+        data.images.map((url) => ({
+          url,
+          serviceId: service.id,
+        })),
+        tx
       );
 
       return {
@@ -48,13 +51,7 @@ export class ServiceService extends BaseService {
 
   static async getServiceById(id: string) {
     return await this.handleNotFound(async () => {
-      return await this.prisma.service.findUnique({
-        where: { id },
-        include: {
-          images: true,
-          category: true,
-        },
-      });
+      return await this.serviceRepository.findServiceById(id);
     });
   }
 
@@ -66,33 +63,30 @@ export class ServiceService extends BaseService {
         categoryIds: { type: "array", field: "categoryId" },
       });
 
+      const where = {
+        isActive: true,
+        ...filters,
+      };
+
       // Get the total count with the filters
-      const total = await this.prisma.service.count({
-        where: {
-          isActive: true,
-          ...filters,
-        },
-      });
+      const total = await this.serviceRepository.countServices(where);
 
       const pagination = buildPagination(total, page, count);
 
       // Apply pagination and sorting
-      const services = await this.prisma.service.findMany({
-        where: {
-          isActive: true,
-          ...filters,
-        },
-        include: {
+      const services = await this.serviceRepository.findServices(
+        where,
+        {
           images: true,
           category: true,
         },
-        skip: (page - 1) * count,
-        take: count,
-        orderBy,
-      });
+        (page - 1) * count,
+        count,
+        orderBy || {}
+      );
 
       return {
-        data: services,
+        list: services,
         pagination,
       };
     });
@@ -108,24 +102,24 @@ export class ServiceService extends BaseService {
       });
 
       // Get the total count with the filters
-      const total = await this.prisma.service.count({ where: filters });
+      const total = await this.serviceRepository.countServices(filters);
 
       const pagination = buildPagination(total, page, count);
 
       // Apply pagination and sorting
-      const services = await this.prisma.service.findMany({
-        where: filters,
-        include: {
+      const services = await this.serviceRepository.findServices(
+        filters,
+        {
           images: true,
           category: true,
         },
-        skip: (page - 1) * count,
-        take: count,
-        orderBy,
-      });
+        (page - 1) * count,
+        count,
+        orderBy || {}
+      );
 
       return {
-        data: services,
+        list: services,
         pagination,
       };
     });
@@ -145,9 +139,9 @@ export class ServiceService extends BaseService {
   ) {
     return await this.handleTransaction(async (tx) => {
       // Update service
-      const service = await tx.service.update({
-        where: { id },
-        data: {
+      const service = await this.serviceRepository.updateService(
+        id,
+        {
           name: data.name,
           description: data.description,
           price: data.price,
@@ -155,28 +149,21 @@ export class ServiceService extends BaseService {
           categoryId: data.categoryId,
           isActive: data.isActive,
         },
-        include: {
-          images: true,
-        },
-      });
+        tx
+      );
 
       // If images are provided, update them
       if (data.images) {
         // Delete existing images
-        await tx.serviceImage.deleteMany({
-          where: { serviceId: id },
-        });
+        await this.serviceRepository.deleteServiceImages(id, tx);
 
         // Create new images
-        const newImages = await Promise.all(
-          data.images.map((url) =>
-            tx.serviceImage.create({
-              data: {
-                url,
-                serviceId: id,
-              },
-            })
-          )
+        const newImages = await this.serviceRepository.createServiceImages(
+          data.images.map((url) => ({
+            url,
+            serviceId: id,
+          })),
+          tx
         );
 
         return {
@@ -191,15 +178,93 @@ export class ServiceService extends BaseService {
 
   static async deleteService(id: string) {
     return await this.handleTransaction(async (tx) => {
+      // Check if service has any appointments
+      const appointments =
+        await this.serviceRepository.findAppointmentsByServiceId(id, tx);
+
+      if (appointments.length > 0) {
+        throw new AppError(ErrorCode.SERVICE_HAS_APPOINTMENTS);
+      }
+
       // First delete all service images
-      await tx.serviceImage.deleteMany({
-        where: { serviceId: id },
-      });
+      await this.serviceRepository.deleteServiceImages(id, tx);
 
       // Then delete the service
-      await tx.service.delete({
-        where: { id },
-      });
+      await this.serviceRepository.deleteService(id, tx);
+    });
+  }
+
+  static async getServicesForDropdown() {
+    return await this.handleDatabaseError(async () => {
+      const services = await this.serviceRepository.findServices(
+        { isActive: true },
+        {
+          category: true,
+        },
+        0,
+        1000,
+        { name: "asc" }
+      );
+
+      return services.map((service) => ({
+        id: service.id,
+        name: service.name,
+      }));
+    });
+  }
+
+  static async deactivateService(id: string) {
+    return await this.handleTransaction(async (tx) => {
+      // Check if service has any active appointments
+      const appointments =
+        await this.serviceRepository.findAppointmentsByServiceId(id, tx);
+
+      if (appointments.length > 0) {
+        const hasActiveAppointments = appointments.some(
+          (appointment) =>
+            appointment.appointment.status === "PENDING" ||
+            appointment.appointment.status === "CONFIRMED"
+        );
+
+        if (hasActiveAppointments) {
+          const activeAppointments = appointments.filter(
+            (appointment) =>
+              appointment.appointment.status === "PENDING" ||
+              appointment.appointment.status === "CONFIRMED"
+          );
+
+          const appointmentIds = activeAppointments
+            .map((appointment) => appointment.appointment.id)
+            .join(", ");
+
+          throw new AppError(
+            ErrorCode.SERVICE_HAS_APPOINTMENTS,
+            `Cannot deactivate service because there are pending or confirmed appointments with IDs: ${appointmentIds}`
+          );
+        }
+      }
+
+      // Deactivate the service
+      await this.serviceRepository.updateService(
+        id,
+        {
+          isActive: false,
+        },
+        tx
+      );
+    });
+  }
+
+  static async reactivateService(id: string) {
+    return await this.handleTransaction(async (tx) => {
+      // Reactivate the service
+      await this.serviceRepository.updateService(
+        id,
+        {
+          isActive: true,
+        },
+        tx
+      );
     });
   }
 }

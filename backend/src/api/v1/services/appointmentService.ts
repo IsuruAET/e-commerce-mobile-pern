@@ -9,14 +9,30 @@ import {
   buildPagination,
   PaginatedResponse,
 } from "../../../utils/queryBuilder";
+import {
+  AppointmentRepository,
+  PrismaTransaction,
+} from "../repositories/appointmentRepository";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
+
+interface AppointmentQueryOptions {
+  statuses?: string[];
+  dateRange?: { from?: string; to?: string };
+  // Add other potential filter fields relevant to user/stylist appointments
+}
 
 export class AppointmentService extends BaseService {
+  private static appointmentRepository = new AppointmentRepository(
+    BaseService.prisma
+  );
+
   static async createAppointment(
     input: CreateAppointmentInput["body"],
     userId: string
   ) {
     return await this.handleWithTimeout(async () => {
-      return await this.handleTransaction(async (tx) => {
+      return await this.handleTransaction(async (tx: PrismaTransaction) => {
         // First, get all services to calculate total price and duration
         const services = await tx.service.findMany({
           where: {
@@ -47,73 +63,25 @@ export class AppointmentService extends BaseService {
         // Convert input dateTime to JS Date
         const appointmentDateTime = DateTime.fromISO(input.dateTime).toJSDate();
 
-        return tx.appointment.create({
-          data: {
+        return this.appointmentRepository.createAppointment(
+          {
             userId,
             stylistId: input.stylistId,
             dateTime: appointmentDateTime,
             notes: input.notes,
             estimatedDuration,
             totalPrice,
-            services: {
-              create: input.services.map((serviceInput) => ({
-                serviceId: serviceInput.serviceId,
-                numberOfPeople: serviceInput.numberOfPeople,
-              })),
-            },
+            services: input.services,
           },
-          include: {
-            services: {
-              include: {
-                service: true,
-              },
-            },
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-            stylist: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
-        });
+          tx
+        );
       });
     }, 10000); // 10 second timeout
   }
 
   static async getAppointment(id: string) {
     return await this.handleNotFound(async () => {
-      return this.prisma.appointment.findUnique({
-        where: { id },
-        include: {
-          services: {
-            include: {
-              service: true,
-            },
-          },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          stylist: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-      });
+      return this.appointmentRepository.findAppointmentById(id);
     });
   }
 
@@ -122,7 +90,7 @@ export class AppointmentService extends BaseService {
     input: UpdateAppointmentInput["body"]
   ) {
     return await this.handleWithTimeout(async () => {
-      return await this.handleTransaction(async (tx) => {
+      return await this.handleTransaction(async (tx: PrismaTransaction) => {
         let updateData: any = {
           status: input.status,
           notes: input.notes,
@@ -177,82 +145,85 @@ export class AppointmentService extends BaseService {
           };
         }
 
-        return tx.appointment.update({
-          where: { id },
-          data: updateData,
-          include: {
-            services: {
-              include: {
-                service: true,
-              },
-            },
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-            stylist: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
-        });
+        return this.appointmentRepository.updateAppointment(id, updateData, tx);
       });
     }, 10000); // 10 second timeout
   }
 
-  static async getUserAppointments(userId: string) {
+  static async getUserAppointments(
+    userId: string,
+    queryParams: Record<string, any>
+  ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      return this.prisma.appointment.findMany({
-        where: { userId },
-        include: {
-          services: {
-            include: {
-              service: true,
-            },
-          },
-          stylist: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: {
-          dateTime: "asc",
+      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+        stylistIds: { type: "array", field: "stylistId" },
+        statuses: { type: "array", field: "status" },
+        dateRange: {
+          type: "dateRange",
+          from: "startDate",
+          to: "endDate",
+          field: "dateTime",
         },
       });
+
+      const total = await this.appointmentRepository.countUserAppointments(
+        userId,
+        filters // Pass original filters, userId is handled by the specific repo method
+      );
+
+      const pagination = buildPagination(total, page, count);
+
+      const appointments =
+        await this.appointmentRepository.findUserAppointments(
+          userId,
+          (page - 1) * count,
+          count,
+          orderBy,
+          filters // Pass original filters
+        );
+
+      return {
+        list: appointments,
+        pagination,
+      };
     });
   }
 
-  static async getStylistAppointments(stylistId: string) {
+  static async getStylistAppointments(
+    stylistId: string,
+    queryParams: Record<string, any>
+  ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
-      return this.prisma.appointment.findMany({
-        where: { stylistId },
-        include: {
-          services: {
-            include: {
-              service: true,
-            },
-          },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: {
-          dateTime: "asc",
+      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+        userIds: { type: "array", field: "userId" },
+        statuses: { type: "array", field: "status" },
+        dateRange: {
+          type: "dateRange",
+          from: "startDate",
+          to: "endDate",
+          field: "dateTime",
         },
       });
+
+      const total = await this.appointmentRepository.countStylistAppointments(
+        stylistId,
+        filters // Pass original filters, stylistId is handled by the specific repo method
+      );
+      const pagination = buildPagination(total, page, count);
+
+      const appointments =
+        await this.appointmentRepository.findStylistAppointments(
+          stylistId,
+          (page - 1) * count,
+          count,
+          orderBy,
+          filters // Pass original filters
+        );
+
+      return {
+        list: appointments,
+        pagination,
+      };
     });
   }
 
@@ -278,12 +249,7 @@ export class AppointmentService extends BaseService {
         }
       }
 
-      const result = await this.prisma.appointment.aggregate({
-        where,
-        _sum: {
-          totalPrice: true,
-        },
-      });
+      const result = await this.appointmentRepository.getTotalIncome(where);
       return Number(result._sum?.totalPrice || 0);
     });
   }
@@ -313,12 +279,7 @@ export class AppointmentService extends BaseService {
         }
       }
 
-      const result = await this.prisma.appointmentService.aggregate({
-        where,
-        _sum: {
-          numberOfPeople: true,
-        },
-      });
+      const result = await this.appointmentRepository.getTotalServices(where);
       return Number(result._sum?.numberOfPeople || 0);
     });
   }
@@ -340,43 +301,74 @@ export class AppointmentService extends BaseService {
       });
 
       // Get the total count with the filters
-      const total = await this.prisma.appointment.count({ where: filters });
+      const total = await this.appointmentRepository.countAppointments(filters);
 
       const pagination = buildPagination(total, page, count);
 
       // Apply pagination and sorting
-      const appointments = await this.prisma.appointment.findMany({
-        where: filters,
-        include: {
-          services: {
-            include: {
-              service: true,
-            },
-          },
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-          stylist: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-        skip: (page - 1) * count,
-        take: count,
-        orderBy,
-      });
+      const appointments = await this.appointmentRepository.listAppointments(
+        filters,
+        (page - 1) * count,
+        count,
+        orderBy
+      );
 
       return {
-        data: appointments,
+        list: appointments,
         pagination,
       };
+    });
+  }
+
+  static async getUserAppointmentById(id: string, userId: string) {
+    return await this.handleNotFound(async () => {
+      return this.appointmentRepository.findUserAppointmentById(id, userId);
+    });
+  }
+
+  static async getStylistAppointmentById(id: string, stylistId: string) {
+    return await this.handleNotFound(async () => {
+      return this.appointmentRepository.findStylistAppointmentById(
+        id,
+        stylistId
+      );
+    });
+  }
+
+  static async updateAppointmentStatus(
+    appointmentId: string,
+    newStatus: string
+  ) {
+    return await this.handleDatabaseError(async () => {
+      const appointment = await this.appointmentRepository.findAppointmentById(
+        appointmentId
+      );
+
+      // Validate status transition
+      const currentStatus = appointment?.status;
+      const validTransitions: Record<string, string[]> = {
+        PENDING: ["CONFIRMED", "CANCELLED", "COMPLETED"],
+        CONFIRMED: ["COMPLETED", "CANCELLED"],
+        COMPLETED: [],
+        CANCELLED: [],
+      };
+
+      if (
+        currentStatus &&
+        !validTransitions[currentStatus].includes(newStatus)
+      ) {
+        throw new AppError(
+          ErrorCode.VALIDATION_ERROR,
+          `Cannot change status from ${currentStatus} to ${newStatus}`
+        );
+      }
+
+      const updatedAppointment =
+        await this.appointmentRepository.updateAppointment(appointmentId, {
+          status: newStatus,
+        });
+
+      return updatedAppointment;
     });
   }
 }

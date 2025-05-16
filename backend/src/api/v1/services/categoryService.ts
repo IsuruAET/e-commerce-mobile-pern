@@ -10,17 +10,22 @@ import {
   buildPagination,
   PaginatedResponse,
 } from "utils/queryBuilder";
+import { CategoryRepository } from "../repositories/categoryRepository";
+import { ServiceRepository } from "../repositories/serviceRepository";
 
 export class CategoryService extends BaseService {
-  static async addCategory(data: CreateCategoryInput) {
+  private static categoryRepository = new CategoryRepository(
+    BaseService.prisma
+  );
+  private static serviceRepository = new ServiceRepository(BaseService.prisma);
+
+  static async createCategory(data: CreateCategoryInput) {
     return await this.handleDatabaseError(async () => {
-      const category = await this.prisma.category.create({
-        data: {
-          name: data.name,
-          description: data.description,
-          image: data.image,
-          isActive: data.isActive,
-        },
+      const category = await this.categoryRepository.createCategory({
+        name: data.name,
+        description: data.description || "",
+        image: data.image || "",
+        isActive: data.isActive,
       });
 
       return category;
@@ -29,9 +34,7 @@ export class CategoryService extends BaseService {
 
   static async getCategoryById(id: string) {
     return await this.handleNotFound(async () => {
-      return await this.prisma.category.findUnique({
-        where: { id },
-      });
+      return await this.categoryRepository.findCategoryById(id);
     });
   }
 
@@ -44,20 +47,20 @@ export class CategoryService extends BaseService {
       });
 
       // Get the total count with the filters
-      const total = await this.prisma.category.count({ where: filters });
+      const total = await this.categoryRepository.countCategories(filters);
 
       const pagination = buildPagination(total, page, count);
 
       // Apply pagination and sorting
-      const categories = await this.prisma.category.findMany({
-        where: filters,
-        skip: (page - 1) * count,
-        take: count,
-        orderBy,
-      });
+      const categories = await this.categoryRepository.findCategories(
+        filters,
+        (page - 1) * count,
+        count,
+        orderBy || {}
+      );
 
       return {
-        data: categories,
+        list: categories,
         pagination,
       };
     });
@@ -65,14 +68,11 @@ export class CategoryService extends BaseService {
 
   static async updateCategory(id: string, data: UpdateCategoryInput) {
     return await this.handleNotFound(async () => {
-      const category = await this.prisma.category.update({
-        where: { id },
-        data: {
-          name: data.name,
-          description: data.description,
-          image: data.image,
-          isActive: data.isActive,
-        },
+      const category = await this.categoryRepository.updateCategory(id, {
+        name: data.name,
+        description: data.description,
+        image: data.image,
+        isActive: data.isActive,
       });
 
       return category;
@@ -82,85 +82,101 @@ export class CategoryService extends BaseService {
   static async deleteCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if category has any services
-      const services = await tx.service.findFirst({
-        where: { categoryId: id },
-      });
+      const services = await this.categoryRepository.findServicesByCategoryId(
+        id
+      );
 
-      if (services) {
+      if (services.length > 0) {
         throw new AppError(ErrorCode.CATEGORY_HAS_SERVICES);
       }
 
-      await tx.category.delete({
-        where: { id },
-      });
+      await this.categoryRepository.deleteCategory(id);
     });
   }
 
   static async deactivateCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
-      // Find all active services in this category
-      const activeServices = await tx.service.findMany({
-        where: {
-          categoryId: id,
-          isActive: true,
-        },
-      });
+      // Get all services in this category
+      const services = await this.categoryRepository.findServicesByCategoryId(
+        id,
+        tx
+      );
 
-      // Deactivate all services in this category
-      if (activeServices.length > 0) {
-        await tx.service.updateMany({
-          where: {
-            id: {
-              in: activeServices.map((service) => service.id),
-            },
-          },
-          data: {
-            isActive: false,
-          },
-        });
+      if (services.length === 0) {
+        return;
       }
 
+      // Get all appointments for all services in a single query
+      const serviceIds = services.map((service) => service.id);
+      const allAppointments =
+        await this.serviceRepository.findAppointmentsByServiceIds(
+          serviceIds,
+          tx
+        );
+
+      // Check if any appointments are active
+      const hasActiveAppointments = allAppointments.some(
+        (appointment) =>
+          appointment.appointment.status === "PENDING" ||
+          appointment.appointment.status === "CONFIRMED"
+      );
+
+      if (hasActiveAppointments) {
+        const activeAppointments = allAppointments.filter(
+          (appointment) =>
+            appointment.appointment.status === "PENDING" ||
+            appointment.appointment.status === "CONFIRMED"
+        );
+
+        const appointmentIds = activeAppointments
+          .map((appointment) => appointment.appointment.id)
+          .join(", ");
+
+        throw new AppError(
+          ErrorCode.CATEGORY_HAS_APPOINTMENTS,
+          `Cannot deactivate category because there are pending or confirmed appointments with IDs: ${appointmentIds}`
+        );
+      }
+
+      // Deactivate all services in this category
+      await this.categoryRepository.updateCategoryServices(id, false, tx);
+
       // Deactivate the category
-      await tx.category.update({
-        where: { id },
-        data: {
+      await this.categoryRepository.updateCategory(
+        id,
+        {
           isActive: false,
         },
-      });
+        tx
+      );
     });
   }
 
   static async reactivateCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
-      // Find all inactive services in this category
-      const inactiveServices = await tx.service.findMany({
-        where: {
-          categoryId: id,
-          isActive: false,
-        },
-      });
-
       // Reactivate all services in this category
-      if (inactiveServices.length > 0) {
-        await tx.service.updateMany({
-          where: {
-            id: {
-              in: inactiveServices.map((service) => service.id),
-            },
-          },
-          data: {
-            isActive: true,
-          },
-        });
-      }
+      await this.categoryRepository.updateCategoryServices(id, true);
 
       // Reactivate the category
-      await tx.category.update({
-        where: { id },
-        data: {
-          isActive: true,
-        },
+      await this.categoryRepository.updateCategory(id, {
+        isActive: true,
       });
+    });
+  }
+
+  static async getCategoriesForDropdown() {
+    return await this.handleDatabaseError(async () => {
+      const categories = await this.categoryRepository.findCategories(
+        { isActive: true },
+        0,
+        1000,
+        { name: "asc" }
+      );
+
+      return categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+      }));
     });
   }
 }

@@ -4,9 +4,9 @@ import { CategoryService } from "../services/categoryService";
 import { PaginatedResponse } from "utils/queryBuilder";
 
 export class CategoryController {
-  static async addCategory(req: Request, res: Response, next: NextFunction) {
+  static async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await CategoryService.addCategory(req.body);
+      const category = await CategoryService.createCategory(req.body);
       res.status(201).json({
         success: true,
         message: "Category added successfully",
@@ -105,6 +105,22 @@ export class CategoryController {
       res.status(200).json({
         success: true,
         message: "Category reactivated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getCategoriesForDropdown(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const categories = await CategoryService.getCategoriesForDropdown();
+      res.status(200).json({
+        success: true,
+        data: categories,
       });
     } catch (error) {
       next(error);

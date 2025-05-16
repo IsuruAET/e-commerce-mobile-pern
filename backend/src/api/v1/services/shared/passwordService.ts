@@ -5,8 +5,13 @@ import { AppError } from "middleware/errorHandler";
 import { sendEmail } from "utils/emailUtils";
 import { JwtUtils } from "utils/jwtUtils";
 import { ErrorCode } from "constants/errorCodes";
+import { PasswordRepository } from "../../repositories/passwordRepository";
 
 export class PasswordService extends BaseService {
+  private static passwordRepository = new PasswordRepository(
+    BaseService.prisma
+  );
+
   static async generateAndSendPasswordCreationToken(
     userId: string,
     email: string
@@ -14,14 +19,12 @@ export class PasswordService extends BaseService {
     return await this.handleWithTimeout(async () => {
       return await this.handleTransaction(async (tx) => {
         // Check for recent token requests
-        const recentAttempts = await tx.passwordCreationToken.count({
-          where: {
+        const recentAttempts =
+          await this.passwordRepository.countRecentPasswordCreationTokens(
             userId,
-            createdAt: {
-              gte: DateTime.now().minus({ days: 1 }).toJSDate(),
-            },
-          },
-        });
+            DateTime.now().minus({ days: 1 }).toJSDate(),
+            tx
+          );
 
         if (recentAttempts >= 3) {
           throw new AppError(ErrorCode.TOO_MANY_PASSWORD_ATTEMPTS);
@@ -32,13 +35,14 @@ export class PasswordService extends BaseService {
         const expiresAt = DateTime.now().plus({ hours: 24 }).toJSDate();
 
         // Store the token
-        await tx.passwordCreationToken.create({
-          data: {
+        await this.passwordRepository.createPasswordCreationToken(
+          {
             token,
             userId,
             expiresAt,
           },
-        });
+          tx
+        );
 
         // Send welcome email with password creation link
         const createPasswordUrl = `${process.env.FRONTEND_URL}/create-password?token=${token}`;
