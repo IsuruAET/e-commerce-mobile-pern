@@ -198,4 +198,24 @@ export class AppointmentController {
       next(error);
     }
   }
+
+  static async updateAppointmentStatus(
+    req: Request,
+    res: Response<{ success: boolean; message: string; data: any }>,
+    next: NextFunction
+  ) {
+    try {
+      const appointment = await AppointmentService.updateAppointmentStatus(
+        req.params.id,
+        req.body.status
+      );
+      res.status(200).json({
+        success: true,
+        message: "Appointment status updated successfully",
+        data: appointment,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

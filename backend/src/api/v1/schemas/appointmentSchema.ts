@@ -146,6 +146,21 @@ export const getAppointmentStatsSchema = z.object({
     .strict(),
 });
 
+export const updateAppointmentStatusSchema = z.object({
+  params: z.object({
+    id: z.string().uuid(),
+  }),
+  body: z
+    .object({
+      status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"], {
+        errorMap: () => ({
+          message: "Invalid status",
+        }),
+      }),
+    })
+    .strict(),
+});
+
 export type Appointment = z.infer<typeof appointmentSchema>;
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
 export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>;
@@ -159,4 +174,7 @@ export type ListStylistAppointmentsInput = z.infer<
 >;
 export type GetAppointmentStatsInput = z.infer<
   typeof getAppointmentStatsSchema
+>;
+export type UpdateAppointmentStatusInput = z.infer<
+  typeof updateAppointmentStatusSchema
 >;

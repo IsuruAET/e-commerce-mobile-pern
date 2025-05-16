@@ -2679,7 +2679,7 @@
 													"// Validate response structure",
 													"pm.test(\"Response contains success message\", function () {",
 													"    pm.expect(jsonData).to.have.property(\"message\");",
-													"    pm.expect(jsonData.message).to.equal(\"Category deactivated successfully\");",
+													"    pm.expect(jsonData.message).to.equal(\"Service deactivated successfully\");",
 													"});"
 												],
 												"type": "text/javascript",
@@ -2733,7 +2733,7 @@
 													"// Validate response structure",
 													"pm.test(\"Response contains success message\", function () {",
 													"    pm.expect(jsonData).to.have.property(\"message\");",
-													"    pm.expect(jsonData.message).to.equal(\"Category reactivated successfully\");",
+													"    pm.expect(jsonData.message).to.equal(\"Service reactivated successfully\");",
 													"});"
 												],
 												"type": "text/javascript",
@@ -3485,6 +3485,104 @@
 													"description": "End date for filtering (optional)",
 													"disabled": true
 												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Manage Appointment",
+							"item": [
+								{
+									"name": "Update Appointment Status",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"// Test response time\r",
+													"pm.test('Response time is less than 500ms', function () {\r",
+													"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+													"});\r",
+													"\r",
+													"// Parse the response body\r",
+													"var jsonData = pm.response.json();\r",
+													"\r",
+													"// Test response structure\r",
+													"pm.test('Response has required fields', function () {\r",
+													"    pm.expect(jsonData).to.have.property('success');\r",
+													"    pm.expect(jsonData).to.have.property('message');\r",
+													"    pm.expect(jsonData).to.have.property('data');\r",
+													"});\r",
+													"\r",
+													"pm.test('Response has required data', function () {\r",
+													"    pm.expect(jsonData.data).to.have.property('id');\r",
+													"    pm.expect(jsonData.data).to.have.property('userId');\r",
+													"    pm.expect(jsonData.data).to.have.property('stylistId');\r",
+													"    pm.expect(jsonData.data).to.have.property('dateTime');\r",
+													"    pm.expect(jsonData.data).to.have.property('status');\r",
+													"    pm.expect(jsonData.data).to.have.property('notes');\r",
+													"    pm.expect(jsonData.data).to.have.property('estimatedDuration');\r",
+													"    pm.expect(jsonData.data).to.have.property('totalPrice');\r",
+													"    pm.expect(jsonData.data).to.have.property('services');\r",
+													"    pm.expect(jsonData.data).to.have.property('user');\r",
+													"    pm.expect(jsonData.data).to.have.property('stylist');\r",
+													"});\r",
+													"\r",
+													"// Validate response structure\r",
+													"pm.test(\"Response contains success message\", function () {\r",
+													"    pm.expect(jsonData).to.have.property(\"message\");\r",
+													"    pm.expect(jsonData.message).to.equal(\"Appointment status updated successfully\");\r",
+													"});\r",
+													"\r",
+													"// Test response status\r",
+													"pm.test('Status code is 200', function () {\r",
+													"    pm.response.to.have.status(200);\r",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {}
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{access_token}}"
+											},
+											{
+												"key": "X-CSRF-Token",
+												"value": "{{csrf_token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"status\": \"CANCELLED\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/api/v1/appointments/{{appointment_id}}/status",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"v1",
+												"appointments",
+												"{{appointment_id}}",
+												"status"
 											]
 										}
 									},

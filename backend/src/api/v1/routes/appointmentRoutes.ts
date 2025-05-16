@@ -8,6 +8,7 @@ import {
   listAppointmentsSchema,
   listUserAppointmentsSchema,
   listStylistAppointmentsSchema,
+  updateAppointmentStatusSchema,
 } from "../schemas/appointmentSchema";
 import { AppointmentController } from "../controllers/appointmentController";
 import { requirePermission } from "middleware/authHandler";
@@ -84,6 +85,13 @@ router.get(
   requirePermission(["read_stylist_appointment"]),
   validateRequest(getAppointmentSchema),
   AppointmentController.getStylistAppointmentById
+);
+
+router.patch(
+  "/:id/status",
+  requirePermission(["manage_appointment"]),
+  validateRequest(updateAppointmentStatusSchema),
+  AppointmentController.updateAppointmentStatus
 );
 
 export default router;

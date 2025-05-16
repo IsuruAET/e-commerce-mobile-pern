@@ -14,6 +14,7 @@ const rolesAndPermissions = {
     "read_appointment_stats",
     "read_user_appointment",
     "read_stylist_appointment",
+    "manage_appointment",
     // Auth permissions
     "manage_auth",
     // Category permissions

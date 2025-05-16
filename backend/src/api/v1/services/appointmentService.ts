@@ -13,6 +13,8 @@ import {
   AppointmentRepository,
   PrismaTransaction,
 } from "../repositories/appointmentRepository";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
 
 interface AppointmentQueryOptions {
   statuses?: string[];
@@ -330,6 +332,43 @@ export class AppointmentService extends BaseService {
         id,
         stylistId
       );
+    });
+  }
+
+  static async updateAppointmentStatus(
+    appointmentId: string,
+    newStatus: string
+  ) {
+    return await this.handleDatabaseError(async () => {
+      const appointment = await this.appointmentRepository.findAppointmentById(
+        appointmentId
+      );
+
+      // Validate status transition
+      const currentStatus = appointment?.status;
+      const validTransitions: Record<string, string[]> = {
+        PENDING: ["CONFIRMED", "CANCELLED", "COMPLETED"],
+        CONFIRMED: ["COMPLETED", "CANCELLED"],
+        COMPLETED: [],
+        CANCELLED: [],
+      };
+
+      if (
+        currentStatus &&
+        !validTransitions[currentStatus].includes(newStatus)
+      ) {
+        throw new AppError(
+          ErrorCode.VALIDATION_ERROR,
+          `Cannot change status from ${currentStatus} to ${newStatus}`
+        );
+      }
+
+      const updatedAppointment =
+        await this.appointmentRepository.updateAppointment(appointmentId, {
+          status: newStatus,
+        });
+
+      return updatedAppointment;
     });
   }
 }
