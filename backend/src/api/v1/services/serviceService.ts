@@ -212,4 +212,59 @@ export class ServiceService extends BaseService {
       }));
     });
   }
+
+  static async deactivateService(id: string) {
+    return await this.handleTransaction(async (tx) => {
+      // Check if service has any active appointments
+      const appointments =
+        await this.serviceRepository.findAppointmentsByServiceId(id, tx);
+
+      if (appointments.length > 0) {
+        const hasActiveAppointments = appointments.some(
+          (appointment) =>
+            appointment.appointment.status === "PENDING" ||
+            appointment.appointment.status === "CONFIRMED"
+        );
+
+        if (hasActiveAppointments) {
+          const activeAppointments = appointments.filter(
+            (appointment) =>
+              appointment.appointment.status === "PENDING" ||
+              appointment.appointment.status === "CONFIRMED"
+          );
+
+          const appointmentIds = activeAppointments
+            .map((appointment) => appointment.appointment.id)
+            .join(", ");
+
+          throw new AppError(
+            ErrorCode.SERVICE_HAS_APPOINTMENTS,
+            `Cannot deactivate service because there are pending or confirmed appointments with IDs: ${appointmentIds}`
+          );
+        }
+      }
+
+      // Deactivate the service
+      await this.serviceRepository.updateService(
+        id,
+        {
+          isActive: false,
+        },
+        tx
+      );
+    });
+  }
+
+  static async reactivateService(id: string) {
+    return await this.handleTransaction(async (tx) => {
+      // Reactivate the service
+      await this.serviceRepository.updateService(
+        id,
+        {
+          isActive: true,
+        },
+        tx
+      );
+    });
+  }
 }

@@ -64,4 +64,18 @@ router.delete(
   ServiceController.deleteService
 );
 
+router.patch(
+  "/:id/deactivate",
+  requirePermission(["manage_service"]),
+  validateRequest(serviceIdSchema),
+  ServiceController.deactivateService
+);
+
+router.patch(
+  "/:id/reactivate",
+  requirePermission(["manage_service"]),
+  validateRequest(serviceIdSchema),
+  ServiceController.reactivateService
+);
+
 export default router;

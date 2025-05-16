@@ -32,6 +32,7 @@ const rolesAndPermissions = {
     "read_services",
     "update_service",
     "delete_service",
+    "manage_service",
     // User permissions
     "create_user",
     "read_user",

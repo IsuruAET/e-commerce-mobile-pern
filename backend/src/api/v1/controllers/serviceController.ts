@@ -104,4 +104,38 @@ export class ServiceController {
       next(error);
     }
   }
+
+  static async deactivateService(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { id } = req.params;
+      await ServiceService.deactivateService(id);
+      res.status(200).json({
+        success: true,
+        message: "Service deactivated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async reactivateService(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { id } = req.params;
+      await ServiceService.reactivateService(id);
+      res.status(200).json({
+        success: true,
+        message: "Service reactivated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
