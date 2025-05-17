@@ -1,5 +1,6 @@
 import { PrismaClient, User, Appointment } from "@prisma/client";
 import { DateTime } from "luxon";
+import { redisTokenService } from "../services/shared/redisTokenService";
 
 // Define a type for the Prisma transaction
 export type PrismaTransaction = Omit<
@@ -249,17 +250,11 @@ export class UserRepository implements IUserRepository {
     userId: string,
     tx?: PrismaTransaction
   ): Promise<void> {
-    const client = this.getClient(tx);
+    // Delete all tokens from Redis
     await Promise.all([
-      client.refreshToken.deleteMany({
-        where: { userId },
-      }),
-      client.passwordResetToken.deleteMany({
-        where: { userId },
-      }),
-      client.passwordCreationToken.deleteMany({
-        where: { userId },
-      }),
+      redisTokenService.deleteAllUserTokens("REFRESH", userId),
+      redisTokenService.deleteAllUserTokens("PASSWORD_RESET", userId),
+      redisTokenService.deleteAllUserTokens("PASSWORD_CREATION", userId),
     ]);
   }
 }

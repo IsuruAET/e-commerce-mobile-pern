@@ -1,5 +1,4 @@
 import jwt, { SignOptions } from "jsonwebtoken";
-import { DateTime } from "luxon";
 
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
@@ -85,8 +84,8 @@ export class JwtUtils {
     }
   }
 
-  static getRefreshTokenExpirationDate(days: number = 7): Date {
-    return DateTime.now().plus({ days }).toJSDate();
+  static getRefreshTokenExpirationInSeconds(): number {
+    return 7 * 24 * 60 * 60; // 7 days in seconds
   }
 
   static decodeToken(token: string): TokenPayload {

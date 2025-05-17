@@ -4,9 +4,9 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 
 import { connectDB } from "./config/database";
+import { connectRedis } from "./config/redis";
 import { requestLogger, logger } from "./middleware/logger";
 import v1Routes from "./api/v1/index";
-import { AuthService } from "./api/v1/services/authService";
 import { errorHandler } from "middleware/errorHandler";
 import { requireAuth } from "middleware/authHandler";
 import { requestIdMiddleware } from "middleware/requestId";
@@ -49,13 +49,11 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// Connect to PostgreSQL and start server
+// Connect to PostgreSQL and Redis, then start server
 const startServer = async () => {
   try {
-    await connectDB();
-
-    // Start the refresh token cleanup scheduler
-    AuthService.startCleanupScheduler();
+    // Connect to both PostgreSQL and Redis concurrently
+    await Promise.all([connectDB(), connectRedis()]);
 
     app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);

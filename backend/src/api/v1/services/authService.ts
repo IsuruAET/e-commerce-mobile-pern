@@ -1,4 +1,3 @@
-import { setInterval } from "timers";
 import { DateTime } from "luxon";
 
 import { BaseService } from "./shared/baseService";
@@ -7,45 +6,18 @@ import { sendEmail } from "utils/emailUtils";
 import { PasswordUtils } from "utils/passwordUtils";
 import { JwtUtils, TokenPayload } from "utils/jwtUtils";
 import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
-import { logger } from "middleware/logger";
 import { PasswordService } from "./shared/passwordService";
 import { AuthRepository } from "../repositories/authRepository";
+import { redisTokenService } from "./shared/redisTokenService";
 
 export class AuthService extends BaseService {
   private static authRepository = new AuthRepository(BaseService.prisma);
 
   static async storeRefreshToken(token: string, userId: string) {
     return await this.handleDatabaseError(async () => {
-      await this.authRepository.createRefreshToken({
-        token,
-        userId,
-        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
-      });
+      const expiresIn = JwtUtils.getRefreshTokenExpirationInSeconds();
+      await redisTokenService.setToken("REFRESH", token, userId, expiresIn);
     });
-  }
-
-  static async cleanupExpiredTokens(userId?: string) {
-    return await this.handleDatabaseError(async () => {
-      await this.authRepository.deleteExpiredRefreshTokens(userId);
-    });
-  }
-
-  static async cleanupExpiredPasswordResetTokens() {
-    return await this.handleDatabaseError(async () => {
-      await this.authRepository.deleteExpiredPasswordResetTokens();
-    });
-  }
-
-  static startCleanupScheduler(intervalHours: number = 24) {
-    setInterval(async () => {
-      try {
-        await this.cleanupExpiredTokens();
-        await this.cleanupExpiredPasswordResetTokens();
-        logger.info(`Cleaned up expired tokens at ${DateTime.now().toISO()}`);
-      } catch (error) {
-        logger.error("Error cleaning up expired tokens:", error);
-      }
-    }, intervalHours * 60 * 60 * 1000);
   }
 
   static async registerUser(email: string, password: string, name: string) {
@@ -94,11 +66,7 @@ export class AuthService extends BaseService {
         isDeactivated: user.isDeactivated || false,
       });
 
-      await this.authRepository.createRefreshToken({
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
-      });
+      await this.storeRefreshToken(refreshToken, user.id);
 
       return {
         accessToken,
@@ -135,8 +103,6 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.SOCIAL_AUTH_REQUIRED);
       }
 
-      await this.authRepository.deleteExpiredRefreshTokens(user.id);
-
       const isPasswordValid = await PasswordUtils.comparePassword(
         password,
         user.password as string
@@ -152,11 +118,7 @@ export class AuthService extends BaseService {
         isDeactivated: user.isDeactivated || false,
       });
 
-      await this.authRepository.createRefreshToken({
-        token: refreshToken,
-        userId: user.id,
-        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
-      });
+      await this.storeRefreshToken(refreshToken, user.id);
 
       return {
         accessToken,
@@ -208,11 +170,11 @@ export class AuthService extends BaseService {
         );
       }
 
-      const storedToken = await this.authRepository.findRefreshToken(
+      const storedUserId = await redisTokenService.getToken(
+        "REFRESH",
         refreshToken
       );
-
-      if (!storedToken) {
+      if (!storedUserId || storedUserId !== user.id) {
         throw new AppError(ErrorCode.INVALID_REFRESH_TOKEN);
       }
 
@@ -229,11 +191,7 @@ export class AuthService extends BaseService {
           isDeactivated: user.isDeactivated || false,
         });
 
-      await this.authRepository.createRefreshToken({
-        token: newRefreshToken,
-        userId: user.id,
-        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
-      });
+      await this.storeRefreshToken(newRefreshToken, user.id);
 
       return {
         accessToken: newAccessToken,
@@ -248,7 +206,7 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
       }
 
-      await this.authRepository.deleteRefreshToken(refreshToken);
+      await redisTokenService.deleteToken("REFRESH", refreshToken);
     });
   }
 
@@ -278,11 +236,7 @@ export class AuthService extends BaseService {
         );
       }
 
-      await this.authRepository.createRefreshToken({
-        token: tokens.refreshToken,
-        userId: user.id,
-        expiresAt: JwtUtils.getRefreshTokenExpirationDate(),
-      });
+      await this.storeRefreshToken(tokens.refreshToken, user.id);
 
       return {
         accessToken: tokens.accessToken,
@@ -346,27 +300,15 @@ export class AuthService extends BaseService {
           );
         }
 
-        const recentAttempts = await tx.passwordResetToken.count({
-          where: {
-            userId: user.id,
-            createdAt: {
-              gte: DateTime.now().minus({ days: 1 }).toJSDate(),
-            },
-          },
-        });
-
-        if (recentAttempts >= 3) {
-          throw new AppError(ErrorCode.TOO_MANY_PASSWORD_ATTEMPTS);
-        }
-
         const resetToken = JwtUtils.generatePasswordToken(user.id, "1h");
-        const expiresAt = DateTime.now().plus({ hours: 1 }).toJSDate();
+        const expiresIn = 60 * 60; // 1 hour in seconds
 
-        await this.authRepository.createPasswordResetToken({
-          token: resetToken,
-          userId: user.id,
-          expiresAt,
-        });
+        await redisTokenService.setToken(
+          "PASSWORD_RESET",
+          resetToken,
+          user.id,
+          expiresIn
+        );
 
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
         await sendEmail({
@@ -420,11 +362,11 @@ export class AuthService extends BaseService {
         );
       }
 
-      const resetToken = await this.authRepository.findPasswordResetToken(
+      const storedUserId = await redisTokenService.getToken(
+        "PASSWORD_RESET",
         token
       );
-
-      if (!resetToken) {
+      if (!storedUserId || storedUserId !== userId) {
         throw new AppError(ErrorCode.INVALID_RESET_TOKEN);
       }
 
@@ -432,7 +374,7 @@ export class AuthService extends BaseService {
 
       await Promise.all([
         this.authRepository.updateUser(userId, { password: hashedPassword }),
-        this.authRepository.deletePasswordResetTokens(userId),
+        redisTokenService.deleteToken("PASSWORD_RESET", token),
       ]);
 
       return { message: "Password reset successful" };
@@ -463,8 +405,8 @@ export class AuthService extends BaseService {
       }
 
       await Promise.all([
-        this.authRepository.deleteExpiredRefreshTokens(userId),
-        this.authRepository.deletePasswordResetTokens(userId),
+        redisTokenService.deleteAllUserTokens("REFRESH", userId),
+        redisTokenService.deleteAllUserTokens("PASSWORD_RESET", userId),
         this.authRepository.deactivateUser(userId),
       ]);
     });
@@ -553,21 +495,21 @@ export class AuthService extends BaseService {
         );
       }
 
-      const passwordToken = await this.authRepository.findPasswordCreationToken(
+      const storedUserId = await redisTokenService.getToken(
+        "PASSWORD_CREATION",
         token
       );
-
-      if (!passwordToken) {
+      if (!storedUserId || storedUserId !== userId) {
         throw new AppError(ErrorCode.INVALID_PASSWORD_CREATION_TOKEN);
       }
 
       const hashedPassword = await PasswordUtils.hashPassword(password);
 
       await Promise.all([
-        this.authRepository.updateUser(passwordToken.userId, {
+        this.authRepository.updateUser(userId, {
           password: hashedPassword,
         }),
-        this.authRepository.deletePasswordCreationTokens(passwordToken.userId),
+        redisTokenService.deleteToken("PASSWORD_CREATION", token),
       ]);
 
       return { message: "Password created successfully" };

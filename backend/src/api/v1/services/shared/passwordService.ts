@@ -1,55 +1,43 @@
-import { DateTime } from "luxon";
-
 import { BaseService } from "./baseService";
 import { AppError } from "middleware/errorHandler";
 import { sendEmail } from "utils/emailUtils";
 import { JwtUtils } from "utils/jwtUtils";
 import { ErrorCode } from "constants/errorCodes";
-import { PasswordRepository } from "../../repositories/passwordRepository";
+import { redisTokenService } from "./redisTokenService";
 
 export class PasswordService extends BaseService {
-  private static passwordRepository = new PasswordRepository(
-    BaseService.prisma
-  );
-
   static async generateAndSendPasswordCreationToken(
     userId: string,
     email: string
   ) {
     return await this.handleWithTimeout(async () => {
-      return await this.handleTransaction(async (tx) => {
-        // Check for recent token requests
-        const recentAttempts =
-          await this.passwordRepository.countRecentPasswordCreationTokens(
-            userId,
-            DateTime.now().minus({ days: 1 }).toJSDate(),
-            tx
-          );
+      // Check for recent token requests using Redis
+      const recentTokens = await redisTokenService.getToken(
+        "PASSWORD_CREATION",
+        userId
+      );
+      if (recentTokens) {
+        throw new AppError(ErrorCode.TOO_MANY_PASSWORD_ATTEMPTS);
+      }
 
-        if (recentAttempts >= 3) {
-          throw new AppError(ErrorCode.TOO_MANY_PASSWORD_ATTEMPTS);
-        }
+      // Generate token using JWT
+      const token = JwtUtils.generatePasswordToken(userId, "24h");
+      const expiresIn = 24 * 60 * 60; // 24 hours in seconds
 
-        // Generate token using JWT
-        const token = JwtUtils.generatePasswordToken(userId, "24h");
-        const expiresAt = DateTime.now().plus({ hours: 24 }).toJSDate();
+      // Store the token in Redis
+      await redisTokenService.setToken(
+        "PASSWORD_CREATION",
+        token,
+        userId,
+        expiresIn
+      );
 
-        // Store the token
-        await this.passwordRepository.createPasswordCreationToken(
-          {
-            token,
-            userId,
-            expiresAt,
-          },
-          tx
-        );
-
-        // Send welcome email with password creation link
-        const createPasswordUrl = `${process.env.FRONTEND_URL}/create-password?token=${token}`;
-        await sendEmail({
-          to: email,
-          subject: "Welcome to Our Platform - Create Your Password",
-          html: `
+      // Send welcome email with password creation link
+      const createPasswordUrl = `${process.env.FRONTEND_URL}/create-password?token=${token}`;
+      await sendEmail({
+        to: email,
+        subject: "Welcome to Our Platform - Create Your Password",
+        html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
             <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               <h1 style="color: #333333; text-align: center; margin-bottom: 20px;">Welcome to Our Platform!</h1>
@@ -66,8 +54,17 @@ export class PasswordService extends BaseService {
             </div>
           </div>
         `,
-        });
       });
     }, 15000);
+  }
+
+  static async validatePasswordCreationToken(
+    token: string
+  ): Promise<string | null> {
+    return await redisTokenService.getToken("PASSWORD_CREATION", token);
+  }
+
+  static async deletePasswordCreationToken(token: string): Promise<void> {
+    await redisTokenService.deleteToken("PASSWORD_CREATION", token);
   }
 }

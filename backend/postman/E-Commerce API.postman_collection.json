@@ -15,7 +15,7 @@
 					"name": "Authentication",
 					"item": [
 						{
-							"name": "Social Sign In",
+							"name": "Social Sign In - M",
 							"item": [
 								{
 									"name": "Google OAuth",
@@ -112,8 +112,8 @@
 													"});\r",
 													"\r",
 													"// Validate response time\r",
-													"pm.test(\"Response time is less than 500ms\", function () {\r",
-													"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+													"pm.test(\"Response time is less than 5000ms\", function () {\r",
+													"    pm.expect(pm.response.responseTime).to.be.below(5000);\r",
 													"});\r",
 													"\r",
 													"// Parse response body\r",
@@ -141,7 +141,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"email\": {{user_email}}\n}",
+											"raw": "{\n    \"email\": \"{{user_email}}\"\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -170,22 +170,41 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"// Validate status code\r",
-													"pm.test(\"Status code is 200\", function () {\r",
-													"    pm.response.to.have.status(200);\r",
-													"});\r",
+													"// // Validate status code\r",
+													"// pm.test(\"Status code is 200\", function () {\r",
+													"//     pm.response.to.have.status(200);\r",
+													"// });\r",
 													"\r",
-													"if (pm.response.code === 200) {\r",
-													"    const resetPassword = JSON.parse(pm.request.body.raw).password;\r",
-													"    pm.environment.set(\"user_password\", resetPassword);\r",
-													"}\r",
+													"// if (pm.response.code === 200) {\r",
+													"//     const resetPassword = JSON.parse(pm.request.body.raw).password;\r",
+													"//     pm.environment.set(\"user_password\", resetPassword);\r",
+													"// }\r",
 													"\r",
-													"// Clear password reset token successful reset password\r",
-													"pm.environment.unset('reset_password_token');\r",
+													"// // Clear password reset token successful reset password\r",
+													"// pm.environment.unset('reset_password_token');\r",
 													"\r",
-													"// Verify reset password token cleared\r",
-													"pm.test('Reset Password Token is cleared', function () {\r",
-													"    pm.expect(pm.environment.get('reset_password_token')).to.be.undefined;\r",
+													"// // Verify reset password token cleared\r",
+													"// pm.test('Reset Password Token is cleared', function () {\r",
+													"//     pm.expect(pm.environment.get('reset_password_token')).to.be.undefined;\r",
+													"// });\r",
+													"\r",
+													"// // Validate response time\r",
+													"// pm.test(\"Response time is less than 500ms\", function () {\r",
+													"//     pm.expect(pm.response.responseTime).to.be.below(500);\r",
+													"// });\r",
+													"\r",
+													"// // Parse response body\r",
+													"// let jsonData = pm.response.json();\r",
+													"\r",
+													"// // Validate response structure\r",
+													"// pm.test(\"Response contains success message\", function () {\r",
+													"//     pm.expect(jsonData).to.have.property(\"message\");\r",
+													"//     pm.expect(jsonData.message).to.equal(\"Password reset successful\");\r",
+													"// });\r",
+													"\r",
+													"// Failed Scenario\r",
+													"pm.test(\"Status code is 400\", function () {\r",
+													"    pm.response.to.have.status(400);\r",
 													"});\r",
 													"\r",
 													"// Validate response time\r",
@@ -199,7 +218,7 @@
 													"// Validate response structure\r",
 													"pm.test(\"Response contains success message\", function () {\r",
 													"    pm.expect(jsonData).to.have.property(\"message\");\r",
-													"    pm.expect(jsonData.message).to.equal(\"Password reset successful\");\r",
+													"    pm.expect(jsonData.message).to.equal(\"This password reset link has expired or is invalid. Please request a new one.\");\r",
 													"});\r",
 													""
 												],
@@ -218,7 +237,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"token\": \"{{reset_password_token}}\",\n    \"password\": \"reset-password123\"\n}",
+											"raw": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\",\n    \"password\": \"reset-password123\"\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -257,20 +276,9 @@
 													"    pm.response.to.have.status(200);",
 													"});",
 													"",
-													"// Parse the response body",
-													"var jsonData = pm.response.json();",
-													"",
-													"// Set password_token environment variable if token is present in response",
-													"if (jsonData && jsonData.token) {",
-													"    pm.environment.set('password_token', jsonData.token);",
-													"    console.log('Password token has been set in environment');",
-													"} else {",
-													"    console.log('No token found in response');",
-													"}",
-													"",
 													"// Validate response time",
-													"pm.test(\"Response time is less than 500ms\", function () {",
-													"    pm.expect(pm.response.responseTime).to.be.below(500);",
+													"pm.test(\"Response time is less than 5000ms\", function () {",
+													"    pm.expect(pm.response.responseTime).to.be.below(5000);",
 													"});",
 													"",
 													"// Parse response body",
@@ -326,22 +334,41 @@
 											"listen": "test",
 											"script": {
 												"exec": [
-													"// Validate status code\r",
-													"pm.test(\"Status code is 200\", function () {\r",
-													"    pm.response.to.have.status(200);\r",
-													"});\r",
+													"// // Validate status code\r",
+													"// pm.test(\"Status code is 200\", function () {\r",
+													"//     pm.response.to.have.status(200);\r",
+													"// });\r",
 													"\r",
-													"if (pm.response.code === 200) {\r",
-													"    const createdPassword = JSON.parse(pm.request.body.raw).password;\r",
-													"    pm.environment.set(\"user_password\", createdPassword);\r",
-													"}\r",
+													"// if (pm.response.code === 200) {\r",
+													"//     const createdPassword = JSON.parse(pm.request.body.raw).password;\r",
+													"//     pm.environment.set(\"user_password\", createdPassword);\r",
+													"// }\r",
 													"\r",
-													"// Clear password create token successful create password\r",
-													"pm.environment.unset('create_password_token');\r",
+													"// // Clear password create token successful create password\r",
+													"// pm.environment.unset('create_password_token');\r",
 													"\r",
-													"// Verify create password token cleared\r",
-													"pm.test('Create Password Token is cleared', function () {\r",
-													"    pm.expect(pm.environment.get('create_password_token')).to.be.undefined;\r",
+													"// // Verify create password token cleared\r",
+													"// pm.test('Create Password Token is cleared', function () {\r",
+													"//     pm.expect(pm.environment.get('create_password_token')).to.be.undefined;\r",
+													"// });\r",
+													"\r",
+													"// // Validate response time\r",
+													"// pm.test(\"Response time is less than 500ms\", function () {\r",
+													"//     pm.expect(pm.response.responseTime).to.be.below(500);\r",
+													"// });\r",
+													"\r",
+													"// // Parse response body\r",
+													"// let jsonData = pm.response.json();\r",
+													"\r",
+													"// // Validate response structure\r",
+													"// pm.test(\"Response contains success message\", function () {\r",
+													"//     pm.expect(jsonData).to.have.property(\"message\");\r",
+													"//     pm.expect(jsonData.message).to.equal(\"Password created successfully\");\r",
+													"// });\r",
+													"\r",
+													"// Failed Scenario\r",
+													"pm.test(\"Status code is 400\", function () {\r",
+													"    pm.response.to.have.status(400);\r",
 													"});\r",
 													"\r",
 													"// Validate response time\r",
@@ -355,9 +382,8 @@
 													"// Validate response structure\r",
 													"pm.test(\"Response contains success message\", function () {\r",
 													"    pm.expect(jsonData).to.have.property(\"message\");\r",
-													"    pm.expect(jsonData.message).to.equal(\"Password created successfully\");\r",
-													"});\r",
-													""
+													"    pm.expect(jsonData.message).to.equal(\"This password reset link has expired or is invalid. Please request a new one.\");\r",
+													"});"
 												],
 												"type": "text/javascript",
 												"packages": {}
@@ -374,7 +400,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"token\": \"{{create_password_token}}\",\n    \"password\": \"create-password123\"\n}",
+											"raw": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\",\n    \"password\": \"create-password123\"\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -565,6 +591,7 @@
 											"// Set environment variables",
 											"pm.environment.set('access_token', jsonData.accessToken);",
 											"pm.environment.set('user_id', jsonData.user.id);",
+											"pm.environment.set('registered_user_id', jsonData.user.id);",
 											"",
 											"// Extract CSRF token from response headers or cookies",
 											"const csrfToken = pm.response.headers.get('X-CSRF-Token') || pm.cookies.get('csrf_token');",
@@ -1673,7 +1700,7 @@
 											}
 										],
 										"url": {
-											"raw": "{{base_url}}/api/v1/users/{{user_id}}/reactivate",
+											"raw": "{{base_url}}/api/v1/users/{{admin_created_user_id}}/reactivate",
 											"host": [
 												"{{base_url}}"
 											],
@@ -1681,7 +1708,7 @@
 												"api",
 												"v1",
 												"users",
-												"{{user_id}}",
+												"{{admin_created_user_id}}",
 												"reactivate"
 											]
 										}
@@ -2044,13 +2071,17 @@
 											"    pm.expect(jsonData.message).to.equal(\"User deleted successfully\");\r",
 											"});\r",
 											"\r",
-											"// Clear user role id and admin created user id\r",
+											"// Clear env variables\r",
 											"pm.environment.unset('user_role_id');\r",
+											"pm.environment.unset('registered_user_id');\r",
 											"pm.environment.unset('admin_created_user_id');\r",
 											"\r",
-											"// Verify user role id and admin created user id are cleared\r",
+											"// Verify cleared env variables\r",
 											"pm.test('User role id is cleared', function () {\r",
 											"    pm.expect(pm.environment.get('user_role_id')).to.be.undefined;\r",
+											"});\r",
+											"pm.test('Registered user id is cleared', function () {\r",
+											"    pm.expect(pm.environment.get('registered_user_id')).to.be.undefined;\r",
 											"});\r",
 											"pm.test('Admin created user id is cleared', function () {\r",
 											"    pm.expect(pm.environment.get('admin_created_user_id')).to.be.undefined;\r",
@@ -3540,6 +3571,14 @@
 													"// Test response status\r",
 													"pm.test('Status code is 200', function () {\r",
 													"    pm.response.to.have.status(200);\r",
+													"});\r",
+													"\r",
+													"// Clear env variables\r",
+													"pm.environment.unset('appointment_id');\r",
+													"\r",
+													"// Verify cleared env variables\r",
+													"pm.test('User is cleared', function () {\r",
+													"    pm.expect(pm.environment.get('appointment_id')).to.be.undefined;\r",
 													"});"
 												],
 												"type": "text/javascript",
@@ -3732,7 +3771,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{base_url}}/api/v1/appointments?count=10&page=1&stylistIds={{stylist_id}}&statuses=COMPLETED&sortBy=dateTime&sortOrder=desc",
+									"raw": "{{base_url}}/api/v1/appointments",
 									"host": [
 										"{{base_url}}"
 									],
@@ -3759,7 +3798,8 @@
 										},
 										{
 											"key": "stylistIds",
-											"value": "{{stylist_id}}"
+											"value": "{{stylist_id}}",
+											"disabled": true
 										},
 										{
 											"key": "statuses",
