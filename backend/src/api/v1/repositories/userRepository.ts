@@ -1,6 +1,5 @@
 import { PrismaClient, User, Appointment } from "@prisma/client";
 import { DateTime } from "luxon";
-import { redisTokenService } from "../services/shared/redisTokenService";
 
 // Define a type for the Prisma transaction
 export type PrismaTransaction = Omit<
@@ -35,10 +34,20 @@ export interface IUserRepository {
     tx?: PrismaTransaction
   ): Promise<User & { role: { name: string } }>;
 
+  findUserByEmail(
+    email: string,
+    tx?: PrismaTransaction
+  ): Promise<UserResponse | null>;
+
   findUserById(
     id: string,
     tx?: PrismaTransaction
   ): Promise<UserResponse | null>;
+
+  findRoleById(
+    id: string,
+    tx?: PrismaTransaction
+  ): Promise<{ id: string; name: string; description: string | null } | null>;
 
   findUsers(
     filters: any,
@@ -77,8 +86,6 @@ export interface IUserRepository {
     userId: string,
     tx?: PrismaTransaction
   ): Promise<Appointment[]>;
-
-  deleteUserTokens(userId: string, tx?: PrismaTransaction): Promise<void>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -101,6 +108,32 @@ export class UserRepository implements IUserRepository {
     return client.user.create({
       data,
       include: { role: true },
+    });
+  }
+
+  async findUserByEmail(
+    email: string,
+    tx?: PrismaTransaction
+  ): Promise<UserResponse | null> {
+    const client = this.getClient(tx);
+    return client.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        isDeactivated: true,
+        deactivatedAt: true,
+        createdAt: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+      },
     });
   }
 
@@ -246,15 +279,18 @@ export class UserRepository implements IUserRepository {
     });
   }
 
-  async deleteUserTokens(
-    userId: string,
+  async findRoleById(
+    id: string,
     tx?: PrismaTransaction
-  ): Promise<void> {
-    // Delete all tokens from Redis
-    await Promise.all([
-      redisTokenService.deleteAllUserTokens("REFRESH", userId),
-      redisTokenService.deleteAllUserTokens("PASSWORD_RESET", userId),
-      redisTokenService.deleteAllUserTokens("PASSWORD_CREATION", userId),
-    ]);
+  ): Promise<{ id: string; name: string; description: string | null } | null> {
+    const client = this.getClient(tx);
+    return client.role.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+      },
+    });
   }
 }

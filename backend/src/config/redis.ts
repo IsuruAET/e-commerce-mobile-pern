@@ -14,6 +14,8 @@ interface RedisConfig {
   enableReadyCheck: boolean;
   maxRetries: number;
   connectionTimeout: number;
+  circuitBreakerThreshold: number;
+  circuitBreakerTimeout: number;
 }
 
 const redisConfig: RedisConfig = {
@@ -24,6 +26,8 @@ const redisConfig: RedisConfig = {
   enableReadyCheck: true,
   maxRetries: 5,
   connectionTimeout: 5000,
+  circuitBreakerThreshold: 3,
+  circuitBreakerTimeout: 30000, // 30 seconds
 };
 
 class RedisConnection {
@@ -31,17 +35,59 @@ class RedisConnection {
   private client: RedisClientType;
   private isConnected: boolean = false;
   private connectionPromise: Promise<void> | null = null;
+  private failureCount: number = 0;
+  private lastFailureTime: number = 0;
+  private isCircuitOpen: boolean = false;
 
   private constructor() {
     this.client = createClient({
       url: redisConfig.url,
       socket: {
         reconnectStrategy: (retries) => {
-          if (retries > redisConfig.maxRetries) {
-            logger.error("Max Redis reconnection attempts reached");
-            return new Error("Max reconnection attempts reached");
+          // Check if circuit breaker is open
+          if (this.isCircuitOpen) {
+            const now = Date.now();
+            if (
+              now - this.lastFailureTime >=
+              redisConfig.circuitBreakerTimeout
+            ) {
+              // Reset circuit breaker after timeout
+              this.isCircuitOpen = false;
+              this.failureCount = 0;
+              logger.info("Circuit breaker reset after timeout");
+            } else {
+              logger.warn(
+                "Circuit breaker is open, skipping reconnection attempt"
+              );
+              return new Error("Circuit breaker is open");
+            }
           }
-          return Math.min(retries * redisConfig.retryDelay, 3000);
+
+          // Increment failure count
+          this.failureCount++;
+
+          // Check if we should open the circuit breaker
+          if (this.failureCount >= redisConfig.circuitBreakerThreshold) {
+            this.isCircuitOpen = true;
+            this.lastFailureTime = Date.now();
+            logger.error("Circuit breaker opened due to too many failures");
+            return new Error("Circuit breaker opened");
+          }
+
+          // If we haven't reached max retries, try to reconnect
+          if (retries <= redisConfig.maxRetries) {
+            const delay = Math.min(retries * redisConfig.retryDelay, 3000);
+            logger.info(
+              `Attempting to reconnect in ${delay}ms (attempt ${retries + 1}/${
+                redisConfig.maxRetries + 1
+              })`
+            );
+            return delay;
+          }
+
+          // If we've reached max retries, stop trying
+          logger.error("Max reconnection attempts reached");
+          return new Error("Max reconnection attempts reached");
         },
         connectTimeout: redisConfig.connectionTimeout,
       },
@@ -55,10 +101,21 @@ class RedisConnection {
     this.client.on("error", (err: Error) => {
       logger.error("Redis Client Error:", err);
       this.isConnected = false;
+      this.failureCount++;
+
+      // Check if we should open the circuit breaker
+      if (this.failureCount >= redisConfig.circuitBreakerThreshold) {
+        this.isCircuitOpen = true;
+        this.lastFailureTime = Date.now();
+        logger.error("Circuit breaker opened due to error");
+      }
     });
 
     this.client.on("connect", () => {
       this.isConnected = true;
+      this.failureCount = 0;
+      this.isCircuitOpen = false;
+      logger.info("Redis connected successfully");
     });
 
     this.client.on("reconnecting", () => {
@@ -106,7 +163,6 @@ class RedisConnection {
         try {
           await this.client.connect();
           this.isConnected = true;
-          logger.info("Redis connected successfully");
           return;
         } catch (error) {
           attempts++;

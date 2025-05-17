@@ -1,6 +1,6 @@
 import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
 import { BaseService } from "./shared/baseService";
-import { PasswordService } from "./shared/passwordService";
+import { PasswordEmailService } from "./shared/passwordEmailService";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import {
@@ -9,12 +9,21 @@ import {
   PaginatedResponse,
 } from "utils/queryBuilder";
 import { UserRepository } from "../repositories/userRepository";
+import { redisTokenService } from "./shared/redisTokenService";
 
 export class UserService extends BaseService {
   private static userRepository = new UserRepository(BaseService.prisma);
 
   static async createUser(data: CreateUserInput) {
     return await this.handleDatabaseError(async () => {
+      const existingUser = await this.userRepository.findUserByEmail(
+        data.email
+      );
+
+      if (existingUser) {
+        throw new AppError(ErrorCode.ADMIN_ADDING_EXISTING_USER);
+      }
+
       const user = await this.userRepository.createUser({
         email: data.email,
         name: data.name,
@@ -23,7 +32,7 @@ export class UserService extends BaseService {
       });
 
       // Generate and send password creation token
-      await PasswordService.generateAndSendPasswordCreationToken(
+      await PasswordEmailService.generateAndSendPasswordCreationToken(
         user.id,
         user.email
       );
@@ -95,8 +104,12 @@ export class UserService extends BaseService {
         throw new AppError(ErrorCode.USER_HAS_APPOINTMENTS);
       }
 
-      // Delete all related tokens
-      await this.userRepository.deleteUserTokens(id, tx);
+      // Delete all tokens from Redis
+      await Promise.all([
+        redisTokenService.deleteAllUserTokens("REFRESH", id),
+        redisTokenService.deleteAllUserTokens("PASSWORD_RESET", id),
+        redisTokenService.deleteAllUserTokens("PASSWORD_CREATION", id),
+      ]);
 
       // Delete the user
       await this.userRepository.deleteUser(id, tx);
@@ -126,8 +139,12 @@ export class UserService extends BaseService {
         });
       }
 
-      // Delete all tokens
-      await this.userRepository.deleteUserTokens(id, tx);
+      // Delete all tokens from Redis
+      await Promise.all([
+        redisTokenService.deleteAllUserTokens("REFRESH", id),
+        redisTokenService.deleteAllUserTokens("PASSWORD_RESET", id),
+        redisTokenService.deleteAllUserTokens("PASSWORD_CREATION", id),
+      ]);
 
       // Deactivate the user
       await this.userRepository.deactivateUser(id, tx);
