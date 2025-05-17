@@ -21,7 +21,8 @@
     "prisma:reset": "npx prisma migrate reset --force",
     "seed:all": "npm run prisma:reset && npm run seed:roles && npm run seed:users && npm run seed:categories && npm run seed:services && npm run seed:appointments",
     "db:backup": "bash scripts/db/backup.sh",
-    "db:restore": "bash scripts/db/restore.sh backups/ecommerce_latest.dump"
+    "db:restore": "bash scripts/db/restore.sh backups/ecommerce_latest.dump",
+    "redis:reset": "bash scripts/redis/reset.sh"
   },
   "keywords": [],
   "author": "",
@@ -52,6 +53,7 @@
     "pg": "^8.14.1",
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0",
+    "redis": "^4.6.13",
     "uuid": "^11.1.0",
     "zod": "^3.24.2"
   },

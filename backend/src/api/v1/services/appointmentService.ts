@@ -91,6 +91,24 @@ export class AppointmentService extends BaseService {
   ) {
     return await this.handleWithTimeout(async () => {
       return await this.handleTransaction(async (tx: PrismaTransaction) => {
+        // First, get the current appointment to check its status
+        const currentAppointment =
+          await this.appointmentRepository.findAppointmentById(id, tx);
+
+        if (!currentAppointment) {
+          throw new AppError(
+            ErrorCode.RESOURCE_NOT_FOUND,
+            "Appointment not found"
+          );
+        }
+
+        if (currentAppointment.status !== "PENDING") {
+          throw new AppError(
+            ErrorCode.VALIDATION_ERROR,
+            "Only PENDING appointments can be updated"
+          );
+        }
+
         let updateData: any = {
           status: input.status,
           notes: input.notes,

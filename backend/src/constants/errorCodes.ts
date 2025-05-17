@@ -24,6 +24,9 @@ export enum ErrorCode {
   PASSWORD_ALREADY_SET = "PASSWORD_ALREADY_SET",
   PASSWORD_NOT_SET = "PASSWORD_NOT_SET",
   SOCIAL_AUTH_REQUIRED = "SOCIAL_AUTH_REQUIRED",
+  ACTIVE_PASSWORD_CREATION_TOKEN = "ACTIVE_PASSWORD_CREATION_TOKEN",
+  ACTIVE_PASSWORD_RESET_TOKEN = "ACTIVE_PASSWORD_RESET_TOKEN",
+  ADMIN_ADDING_EXISTING_USER = "ADMIN_ADDING_EXISTING_USER",
 
   // Authentication Errors (401)
   UNAUTHORIZED = "UNAUTHORIZED",
@@ -98,6 +101,12 @@ export const ERROR_MESSAGES: ErrorMessages = {
     "Your account has been created but you need to set your password. Please check your email for the password creation link or request a new one.",
   [ErrorCode.SOCIAL_AUTH_REQUIRED]:
     "Please use social authentication to access your account.",
+  [ErrorCode.ACTIVE_PASSWORD_CREATION_TOKEN]:
+    "An active password creation link already exists. Please check your email.",
+  [ErrorCode.ACTIVE_PASSWORD_RESET_TOKEN]:
+    "An active password reset link already exists. Please check your email.",
+  [ErrorCode.ADMIN_ADDING_EXISTING_USER]:
+    "Cannot add user. A user with this email already exists in the system.",
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: "You need to be logged in to do that.",
@@ -178,6 +187,9 @@ export const ERROR_STATUS_CODES: ErrorStatusCodes = {
   [ErrorCode.PASSWORD_ALREADY_SET]: 400,
   [ErrorCode.PASSWORD_NOT_SET]: 400,
   [ErrorCode.SOCIAL_AUTH_REQUIRED]: 400,
+  [ErrorCode.ACTIVE_PASSWORD_CREATION_TOKEN]: 400,
+  [ErrorCode.ACTIVE_PASSWORD_RESET_TOKEN]: 400,
+  [ErrorCode.ADMIN_ADDING_EXISTING_USER]: 400,
 
   // Authentication Errors
   [ErrorCode.UNAUTHORIZED]: 401,
