@@ -4,9 +4,14 @@ import { ErrorCode } from "constants/errorCodes";
 import { RoleRepository } from "../repositories/roleRepository";
 
 export class RoleService extends BaseService {
-  private static roleRepository = new RoleRepository(BaseService.prisma);
+  private readonly roleRepository: RoleRepository;
 
-  static async createRole(input: {
+  constructor() {
+    super();
+    this.roleRepository = new RoleRepository(this.prisma);
+  }
+
+  async createRole(input: {
     name: string;
     description: string;
     permissions: string[];
@@ -27,13 +32,13 @@ export class RoleService extends BaseService {
     });
   }
 
-  static async getRole(id: string) {
+  async getRole(id: string) {
     return await this.handleNotFound(async () => {
       return this.roleRepository.findRoleById(id);
     });
   }
 
-  static async updateRole(
+  async updateRole(
     id: string,
     input: { name: string; description: string; permissions: string[] }
   ) {
@@ -62,7 +67,7 @@ export class RoleService extends BaseService {
     });
   }
 
-  static async deleteRole(id: string) {
+  async deleteRole(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if role exists
       const role = await this.roleRepository.findRoleById(id, tx);
@@ -86,19 +91,19 @@ export class RoleService extends BaseService {
     });
   }
 
-  static async getAllRoles() {
+  async getAllRoles() {
     return await this.handleDatabaseError(async () => {
       return this.roleRepository.getAllRoles();
     });
   }
 
-  static async getAllPermissions() {
+  async getAllPermissions() {
     return await this.handleDatabaseError(async () => {
       return this.roleRepository.getAllPermissions();
     });
   }
 
-  static async getRolesForDropdown() {
+  async getRolesForDropdown() {
     return await this.handleDatabaseError(async () => {
       const roles = await this.roleRepository.getAllRoles();
       return roles.map((role) => ({

@@ -23,11 +23,14 @@ interface AppointmentQueryOptions {
 }
 
 export class AppointmentService extends BaseService {
-  private static appointmentRepository = new AppointmentRepository(
-    BaseService.prisma
-  );
+  private readonly appointmentRepository: AppointmentRepository;
 
-  static async createAppointment(
+  constructor() {
+    super();
+    this.appointmentRepository = new AppointmentRepository(this.prisma);
+  }
+
+  async createAppointment(
     input: CreateAppointmentInput["body"],
     userId: string
   ) {
@@ -79,16 +82,13 @@ export class AppointmentService extends BaseService {
     }, 10000); // 10 second timeout
   }
 
-  static async getAppointment(id: string) {
+  async getAppointment(id: string) {
     return await this.handleNotFound(async () => {
       return this.appointmentRepository.findAppointmentById(id);
     });
   }
 
-  static async updateAppointment(
-    id: string,
-    input: UpdateAppointmentInput["body"]
-  ) {
+  async updateAppointment(id: string, input: UpdateAppointmentInput["body"]) {
     return await this.handleWithTimeout(async () => {
       return await this.handleTransaction(async (tx: PrismaTransaction) => {
         // First, get the current appointment to check its status
@@ -168,7 +168,7 @@ export class AppointmentService extends BaseService {
     }, 10000); // 10 second timeout
   }
 
-  static async getUserAppointments(
+  async getUserAppointments(
     userId: string,
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
@@ -186,7 +186,7 @@ export class AppointmentService extends BaseService {
 
       const total = await this.appointmentRepository.countUserAppointments(
         userId,
-        filters // Pass original filters, userId is handled by the specific repo method
+        filters
       );
 
       const pagination = buildPagination(total, page, count);
@@ -197,7 +197,7 @@ export class AppointmentService extends BaseService {
           (page - 1) * count,
           count,
           orderBy,
-          filters // Pass original filters
+          filters
         );
 
       return {
@@ -207,7 +207,7 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  static async getStylistAppointments(
+  async getStylistAppointments(
     stylistId: string,
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
@@ -225,7 +225,7 @@ export class AppointmentService extends BaseService {
 
       const total = await this.appointmentRepository.countStylistAppointments(
         stylistId,
-        filters // Pass original filters, stylistId is handled by the specific repo method
+        filters
       );
       const pagination = buildPagination(total, page, count);
 
@@ -235,7 +235,7 @@ export class AppointmentService extends BaseService {
           (page - 1) * count,
           count,
           orderBy,
-          filters // Pass original filters
+          filters
         );
 
       return {
@@ -245,7 +245,7 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  static async getTotalIncome(
+  async getTotalIncome(
     stylistIds?: string[],
     startDate?: string,
     endDate?: string
@@ -272,7 +272,7 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  static async getTotalServices(
+  async getTotalServices(
     stylistIds?: string[],
     startDate?: string,
     endDate?: string
@@ -302,7 +302,7 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  static async listAppointments(
+  async listAppointments(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
@@ -318,12 +318,10 @@ export class AppointmentService extends BaseService {
         },
       });
 
-      // Get the total count with the filters
       const total = await this.appointmentRepository.countAppointments(filters);
 
       const pagination = buildPagination(total, page, count);
 
-      // Apply pagination and sorting
       const appointments = await this.appointmentRepository.listAppointments(
         filters,
         (page - 1) * count,
@@ -338,13 +336,13 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  static async getUserAppointmentById(id: string, userId: string) {
+  async getUserAppointmentById(id: string, userId: string) {
     return await this.handleNotFound(async () => {
       return this.appointmentRepository.findUserAppointmentById(id, userId);
     });
   }
 
-  static async getStylistAppointmentById(id: string, stylistId: string) {
+  async getStylistAppointmentById(id: string, stylistId: string) {
     return await this.handleNotFound(async () => {
       return this.appointmentRepository.findStylistAppointmentById(
         id,
@@ -353,10 +351,7 @@ export class AppointmentService extends BaseService {
     });
   }
 
-  static async updateAppointmentStatus(
-    appointmentId: string,
-    newStatus: string
-  ) {
+  async updateAppointmentStatus(appointmentId: string, newStatus: string) {
     return await this.handleDatabaseError(async () => {
       const appointment = await this.appointmentRepository.findAppointmentById(
         appointmentId

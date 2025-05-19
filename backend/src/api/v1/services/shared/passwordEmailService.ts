@@ -6,10 +6,20 @@ import { ErrorCode } from "constants/errorCodes";
 import { redisTokenService } from "./redisTokenService";
 
 export class PasswordEmailService extends BaseService {
-  static async generateAndSendPasswordCreationToken(
-    userId: string,
-    email: string
-  ) {
+  private static instance: PasswordEmailService;
+
+  private constructor() {
+    super();
+  }
+
+  public static getInstance(): PasswordEmailService {
+    if (!PasswordEmailService.instance) {
+      PasswordEmailService.instance = new PasswordEmailService();
+    }
+    return PasswordEmailService.instance;
+  }
+
+  async generateAndSendPasswordCreationToken(userId: string, email: string) {
     return await this.handleWithTimeout(async () => {
       // Check for recent token requests using Redis
       const recentTokens = await redisTokenService.getToken(
@@ -58,10 +68,7 @@ export class PasswordEmailService extends BaseService {
     }, 15000);
   }
 
-  static async generateAndSendPasswordResetToken(
-    userId: string,
-    email: string
-  ) {
+  async generateAndSendPasswordResetToken(userId: string, email: string) {
     return await this.handleWithTimeout(async () => {
       // Check for recent token requests using Redis
       const recentTokens = await redisTokenService.getToken(
@@ -108,3 +115,5 @@ export class PasswordEmailService extends BaseService {
     }, 15000);
   }
 }
+
+export const passwordEmailService = PasswordEmailService.getInstance();

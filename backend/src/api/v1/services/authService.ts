@@ -5,21 +5,26 @@ import { AppError } from "middleware/errorHandler";
 import { PasswordUtils } from "utils/passwordUtils";
 import { JwtUtils, TokenPayload } from "utils/jwtUtils";
 import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
-import { PasswordEmailService } from "./shared/passwordEmailService";
+import { passwordEmailService } from "./shared/passwordEmailService";
 import { AuthRepository } from "../repositories/authRepository";
 import { redisTokenService } from "./shared/redisTokenService";
 
 export class AuthService extends BaseService {
-  private static authRepository = new AuthRepository(BaseService.prisma);
+  private authRepository: AuthRepository;
 
-  static async storeRefreshToken(token: string, userId: string) {
+  constructor() {
+    super();
+    this.authRepository = new AuthRepository(this.prisma);
+  }
+
+  async storeRefreshToken(token: string, userId: string) {
     return await this.handleDatabaseError(async () => {
       const expiresIn = JwtUtils.getRefreshTokenExpirationInSeconds();
       await redisTokenService.setToken("REFRESH", token, userId, expiresIn);
     });
   }
 
-  static async registerUser(email: string, password: string, name: string) {
+  async registerUser(email: string, password: string, name: string) {
     return await this.handleTransaction(async (tx) => {
       const existingUser = await this.authRepository.findUserByEmail(email);
 
@@ -79,7 +84,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async loginUser(email: string, password: string) {
+  async loginUser(email: string, password: string) {
     return await this.handleTransaction(async (tx) => {
       const user = await this.authRepository.findUserByEmail(email);
 
@@ -131,7 +136,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async refreshUserToken(refreshToken: string, accessToken: string) {
+  async refreshUserToken(refreshToken: string, accessToken: string) {
     if (!refreshToken || !accessToken) {
       throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
     }
@@ -199,7 +204,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async logoutUser(refreshToken: string) {
+  async logoutUser(refreshToken: string) {
     return await this.handleDatabaseError(async () => {
       if (!refreshToken) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
@@ -209,11 +214,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async handleGoogleCallback(
-    user: any,
-    tokens: any,
-    passportError?: any
-  ) {
+  async handleGoogleCallback(user: any, tokens: any, passportError?: any) {
     return await this.handleDatabaseError(async () => {
       if (passportError) {
         throw new AppError(
@@ -249,7 +250,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async changePassword(
+  async changePassword(
     userId: string,
     currentPassword: string,
     newPassword: string
@@ -280,7 +281,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async requestPasswordReset(email: string) {
+  async requestPasswordReset(email: string) {
     return await this.handleDatabaseError(async () => {
       const user = await this.authRepository.findUserByEmail(email);
 
@@ -298,7 +299,7 @@ export class AuthService extends BaseService {
         );
       }
 
-      await PasswordEmailService.generateAndSendPasswordResetToken(
+      await passwordEmailService.generateAndSendPasswordResetToken(
         user.id,
         email
       );
@@ -310,7 +311,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async resetUserPassword(token: string, newPassword: string) {
+  async resetUserPassword(token: string, newPassword: string) {
     return await this.handleTransaction(async (tx) => {
       if (!token) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
@@ -350,7 +351,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async deactivateUserAccount(userId: string) {
+  async deactivateUserAccount(userId: string) {
     return await this.handleTransaction(async (tx) => {
       const activeAppointments = await tx.appointment.findMany({
         where: {
@@ -381,7 +382,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async updateUserProfile(
+  async updateUserProfile(
     userId: string,
     data: { name: string; phone?: string }
   ) {
@@ -409,7 +410,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async requestNewPasswordCreationToken(email: string) {
+  async requestNewPasswordCreationToken(email: string) {
     return await this.handleDatabaseError(async () => {
       const user = await this.authRepository.findUserByEmail(email);
 
@@ -431,7 +432,7 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.PASSWORD_ALREADY_SET);
       }
 
-      await PasswordEmailService.generateAndSendPasswordCreationToken(
+      await passwordEmailService.generateAndSendPasswordCreationToken(
         user.id,
         email
       );
@@ -443,7 +444,7 @@ export class AuthService extends BaseService {
     });
   }
 
-  static async createPassword(token: string, password: string) {
+  async createPassword(token: string, password: string) {
     return await this.handleTransaction(async (tx) => {
       if (!token) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);

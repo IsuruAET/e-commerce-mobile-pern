@@ -1,12 +1,17 @@
 import { Request, Response, NextFunction } from "express";
-
 import { RoleService } from "../services/roleService";
 
 export class RoleController {
-  static async createRole(req: Request, res: Response, next: NextFunction) {
+  private readonly roleService: RoleService;
+
+  constructor() {
+    this.roleService = new RoleService();
+  }
+
+  async createRole(req: Request, res: Response, next: NextFunction) {
     try {
       const { name, description, permissions } = req.body;
-      const role = await RoleService.createRole({
+      const role = await this.roleService.createRole({
         name,
         description,
         permissions,
@@ -21,9 +26,9 @@ export class RoleController {
     }
   }
 
-  static async listRoles(req: Request, res: Response, next: NextFunction) {
+  async listRoles(req: Request, res: Response, next: NextFunction) {
     try {
-      const roles = await RoleService.getAllRoles();
+      const roles = await this.roleService.getAllRoles();
       res.status(200).json({
         success: true,
         data: roles,
@@ -33,10 +38,10 @@ export class RoleController {
     }
   }
 
-  static async getRoleById(req: Request, res: Response, next: NextFunction) {
+  async getRoleById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const role = await RoleService.getRole(id);
+      const role = await this.roleService.getRole(id);
       res.status(200).json({
         success: true,
         data: role,
@@ -46,11 +51,11 @@ export class RoleController {
     }
   }
 
-  static async updateRole(req: Request, res: Response, next: NextFunction) {
+  async updateRole(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
       const { name, description, permissions } = req.body;
-      const role = await RoleService.updateRole(id, {
+      const role = await this.roleService.updateRole(id, {
         name,
         description,
         permissions,
@@ -65,10 +70,10 @@ export class RoleController {
     }
   }
 
-  static async deleteRole(req: Request, res: Response, next: NextFunction) {
+  async deleteRole(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await RoleService.deleteRole(id);
+      await this.roleService.deleteRole(id);
       res.status(200).json({
         success: true,
         message: "Role deleted successfully",
@@ -78,13 +83,9 @@ export class RoleController {
     }
   }
 
-  static async listPermissions(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  async listPermissions(req: Request, res: Response, next: NextFunction) {
     try {
-      const permissions = await RoleService.getAllPermissions();
+      const permissions = await this.roleService.getAllPermissions();
       res.status(200).json({
         success: true,
         data: permissions,
@@ -94,13 +95,9 @@ export class RoleController {
     }
   }
 
-  static async getRolesForDropdown(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  async getRolesForDropdown(req: Request, res: Response, next: NextFunction) {
     try {
-      const roles = await RoleService.getRolesForDropdown();
+      const roles = await this.roleService.getRolesForDropdown();
       res.status(200).json({
         success: true,
         data: roles,

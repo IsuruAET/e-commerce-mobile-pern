@@ -4,9 +4,15 @@ import { ServiceService } from "../services/serviceService";
 import { PaginatedResponse } from "utils/queryBuilder";
 
 export class ServiceController {
-  static async createService(req: Request, res: Response, next: NextFunction) {
+  private readonly serviceService: ServiceService;
+
+  constructor() {
+    this.serviceService = new ServiceService();
+  }
+
+  async createService(req: Request, res: Response, next: NextFunction) {
     try {
-      const service = await ServiceService.createService(req.body);
+      const service = await this.serviceService.createService(req.body);
       res.status(201).json({
         success: true,
         message: "Service created successfully",
@@ -17,10 +23,10 @@ export class ServiceController {
     }
   }
 
-  static async getServiceById(req: Request, res: Response, next: NextFunction) {
+  async getServiceById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const service = await ServiceService.getServiceById(id);
+      const service = await this.serviceService.getServiceById(id);
       res.status(200).json({
         success: true,
         data: service,
@@ -30,13 +36,13 @@ export class ServiceController {
     }
   }
 
-  static async listActiveServices(
+  async listActiveServices(
     req: Request,
     res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
-      const result = await ServiceService.listActiveServices(req.query);
+      const result = await this.serviceService.listActiveServices(req.query);
       res.status(200).json({
         success: true,
         data: result,
@@ -46,13 +52,13 @@ export class ServiceController {
     }
   }
 
-  static async listAllServices(
+  async listAllServices(
     req: Request,
     res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
-      const result = await ServiceService.listAllServices(req.query);
+      const result = await this.serviceService.listAllServices(req.query);
       res.status(200).json({
         success: true,
         data: result,
@@ -62,10 +68,10 @@ export class ServiceController {
     }
   }
 
-  static async updateService(req: Request, res: Response, next: NextFunction) {
+  async updateService(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const service = await ServiceService.updateService(id, req.body);
+      const service = await this.serviceService.updateService(id, req.body);
       res.status(200).json({
         success: true,
         message: "Service updated successfully",
@@ -76,10 +82,10 @@ export class ServiceController {
     }
   }
 
-  static async deleteService(req: Request, res: Response, next: NextFunction) {
+  async deleteService(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await ServiceService.deleteService(id);
+      await this.serviceService.deleteService(id);
       res.status(200).json({
         success: true,
         message: "Service deleted successfully",
@@ -89,13 +95,13 @@ export class ServiceController {
     }
   }
 
-  static async getServicesForDropdown(
+  async getServicesForDropdown(
     req: Request,
     res: Response,
     next: NextFunction
   ) {
     try {
-      const services = await ServiceService.getServicesForDropdown();
+      const services = await this.serviceService.getServicesForDropdown();
       res.status(200).json({
         success: true,
         data: services,
@@ -105,14 +111,10 @@ export class ServiceController {
     }
   }
 
-  static async deactivateService(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  async deactivateService(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await ServiceService.deactivateService(id);
+      await this.serviceService.deactivateService(id);
       res.status(200).json({
         success: true,
         message: "Service deactivated successfully",
@@ -122,14 +124,10 @@ export class ServiceController {
     }
   }
 
-  static async reactivateService(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  async reactivateService(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await ServiceService.reactivateService(id);
+      await this.serviceService.reactivateService(id);
       res.status(200).json({
         success: true,
         message: "Service reactivated successfully",

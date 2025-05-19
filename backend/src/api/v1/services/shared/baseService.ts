@@ -4,9 +4,13 @@ import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 
 export class BaseService {
-  protected static prisma = new PrismaClient();
+  protected readonly prisma: PrismaClient;
 
-  protected static async handleDatabaseError<T>(
+  constructor() {
+    this.prisma = new PrismaClient();
+  }
+
+  protected async handleDatabaseError<T>(
     operation: () => Promise<T>
   ): Promise<T> {
     try {
@@ -31,7 +35,7 @@ export class BaseService {
     }
   }
 
-  protected static async handleNotFound<T>(
+  protected async handleNotFound<T>(
     operation: () => Promise<T | null>,
     errorCode: ErrorCode = ErrorCode.RESOURCE_NOT_FOUND
   ): Promise<T> {
@@ -42,7 +46,7 @@ export class BaseService {
     return result;
   }
 
-  protected static async handleTransaction<T>(
+  protected async handleTransaction<T>(
     operations: (
       tx: Omit<
         PrismaClient,
@@ -75,7 +79,7 @@ export class BaseService {
     });
   }
 
-  protected static async handleWithTimeout<T>(
+  protected async handleWithTimeout<T>(
     operation: () => Promise<T>,
     timeoutMs: number = 30000
   ): Promise<T> {

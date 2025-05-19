@@ -9,30 +9,31 @@ import {
 } from "../schemas/roleSchema";
 
 const router = Router();
+const roleController = new RoleController();
 
 // Create role
 router.post(
   "/",
   requirePermission(["manage_roles"]),
   validateRequest(createRoleSchema),
-  RoleController.createRole
+  (req, res, next) => roleController.createRole(req, res, next)
 );
 
 // List all roles
-router.get("/", requirePermission(["manage_roles"]), RoleController.listRoles);
+router.get("/", requirePermission(["manage_roles"]), (req, res, next) =>
+  roleController.listRoles(req, res, next)
+);
 
 // List all permissions
 router.get(
   "/permissions",
   requirePermission(["manage_roles"]),
-  RoleController.listPermissions
+  (req, res, next) => roleController.listPermissions(req, res, next)
 );
 
 // Get roles for dropdown
-router.get(
-  "/options",
-  requirePermission(["manage_roles"]),
-  RoleController.getRolesForDropdown
+router.get("/options", requirePermission(["manage_roles"]), (req, res, next) =>
+  roleController.getRolesForDropdown(req, res, next)
 );
 
 // Get role by id
@@ -40,7 +41,7 @@ router.get(
   "/:id",
   requirePermission(["manage_roles"]),
   validateRequest(roleIdSchema),
-  RoleController.getRoleById
+  (req, res, next) => roleController.getRoleById(req, res, next)
 );
 
 // Update role
@@ -49,7 +50,7 @@ router.put(
   requirePermission(["manage_roles"]),
   validateRequest(updateRoleSchema),
   validateRequest(roleIdSchema),
-  RoleController.updateRole
+  (req, res, next) => roleController.updateRole(req, res, next)
 );
 
 // Delete role
@@ -57,7 +58,7 @@ router.delete(
   "/:id",
   requirePermission(["manage_roles"]),
   validateRequest(roleIdSchema),
-  RoleController.deleteRole
+  (req, res, next) => roleController.deleteRole(req, res, next)
 );
 
 export default router;

@@ -4,14 +4,20 @@ import passport from "passport";
 import { AuthService } from "../services/authService";
 
 export class AuthController {
-  static async register(
+  private authService: AuthService;
+
+  constructor() {
+    this.authService = new AuthService();
+  }
+
+  async register(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { email, password, name } = req.body;
-      const { refreshToken, ...rest } = await AuthService.registerUser(
+      const { refreshToken, ...rest } = await this.authService.registerUser(
         email,
         password,
         name
@@ -31,14 +37,10 @@ export class AuthController {
     }
   }
 
-  static async login(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
-      const { refreshToken, ...rest } = await AuthService.loginUser(
+      const { refreshToken, ...rest } = await this.authService.loginUser(
         email,
         password
       );
@@ -57,7 +59,7 @@ export class AuthController {
     }
   }
 
-  static async refreshToken(
+  async refreshToken(
     req: Request,
     res: Response,
     next: NextFunction
@@ -67,7 +69,7 @@ export class AuthController {
       const accessToken = req.headers.authorization?.split(" ")[1] as string;
 
       const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-        await AuthService.refreshUserToken(refreshToken, accessToken);
+        await this.authService.refreshUserToken(refreshToken, accessToken);
 
       // Set new refresh token in HTTP-only cookie
       res.cookie("refreshToken", newRefreshToken, {
@@ -83,15 +85,11 @@ export class AuthController {
     }
   }
 
-  static async logout(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
       if (refreshToken) {
-        await AuthService.logoutUser(refreshToken);
+        await this.authService.logoutUser(refreshToken);
       }
 
       // Clear refresh token cookie
@@ -119,13 +117,13 @@ export class AuthController {
     }
   }
 
-  static googleAuth(req: Request, res: Response, next: NextFunction): void {
+  googleAuth(req: Request, res: Response, next: NextFunction): void {
     passport.authenticate("google", {
       scope: ["profile", "email"],
     })(req, res, next);
   }
 
-  static async googleCallback(
+  async googleCallback(
     req: Request,
     res: Response,
     next: NextFunction
@@ -136,7 +134,7 @@ export class AuthController {
       async (err: any, data: any) => {
         try {
           const { refreshToken, ...rest } =
-            await AuthService.handleGoogleCallback(
+            await this.authService.handleGoogleCallback(
               data?.user,
               data?.tokens,
               err
@@ -158,7 +156,7 @@ export class AuthController {
     )(req, res, next);
   }
 
-  static async changePassword(
+  async changePassword(
     req: Request,
     res: Response,
     next: NextFunction
@@ -167,7 +165,7 @@ export class AuthController {
       const { currentPassword, newPassword } = req.body;
       const userId = req.auth?.userId as string;
 
-      const result = await AuthService.changePassword(
+      const result = await this.authService.changePassword(
         userId,
         currentPassword,
         newPassword
@@ -178,42 +176,42 @@ export class AuthController {
     }
   }
 
-  static async forgotPassword(
+  async forgotPassword(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { email } = req.body;
-      const result = await AuthService.requestPasswordReset(email);
+      const result = await this.authService.requestPasswordReset(email);
       res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
 
-  static async resetPassword(
+  async resetPassword(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { token, password } = req.body;
-      const result = await AuthService.resetUserPassword(token, password);
+      const result = await this.authService.resetUserPassword(token, password);
       res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
 
-  static async deactivateAccount(
+  async deactivateAccount(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const userId = req.auth?.userId as string;
-      await AuthService.deactivateUserAccount(userId);
+      await this.authService.deactivateUserAccount(userId);
 
       // Clear the refresh token cookie
       res.clearCookie("refreshToken", {
@@ -240,7 +238,7 @@ export class AuthController {
     }
   }
 
-  static async updateProfile(
+  async updateProfile(
     req: Request,
     res: Response,
     next: NextFunction
@@ -248,7 +246,7 @@ export class AuthController {
     try {
       const userId = req.auth?.userId as string;
       const { name, phone } = req.body;
-      const result = await AuthService.updateUserProfile(userId, {
+      const result = await this.authService.updateUserProfile(userId, {
         name,
         phone,
       });
@@ -258,28 +256,30 @@ export class AuthController {
     }
   }
 
-  static async createPassword(
+  async createPassword(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { token, password } = req.body;
-      const result = await AuthService.createPassword(token, password);
+      const result = await this.authService.createPassword(token, password);
       res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
 
-  static async requestNewPasswordCreationToken(
+  async requestNewPasswordCreationToken(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { email } = req.body;
-      const result = await AuthService.requestNewPasswordCreationToken(email);
+      const result = await this.authService.requestNewPasswordCreationToken(
+        email
+      );
       res.status(200).json(result);
     } catch (error) {
       next(error);

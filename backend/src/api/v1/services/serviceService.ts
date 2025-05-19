@@ -9,9 +9,14 @@ import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "../../../constants/errorCodes";
 
 export class ServiceService extends BaseService {
-  private static serviceRepository = new ServiceRepository(BaseService.prisma);
+  private readonly serviceRepository: ServiceRepository;
 
-  static async createService(data: {
+  constructor() {
+    super();
+    this.serviceRepository = new ServiceRepository(this.prisma);
+  }
+
+  async createService(data: {
     name: string;
     description: string;
     price: number;
@@ -49,13 +54,13 @@ export class ServiceService extends BaseService {
     });
   }
 
-  static async getServiceById(id: string) {
+  async getServiceById(id: string) {
     return await this.handleNotFound(async () => {
       return await this.serviceRepository.findServiceById(id);
     });
   }
 
-  static async listActiveServices(
+  async listActiveServices(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
@@ -92,7 +97,7 @@ export class ServiceService extends BaseService {
     });
   }
 
-  static async listAllServices(
+  async listAllServices(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
     return await this.handleDatabaseError(async () => {
@@ -125,7 +130,7 @@ export class ServiceService extends BaseService {
     });
   }
 
-  static async updateService(
+  async updateService(
     id: string,
     data: {
       name?: string;
@@ -176,7 +181,7 @@ export class ServiceService extends BaseService {
     });
   }
 
-  static async deleteService(id: string) {
+  async deleteService(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if service has any appointments
       const appointments =
@@ -194,7 +199,7 @@ export class ServiceService extends BaseService {
     });
   }
 
-  static async getServicesForDropdown() {
+  async getServicesForDropdown() {
     return await this.handleDatabaseError(async () => {
       const services = await this.serviceRepository.findServices(
         { isActive: true },
@@ -213,7 +218,7 @@ export class ServiceService extends BaseService {
     });
   }
 
-  static async deactivateService(id: string) {
+  async deactivateService(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if service has any active appointments
       const appointments =
@@ -255,7 +260,7 @@ export class ServiceService extends BaseService {
     });
   }
 
-  static async reactivateService(id: string) {
+  async reactivateService(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Reactivate the service
       await this.serviceRepository.updateService(
