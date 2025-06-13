@@ -1,9 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 
-interface CustomRequest extends Request {
-  id: string;
-}
-
 import {
   ErrorCode,
   ERROR_MESSAGES,
@@ -35,7 +31,7 @@ export class AppError extends Error {
 
 export const errorHandler = (
   err: Error | AppError,
-  req: CustomRequest,
+  req: Request,
   res: Response,
   _next: NextFunction
 ) => {

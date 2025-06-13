@@ -1,42 +1,18 @@
 import { DateTime } from "luxon";
 import { Request } from "express";
+import { SuccessResponse, ErrorResponse, ApiResponse } from "types/api";
 
-export interface CustomRequest extends Request {
-  id: string;
-}
+export { SuccessResponse, ErrorResponse, ApiResponse };
 
-interface SuccessResponse<T = any> {
-  success: true;
-  data: T | null;
-  message?: string;
-  meta: {
-    timestamp: string;
-    requestId: string;
-  };
-}
-
-interface ErrorResponse {
-  success: false;
-  data: null;
-  message: string;
-  error: {
-    code: string;
-    details?: {
-      fields?: Record<string, string[]>;
-      [key: string]: any;
-    };
-  };
-  meta: {
-    timestamp: string;
-    requestId: string;
-  };
-}
-
-export type ApiResponse<T = any> = SuccessResponse<T> | ErrorResponse;
+export const isSuccessResponse = <T>(
+  response: ApiResponse<T>
+): response is SuccessResponse<T> => {
+  return response.success === true;
+};
 
 export const createSuccessResponse = <T>(
-  req: CustomRequest,
-  data: T | null = null,
+  req: Request,
+  data: T,
   message?: string
 ): SuccessResponse<T> => ({
   success: true,
@@ -49,7 +25,7 @@ export const createSuccessResponse = <T>(
 });
 
 export const createErrorResponse = (
-  req: CustomRequest,
+  req: Request,
   code: string,
   message: string,
   details?: Record<string, any>
@@ -68,7 +44,7 @@ export const createErrorResponse = (
 });
 
 export const createValidationErrorResponse = (
-  req: CustomRequest,
+  req: Request,
   fields: Record<string, string[]>
 ): ErrorResponse => ({
   success: false,

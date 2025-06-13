@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { Request } from "express";
 
 import { BaseService } from "./shared/baseService";
 import { AppError } from "middleware/errorHandler";
@@ -8,12 +9,9 @@ import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 import { passwordEmailService } from "./shared/passwordEmailService";
 import { AuthRepository } from "../repositories/authRepository";
 import { redisTokenService } from "./shared/redisTokenService";
-import {
-  createSuccessResponse,
-  ApiResponse,
-  CustomRequest,
-} from "utils/responseUtils";
+import { createSuccessResponse, ApiResponse } from "utils/responseUtils";
 import { DEFAULT_USER_ROLE } from "constants/userRoles";
+import { AuthResponse } from "types/auth";
 
 export class AuthService extends BaseService {
   private authRepository: AuthRepository;
@@ -31,11 +29,11 @@ export class AuthService extends BaseService {
   }
 
   async registerUser(
-    req: CustomRequest,
+    req: Request,
     email: string,
     password: string,
     name: string
-  ): Promise<ApiResponse> {
+  ): Promise<ApiResponse<AuthResponse>> {
     return await this.handleTransaction(async (tx) => {
       const existingUser = await this.authRepository.findUserByEmail(email);
 
@@ -96,7 +94,11 @@ export class AuthService extends BaseService {
     });
   }
 
-  async loginUser(email: string, password: string) {
+  async loginUser(
+    req: Request,
+    email: string,
+    password: string
+  ): Promise<ApiResponse<AuthResponse>> {
     return await this.handleTransaction(async (tx) => {
       const user = await this.authRepository.findUserByEmail(email);
 
@@ -105,10 +107,7 @@ export class AuthService extends BaseService {
       }
 
       if (user.isDeactivated) {
-        throw new AppError(
-          ErrorCode.ACCOUNT_DEACTIVATED,
-          "Your account has been deactivated. Please contact support for assistance."
-        );
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
       }
 
       if (!user.password && !user.googleId) {
@@ -136,15 +135,19 @@ export class AuthService extends BaseService {
 
       await this.storeRefreshToken(refreshToken, user.id);
 
-      return {
-        accessToken,
-        refreshToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
+      return createSuccessResponse(
+        req,
+        {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
         },
-      };
+        "User logged in successfully"
+      );
     });
   }
 
@@ -180,10 +183,7 @@ export class AuthService extends BaseService {
       }
 
       if (user.isDeactivated) {
-        throw new AppError(
-          ErrorCode.ACCOUNT_DEACTIVATED,
-          "Your account has been deactivated. Please contact support for assistance."
-        );
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
       }
 
       const storedUserId = await redisTokenService.getToken(
@@ -242,10 +242,7 @@ export class AuthService extends BaseService {
       }
 
       if (user.isDeactivated) {
-        throw new AppError(
-          ErrorCode.ACCOUNT_DEACTIVATED,
-          "Your account has been deactivated. Please contact support for assistance."
-        );
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
       }
 
       await this.storeRefreshToken(tokens.refreshToken, user.id);
@@ -305,10 +302,7 @@ export class AuthService extends BaseService {
       }
 
       if (user.isDeactivated) {
-        throw new AppError(
-          ErrorCode.ACCOUNT_DEACTIVATED,
-          "Your account has been deactivated. Please contact support for assistance."
-        );
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
       }
 
       await passwordEmailService.generateAndSendPasswordResetToken(
@@ -338,10 +332,7 @@ export class AuthService extends BaseService {
       }
 
       if (user.isDeactivated) {
-        throw new AppError(
-          ErrorCode.ACCOUNT_DEACTIVATED,
-          "Your account has been deactivated. Please contact support for assistance."
-        );
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
       }
 
       const storedUserId = await redisTokenService.getToken(
@@ -434,10 +425,7 @@ export class AuthService extends BaseService {
       }
 
       if (user.isDeactivated) {
-        throw new AppError(
-          ErrorCode.ACCOUNT_DEACTIVATED,
-          "Your account has been deactivated. Please contact support for assistance."
-        );
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
       }
 
       if (user.password) {
@@ -471,10 +459,7 @@ export class AuthService extends BaseService {
       }
 
       if (user.isDeactivated) {
-        throw new AppError(
-          ErrorCode.ACCOUNT_DEACTIVATED,
-          "Your account has been deactivated. Please contact support for assistance."
-        );
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
       }
 
       const storedUserId = await redisTokenService.getToken(
