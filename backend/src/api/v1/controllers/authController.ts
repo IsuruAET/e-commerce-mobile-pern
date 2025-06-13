@@ -154,7 +154,7 @@ export class AuthController {
   ): Promise<void> {
     try {
       const { email } = req.body;
-      const result = await this.authService.requestPasswordReset(email);
+      const result = await this.authService.requestPasswordReset(req, email);
       res.status(200).json(result);
     } catch (error) {
       next(error);

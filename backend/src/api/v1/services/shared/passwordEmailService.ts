@@ -43,7 +43,7 @@ export class PasswordEmailService extends BaseService {
       );
 
       // Send welcome email with password creation link
-      const createPasswordUrl = `${process.env.FRONTEND_URL}/create-password?token=${token}`;
+      const createPasswordUrl = `${process.env.APP_URL}/create-password?token=${token}`;
       await sendEmail({
         to: email,
         subject: "Welcome to Our Platform - Create Your Password",
@@ -90,7 +90,7 @@ export class PasswordEmailService extends BaseService {
         expiresIn
       );
 
-      const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+      const resetUrl = `${process.env.APP_URL}/reset-password?token=${resetToken}`;
       await sendEmail({
         to: email,
         subject: "Password Reset Request",
