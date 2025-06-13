@@ -516,7 +516,10 @@ export class AuthService extends BaseService {
     });
   }
 
-  async deactivateUserAccount(userId: string) {
+  async deactivateUserAccount(
+    req: Request,
+    userId: string
+  ): Promise<ApiResponse<null>> {
     return await this.handleTransaction(async (tx) => {
       const activeAppointments = await tx.appointment.findMany({
         where: {
@@ -544,6 +547,12 @@ export class AuthService extends BaseService {
         redisTokenService.deleteAllUserTokens("PASSWORD_RESET", userId),
         this.authRepository.deactivateUser(userId),
       ]);
+
+      return createSuccessResponse(
+        req,
+        null,
+        "Account deactivated successfully"
+      );
     });
   }
 

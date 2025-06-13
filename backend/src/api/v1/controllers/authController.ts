@@ -187,11 +187,13 @@ export class AuthController {
   ): Promise<void> {
     try {
       const userId = req.auth?.userId as string;
-      await this.authService.deactivateUserAccount(userId);
+      const response = await this.authService.deactivateUserAccount(
+        req,
+        userId
+      );
 
       clearAuthCookies(res);
-
-      res.status(200).json({ message: "Account deactivated successfully" });
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
