@@ -11,7 +11,7 @@ import { AuthRepository } from "../repositories/authRepository";
 import { redisTokenService } from "./shared/redisTokenService";
 import { createSuccessResponse, ApiResponse } from "utils/responseUtils";
 import { DEFAULT_USER_ROLE } from "constants/userRoles";
-import { AuthResponse } from "types/auth";
+import { AuthResponse, GoogleUser, GoogleTokens } from "types/auth";
 
 export class AuthService extends BaseService {
   private authRepository: AuthRepository;
@@ -255,8 +255,13 @@ export class AuthService extends BaseService {
     });
   }
 
-  async handleGoogleCallback(user: any, tokens: any, passportError?: any) {
-    return await this.handleDatabaseError(async () => {
+  async handleGoogleCallback(
+    req: Request,
+    user: GoogleUser,
+    tokens: GoogleTokens | null,
+    passportError?: Error
+  ): Promise<ApiResponse<AuthResponse>> {
+    return await this.handleTransaction(async (tx) => {
       if (passportError) {
         throw new AppError(
           ErrorCode.AUTHENTICATION_FAILED,
@@ -270,21 +275,71 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_USER_DATA);
       }
 
-      if (user.isDeactivated) {
-        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
-      }
+      // Check if user exists
+      const existingUser = await this.authRepository.findUserByEmail(
+        user.email
+      );
+      if (existingUser) {
+        if (existingUser.isDeactivated) {
+          throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
+        }
 
-      await this.storeRefreshToken(tokens.refreshToken, user.id);
+        // Link Google account to existing account
+        user.id = existingUser.id;
 
-      return {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        user: {
-          id: user.id,
+        // Update Google ID if not set
+        if (!existingUser.googleId) {
+          await this.authRepository.updateUser(existingUser.id, {
+            googleId: user.id,
+          });
+        }
+      } else {
+        // Create new user with Google ID
+        const userRole = await tx.role.findFirst({
+          where: { name: DEFAULT_USER_ROLE },
+        });
+
+        if (!userRole) {
+          throw new AppError(
+            ErrorCode.INTERNAL_SERVER_ERROR,
+            "Default role not found"
+          );
+        }
+
+        const newUser = await this.authRepository.createUser({
           email: user.email,
           name: user.name,
+          googleId: user.id,
+          roleId: userRole.id,
+        });
+
+        // Replace Google ID with our database ID for token generation and user operations
+        user.id = newUser.id;
+      }
+
+      // Generate tokens
+      const { accessToken, refreshToken } = JwtUtils.generateTokens({
+        userId: user.id,
+        email: user.email,
+        role: existingUser?.role.name || DEFAULT_USER_ROLE,
+        isDeactivated: existingUser?.isDeactivated || false,
+      });
+
+      await this.storeRefreshToken(refreshToken, user.id);
+
+      return createSuccessResponse(
+        req,
+        {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
         },
-      };
+        "Google authentication successful"
+      );
     });
   }
 

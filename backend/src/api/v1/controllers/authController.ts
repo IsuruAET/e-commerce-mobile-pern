@@ -111,16 +111,14 @@ export class AuthController {
       { session: false },
       async (err: any, data: any) => {
         try {
-          const { refreshToken, ...rest } =
-            await this.authService.handleGoogleCallback(
-              data?.user,
-              data?.tokens,
-              err
-            );
+          const response = (await this.authService.handleGoogleCallback(
+            req,
+            data?.user,
+            data?.tokens,
+            err
+          )) as SuccessResponse<AuthResponse>;
 
-          setRefreshTokenCookie(res, refreshToken);
-
-          res.status(200).json(rest);
+          this.handleAuthResponse(res, response);
         } catch (error) {
           next(error);
         }
