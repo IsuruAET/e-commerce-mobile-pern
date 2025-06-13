@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { SuccessResponse } from "utils/responseUtils";
 import { AuthResponse } from "types/auth";
+import { setRefreshTokenCookie, clearAuthCookies } from "utils/cookieUtils";
 
 import { AuthService } from "../services/authService";
 
@@ -27,14 +28,7 @@ export class AuthController {
       )) as SuccessResponse<AuthResponse>;
 
       const { refreshToken, ...rest } = response.data;
-
-      // Set refresh token in HTTP-only cookie
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      setRefreshTokenCookie(res, refreshToken);
 
       res.status(201).json({
         ...response,
@@ -54,14 +48,8 @@ export class AuthController {
         password
       )) as SuccessResponse<AuthResponse>;
 
-      // Set refresh token in HTTP-only cookie
       const { refreshToken, ...rest } = response.data;
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      setRefreshTokenCookie(res, refreshToken);
 
       res.status(200).json({
         ...response,
@@ -84,13 +72,7 @@ export class AuthController {
       const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
         await this.authService.refreshUserToken(refreshToken, accessToken);
 
-      // Set new refresh token in HTTP-only cookie
-      res.cookie("refreshToken", newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      setRefreshTokenCookie(res, newRefreshToken);
 
       res.status(200).json({ accessToken: newAccessToken });
     } catch (error) {
@@ -105,24 +87,7 @@ export class AuthController {
         await this.authService.logoutUser(refreshToken);
       }
 
-      // Clear refresh token cookie
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
-      // Clear CSRF token cookies
-      res.clearCookie("csrf_token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-      res.clearCookie("csrf_token_js", {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
+      clearAuthCookies(res);
 
       res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
@@ -153,13 +118,7 @@ export class AuthController {
               err
             );
 
-          // Set refresh token in HTTP-only cookie
-          res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          });
+          setRefreshTokenCookie(res, refreshToken);
 
           res.status(200).json(rest);
         } catch (error) {
@@ -226,24 +185,7 @@ export class AuthController {
       const userId = req.auth?.userId as string;
       await this.authService.deactivateUserAccount(userId);
 
-      // Clear the refresh token cookie
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
-      // Clear CSRF token cookies
-      res.clearCookie("csrf_token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-      res.clearCookie("csrf_token_js", {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
+      clearAuthCookies(res);
 
       res.status(200).json({ message: "Account deactivated successfully" });
     } catch (error) {
