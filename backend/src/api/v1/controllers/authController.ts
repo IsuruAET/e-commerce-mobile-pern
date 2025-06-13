@@ -136,6 +136,7 @@ export class AuthController {
       const userId = req.auth?.userId as string;
 
       const result = await this.authService.changePassword(
+        req,
         userId,
         currentPassword,
         newPassword

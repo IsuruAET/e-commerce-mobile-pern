@@ -43,7 +43,38 @@ export class AuthService extends BaseService {
         }
 
         if (!existingUser.password && existingUser.googleId) {
-          throw new AppError(ErrorCode.SOCIAL_AUTH_REQUIRED);
+          const hashedPassword = await PasswordUtils.hashPassword(password);
+          await this.authRepository.updateUser(existingUser.id, {
+            password: hashedPassword,
+            ...(name && { name }), // Update name if provided
+          });
+
+          if (existingUser.isDeactivated) {
+            throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
+          }
+
+          const { accessToken, refreshToken } = JwtUtils.generateTokens({
+            userId: existingUser.id,
+            email: existingUser.email || "",
+            role: existingUser.role.name,
+            isDeactivated: existingUser.isDeactivated || false,
+          });
+
+          await this.storeRefreshToken(refreshToken, existingUser.id);
+
+          return createSuccessResponse(
+            req,
+            {
+              accessToken,
+              refreshToken,
+              user: {
+                id: existingUser.id,
+                email: existingUser.email,
+                name: existingUser.name,
+              },
+            },
+            "User registered successfully"
+          );
         }
 
         throw new AppError(ErrorCode.EMAIL_EXISTS);
@@ -344,15 +375,24 @@ export class AuthService extends BaseService {
   }
 
   async changePassword(
+    req: Request,
     userId: string,
     currentPassword: string,
     newPassword: string
-  ) {
-    return await this.handleDatabaseError(async () => {
+  ): Promise<ApiResponse<null>> {
+    return await this.handleTransaction(async (tx) => {
       const user = await this.authRepository.findUserById(userId);
 
-      if (!user || !user.password) {
+      if (!user) {
         throw new AppError(ErrorCode.USER_NOT_FOUND);
+      }
+
+      if (user.isDeactivated) {
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
+      }
+
+      if (!user.password) {
+        throw new AppError(ErrorCode.PASSWORD_NOT_SET);
       }
 
       const isPasswordValid = await PasswordUtils.comparePassword(
@@ -370,7 +410,14 @@ export class AuthService extends BaseService {
         password: hashedPassword,
       });
 
-      return { message: "Password changed successfully" };
+      // Invalidate all refresh tokens for security
+      await redisTokenService.deleteAllUserTokens("REFRESH", userId);
+
+      return createSuccessResponse(
+        req,
+        null,
+        "Password changed successfully. Please login again with your new password."
+      );
     });
   }
 
