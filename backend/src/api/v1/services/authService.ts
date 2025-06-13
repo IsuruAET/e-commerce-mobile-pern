@@ -8,6 +8,12 @@ import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 import { passwordEmailService } from "./shared/passwordEmailService";
 import { AuthRepository } from "../repositories/authRepository";
 import { redisTokenService } from "./shared/redisTokenService";
+import {
+  createSuccessResponse,
+  ApiResponse,
+  CustomRequest,
+} from "utils/responseUtils";
+import { DEFAULT_USER_ROLE } from "constants/userRoles";
 
 export class AuthService extends BaseService {
   private authRepository: AuthRepository;
@@ -24,16 +30,18 @@ export class AuthService extends BaseService {
     });
   }
 
-  async registerUser(email: string, password: string, name: string) {
+  async registerUser(
+    req: CustomRequest,
+    email: string,
+    password: string,
+    name: string
+  ): Promise<ApiResponse> {
     return await this.handleTransaction(async (tx) => {
       const existingUser = await this.authRepository.findUserByEmail(email);
 
       if (existingUser) {
         if (!existingUser.password && !existingUser.googleId) {
-          throw new AppError(
-            ErrorCode.PASSWORD_NOT_SET,
-            "An account with this email already exists. Please check your email for the password creation link or request a new one."
-          );
+          throw new AppError(ErrorCode.PASSWORD_NOT_SET);
         }
 
         if (!existingUser.password && existingUser.googleId) {
@@ -46,7 +54,7 @@ export class AuthService extends BaseService {
       const hashedPassword = await PasswordUtils.hashPassword(password);
 
       const userRole = await tx.role.findFirst({
-        where: { name: "user" },
+        where: { name: DEFAULT_USER_ROLE },
       });
 
       if (!userRole) {
@@ -72,15 +80,19 @@ export class AuthService extends BaseService {
 
       await this.storeRefreshToken(refreshToken, user.id);
 
-      return {
-        accessToken,
-        refreshToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
+      return createSuccessResponse(
+        req,
+        {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
         },
-      };
+        "User registered successfully"
+      );
     });
   }
 

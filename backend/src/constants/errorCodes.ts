@@ -98,7 +98,7 @@ export const ERROR_MESSAGES: ErrorMessages = {
   [ErrorCode.PASSWORD_ALREADY_SET]:
     "Password has already been set for this account",
   [ErrorCode.PASSWORD_NOT_SET]:
-    "Your account has been created but you need to set your password. Please check your email for the password creation link or request a new one.",
+    "An account with this email already exists. Please check your email for the password creation link or request a new one.",
   [ErrorCode.SOCIAL_AUTH_REQUIRED]:
     "Please use social authentication to access your account.",
   [ErrorCode.ACTIVE_PASSWORD_CREATION_TOKEN]:
