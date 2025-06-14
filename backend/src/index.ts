@@ -11,6 +11,7 @@ import { errorHandler } from "middleware/errorHandler";
 import { requireAuth } from "middleware/authHandler";
 import { requestIdMiddleware } from "middleware/requestId";
 import { csrfProtection, setCsrfToken } from "middleware/csrfHandler";
+import { checkRouteExists } from "middleware/routeHandler";
 import "./config/passport";
 
 // Load environment variables
@@ -28,17 +29,23 @@ const corsOptions = {
 };
 
 // Middleware
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(cookieParser());
-app.use(requestIdMiddleware);
-app.use(requestLogger);
+app.use(requestIdMiddleware); // First for request tracking
+app.use(requestLogger); // Log all requests
+app.use(cors(corsOptions)); // Security boundary
+app.use(express.json()); // Parse request bodies
+app.use(cookieParser()); // Parse cookies
+app.use(setCsrfToken); // Set CSRF token for all requests
 
-// CSRF Protection
-app.use(setCsrfToken);
-app.use("/api/v1", csrfProtection, requireAuth, v1Routes);
+// API routes with middleware in correct order
+app.use(
+  "/api/v1",
+  checkRouteExists, // Check route exists before auth
+  requireAuth, // Authenticate user
+  csrfProtection, // Verify CSRF after auth
+  v1Routes // Route handlers
+);
 
-// Error handling middleware
+// Error handling middleware (always last)
 app.use(errorHandler);
 
 // Root route
