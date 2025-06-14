@@ -11,7 +11,12 @@ import { AuthRepository } from "../repositories/authRepository";
 import { redisTokenService } from "./shared/redisTokenService";
 import { createSuccessResponse, ApiResponse } from "utils/responseUtils";
 import { DEFAULT_USER_ROLE } from "constants/userRoles";
-import { AuthResponse, GoogleUser, GoogleTokens } from "types/auth";
+import {
+  AuthResponse,
+  GoogleUser,
+  GoogleTokens,
+  ProfileUpdateResponse,
+} from "types/auth";
 
 export class AuthService extends BaseService {
   private authRepository: AuthRepository;
@@ -557,14 +562,19 @@ export class AuthService extends BaseService {
   }
 
   async updateUserProfile(
+    req: Request,
     userId: string,
     data: { name: string; phone?: string }
-  ) {
-    return await this.handleDatabaseError(async () => {
+  ): Promise<ApiResponse<ProfileUpdateResponse>> {
+    return await this.handleTransaction(async (tx) => {
       const user = await this.authRepository.findUserById(userId);
 
       if (!user) {
         throw new AppError(ErrorCode.USER_NOT_FOUND);
+      }
+
+      if (user.isDeactivated) {
+        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
       }
 
       const updatedUser = await this.authRepository.updateUser(userId, {
@@ -572,15 +582,18 @@ export class AuthService extends BaseService {
         phone: data.phone,
       });
 
-      return {
-        message: "Profile updated successfully",
-        user: {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          name: updatedUser.name,
-          phone: updatedUser.phone,
+      return createSuccessResponse(
+        req,
+        {
+          user: {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            name: updatedUser.name,
+            phone: updatedUser.phone,
+          },
         },
-      };
+        "Profile updated successfully"
+      );
     });
   }
 
