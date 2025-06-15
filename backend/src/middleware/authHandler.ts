@@ -1,12 +1,10 @@
 import { expressjwt } from "express-jwt";
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import { PrismaClient } from "@prisma/client";
+import { prismaClient } from "config/prisma";
 
 import { AppError } from "./errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import { PUBLIC_ROUTES } from "constants/publicRoutes";
-
-const prisma = new PrismaClient();
 
 // Extend Express Request type to include auth property
 declare global {
@@ -64,7 +62,7 @@ export const requirePermission = (permissions: string[]): RequestHandler => {
 
     try {
       // Get user's role and its permissions
-      const userRole = await prisma.role.findFirst({
+      const userRole = await prismaClient.role.findFirst({
         where: { name: req.auth.role },
         include: {
           permissions: {
@@ -80,8 +78,9 @@ export const requirePermission = (permissions: string[]): RequestHandler => {
       }
 
       // Check if user has any of the required permissions
-      const hasPermission = userRole.permissions.some((rp) =>
-        permissions.includes(rp.permission.name)
+      const hasPermission = userRole.permissions.some(
+        (rp: { permission: { name: string } }) =>
+          permissions.includes(rp.permission.name)
       );
 
       if (!hasPermission) {

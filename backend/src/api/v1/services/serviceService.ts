@@ -1,4 +1,5 @@
 import { BaseService } from "./shared/baseService";
+import { prismaClient } from "config/prisma";
 import {
   buildQueryOptions,
   buildPagination,
@@ -12,7 +13,7 @@ export class ServiceService extends BaseService {
   private readonly serviceRepository: ServiceRepository;
 
   constructor() {
-    super();
+    super(prismaClient);
     this.serviceRepository = new ServiceRepository(this.prisma);
   }
 
@@ -63,71 +64,67 @@ export class ServiceService extends BaseService {
   async listActiveServices(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
-    return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
-        categoryIds: { type: "array", field: "categoryId" },
-      });
-
-      const where = {
-        isActive: true,
-        ...filters,
-      };
-
-      // Get the total count with the filters
-      const total = await this.serviceRepository.countServices(where);
-
-      const pagination = buildPagination(total, page, count);
-
-      // Apply pagination and sorting
-      const services = await this.serviceRepository.findServices(
-        where,
-        {
-          images: true,
-          category: true,
-        },
-        (page - 1) * count,
-        count,
-        orderBy || {}
-      );
-
-      return {
-        list: services,
-        pagination,
-      };
+    const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+      categoryIds: { type: "array", field: "categoryId" },
     });
+
+    const where = {
+      isActive: true,
+      ...filters,
+    };
+
+    // Get the total count with the filters
+    const total = await this.serviceRepository.countServices(where);
+
+    const pagination = buildPagination(total, page, count);
+
+    // Apply pagination and sorting
+    const services = await this.serviceRepository.findServices(
+      where,
+      {
+        images: true,
+        category: true,
+      },
+      (page - 1) * count,
+      count,
+      orderBy || {}
+    );
+
+    return {
+      list: services,
+      pagination,
+    };
   }
 
   async listAllServices(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
-    return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
-        categoryIds: { type: "array", field: "categoryId" },
-        isActive: { type: "boolean" },
-      });
-
-      // Get the total count with the filters
-      const total = await this.serviceRepository.countServices(filters);
-
-      const pagination = buildPagination(total, page, count);
-
-      // Apply pagination and sorting
-      const services = await this.serviceRepository.findServices(
-        filters,
-        {
-          images: true,
-          category: true,
-        },
-        (page - 1) * count,
-        count,
-        orderBy || {}
-      );
-
-      return {
-        list: services,
-        pagination,
-      };
+    const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+      categoryIds: { type: "array", field: "categoryId" },
+      isActive: { type: "boolean" },
     });
+
+    // Get the total count with the filters
+    const total = await this.serviceRepository.countServices(filters);
+
+    const pagination = buildPagination(total, page, count);
+
+    // Apply pagination and sorting
+    const services = await this.serviceRepository.findServices(
+      filters,
+      {
+        images: true,
+        category: true,
+      },
+      (page - 1) * count,
+      count,
+      orderBy || {}
+    );
+
+    return {
+      list: services,
+      pagination,
+    };
   }
 
   async updateService(
@@ -200,22 +197,20 @@ export class ServiceService extends BaseService {
   }
 
   async getServicesForDropdown() {
-    return await this.handleDatabaseError(async () => {
-      const services = await this.serviceRepository.findServices(
-        { isActive: true },
-        {
-          category: true,
-        },
-        0,
-        1000,
-        { name: "asc" }
-      );
+    const services = await this.serviceRepository.findServices(
+      { isActive: true },
+      {
+        category: true,
+      },
+      0,
+      1000,
+      { name: "asc" }
+    );
 
-      return services.map((service) => ({
-        id: service.id,
-        name: service.name,
-      }));
-    });
+    return services.map((service) => ({
+      id: service.id,
+      name: service.name,
+    }));
   }
 
   async deactivateService(id: string) {

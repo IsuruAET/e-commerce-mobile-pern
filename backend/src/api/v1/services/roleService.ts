@@ -2,12 +2,13 @@ import { BaseService } from "./shared/baseService";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import { RoleRepository } from "../repositories/roleRepository";
+import { prismaClient } from "config/prisma";
 
 export class RoleService extends BaseService {
   private readonly roleRepository: RoleRepository;
 
   constructor() {
-    super();
+    super(prismaClient);
     this.roleRepository = new RoleRepository(this.prisma);
   }
 
@@ -92,24 +93,18 @@ export class RoleService extends BaseService {
   }
 
   async getAllRoles() {
-    return await this.handleDatabaseError(async () => {
-      return this.roleRepository.getAllRoles();
-    });
+    return this.roleRepository.getAllRoles();
   }
 
   async getAllPermissions() {
-    return await this.handleDatabaseError(async () => {
-      return this.roleRepository.getAllPermissions();
-    });
+    return this.roleRepository.getAllPermissions();
   }
 
   async getRolesForDropdown() {
-    return await this.handleDatabaseError(async () => {
-      const roles = await this.roleRepository.getAllRoles();
-      return roles.map((role) => ({
-        id: role.id,
-        name: role.name,
-      }));
-    });
+    const roles = await this.roleRepository.getAllRoles();
+    return roles.map((role) => ({
+      id: role.id,
+      name: role.name,
+    }));
   }
 }

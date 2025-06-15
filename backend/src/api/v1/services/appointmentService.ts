@@ -15,6 +15,7 @@ import {
 } from "../repositories/appointmentRepository";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
+import { prismaClient } from "config/prisma";
 
 interface AppointmentQueryOptions {
   statuses?: string[];
@@ -26,7 +27,7 @@ export class AppointmentService extends BaseService {
   private readonly appointmentRepository: AppointmentRepository;
 
   constructor() {
-    super();
+    super(prismaClient);
     this.appointmentRepository = new AppointmentRepository(this.prisma);
   }
 
@@ -34,9 +35,84 @@ export class AppointmentService extends BaseService {
     input: CreateAppointmentInput["body"],
     userId: string
   ) {
-    return await this.handleWithTimeout(async () => {
-      return await this.handleTransaction(async (tx: PrismaTransaction) => {
-        // First, get all services to calculate total price and duration
+    return await this.handleTransaction(async (tx: PrismaTransaction) => {
+      // First, get all services to calculate total price and duration
+      const services = await tx.service.findMany({
+        where: {
+          id: {
+            in: input.services.map((s: { serviceId: string }) => s.serviceId),
+          },
+        },
+      });
+
+      // Calculate total price and duration based on number of people per service
+      const totalPrice = input.services.reduce((sum: number, serviceInput) => {
+        const service = services.find((s) => s.id === serviceInput.serviceId);
+        return (
+          sum + (Number(service?.price) || 0) * serviceInput.numberOfPeople
+        );
+      }, 0);
+
+      const estimatedDuration = services.reduce(
+        (sum: number, service) => sum + service.duration,
+        0
+      );
+
+      // Convert input dateTime to JS Date
+      const appointmentDateTime = DateTime.fromISO(input.dateTime).toJSDate();
+
+      return this.appointmentRepository.createAppointment(
+        {
+          userId,
+          stylistId: input.stylistId,
+          dateTime: appointmentDateTime,
+          notes: input.notes,
+          estimatedDuration,
+          totalPrice,
+          services: input.services,
+        },
+        tx
+      );
+    });
+  }
+
+  async getAppointment(id: string) {
+    return await this.handleNotFound(async () => {
+      return this.appointmentRepository.findAppointmentById(id);
+    });
+  }
+
+  async updateAppointment(id: string, input: UpdateAppointmentInput["body"]) {
+    return await this.handleTransaction(async (tx: PrismaTransaction) => {
+      // First, get the current appointment to check its status
+      const currentAppointment =
+        await this.appointmentRepository.findAppointmentById(id, tx);
+
+      if (!currentAppointment) {
+        throw new AppError(
+          ErrorCode.RESOURCE_NOT_FOUND,
+          "Appointment not found"
+        );
+      }
+
+      if (currentAppointment.status !== "PENDING") {
+        throw new AppError(
+          ErrorCode.VALIDATION_ERROR,
+          "Only PENDING appointments can be updated"
+        );
+      }
+
+      let updateData: any = {
+        status: input.status,
+        notes: input.notes,
+      };
+
+      if (input.dateTime) {
+        updateData.dateTime = DateTime.fromISO(input.dateTime).toJSDate();
+      }
+
+      if (input.services) {
+        // Get all services to calculate new total price and duration
         const services = await tx.service.findMany({
           where: {
             id: {
@@ -63,116 +139,29 @@ export class AppointmentService extends BaseService {
           0
         );
 
-        // Convert input dateTime to JS Date
-        const appointmentDateTime = DateTime.fromISO(input.dateTime).toJSDate();
-
-        return this.appointmentRepository.createAppointment(
-          {
-            userId,
-            stylistId: input.stylistId,
-            dateTime: appointmentDateTime,
-            notes: input.notes,
-            estimatedDuration,
-            totalPrice,
-            services: input.services,
+        updateData = {
+          ...updateData,
+          totalPrice,
+          estimatedDuration,
+          services: {
+            deleteMany: {},
+            create: input.services.map((serviceInput) => ({
+              serviceId: serviceInput.serviceId,
+              numberOfPeople: serviceInput.numberOfPeople,
+            })),
           },
-          tx
-        );
-      });
-    }, 10000); // 10 second timeout
-  }
-
-  async getAppointment(id: string) {
-    return await this.handleNotFound(async () => {
-      return this.appointmentRepository.findAppointmentById(id);
-    });
-  }
-
-  async updateAppointment(id: string, input: UpdateAppointmentInput["body"]) {
-    return await this.handleWithTimeout(async () => {
-      return await this.handleTransaction(async (tx: PrismaTransaction) => {
-        // First, get the current appointment to check its status
-        const currentAppointment =
-          await this.appointmentRepository.findAppointmentById(id, tx);
-
-        if (!currentAppointment) {
-          throw new AppError(
-            ErrorCode.RESOURCE_NOT_FOUND,
-            "Appointment not found"
-          );
-        }
-
-        if (currentAppointment.status !== "PENDING") {
-          throw new AppError(
-            ErrorCode.VALIDATION_ERROR,
-            "Only PENDING appointments can be updated"
-          );
-        }
-
-        let updateData: any = {
-          status: input.status,
-          notes: input.notes,
         };
+      }
 
-        if (input.dateTime) {
-          updateData.dateTime = DateTime.fromISO(input.dateTime).toJSDate();
-        }
-
-        if (input.services) {
-          // Get all services to calculate new total price and duration
-          const services = await tx.service.findMany({
-            where: {
-              id: {
-                in: input.services.map(
-                  (s: { serviceId: string }) => s.serviceId
-                ),
-              },
-            },
-          });
-
-          // Calculate total price and duration based on number of people per service
-          const totalPrice = input.services.reduce(
-            (sum: number, serviceInput) => {
-              const service = services.find(
-                (s) => s.id === serviceInput.serviceId
-              );
-              return (
-                sum +
-                (Number(service?.price) || 0) * serviceInput.numberOfPeople
-              );
-            },
-            0
-          );
-
-          const estimatedDuration = services.reduce(
-            (sum: number, service) => sum + service.duration,
-            0
-          );
-
-          updateData = {
-            ...updateData,
-            totalPrice,
-            estimatedDuration,
-            services: {
-              deleteMany: {},
-              create: input.services.map((serviceInput) => ({
-                serviceId: serviceInput.serviceId,
-                numberOfPeople: serviceInput.numberOfPeople,
-              })),
-            },
-          };
-        }
-
-        return this.appointmentRepository.updateAppointment(id, updateData, tx);
-      });
-    }, 10000); // 10 second timeout
+      return this.appointmentRepository.updateAppointment(id, updateData, tx);
+    });
   }
 
   async getUserAppointments(
     userId: string,
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async () => {
       const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
         stylistIds: { type: "array", field: "stylistId" },
         statuses: { type: "array", field: "status" },
@@ -211,7 +200,7 @@ export class AppointmentService extends BaseService {
     stylistId: string,
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async () => {
       const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
         userIds: { type: "array", field: "userId" },
         statuses: { type: "array", field: "status" },
@@ -250,7 +239,7 @@ export class AppointmentService extends BaseService {
     startDate?: string,
     endDate?: string
   ): Promise<number> {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async () => {
       const where: any = {
         status: "COMPLETED",
         ...(stylistIds &&
@@ -277,7 +266,7 @@ export class AppointmentService extends BaseService {
     startDate?: string,
     endDate?: string
   ): Promise<number> {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async () => {
       const where: any = {
         appointment: {
           status: "COMPLETED",
@@ -305,7 +294,7 @@ export class AppointmentService extends BaseService {
   async listAppointments(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async () => {
       const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
         userIds: { type: "array", field: "userId" },
         stylistIds: { type: "array", field: "stylistId" },
@@ -352,7 +341,7 @@ export class AppointmentService extends BaseService {
   }
 
   async updateAppointmentStatus(appointmentId: string, newStatus: string) {
-    return await this.handleDatabaseError(async () => {
+    return await this.handleTransaction(async () => {
       const appointment = await this.appointmentRepository.findAppointmentById(
         appointmentId
       );
