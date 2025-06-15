@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import passport from "passport";
-import { CustomRequest } from "utils/responseUtils";
+import { SuccessResponse } from "utils/responseUtils";
+import { AuthResponse } from "types/auth";
 
 import { AuthService } from "../services/authService";
 
@@ -18,12 +19,12 @@ export class AuthController {
   ): Promise<void> {
     try {
       const { email, password, name } = req.body;
-      const response = await this.authService.registerUser(
-        req as CustomRequest,
+      const response = (await this.authService.registerUser(
+        req,
         email,
         password,
         name
-      );
+      )) as SuccessResponse<AuthResponse>;
 
       const { refreshToken, ...rest } = response.data;
 
@@ -47,12 +48,14 @@ export class AuthController {
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
-      const { refreshToken, ...rest } = await this.authService.loginUser(
+      const response = (await this.authService.loginUser(
+        req,
         email,
         password
-      );
+      )) as SuccessResponse<AuthResponse>;
 
       // Set refresh token in HTTP-only cookie
+      const { refreshToken, ...rest } = response.data;
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -60,7 +63,10 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
-      res.status(200).json(rest);
+      res.status(200).json({
+        ...response,
+        data: rest,
+      });
     } catch (error) {
       next(error);
     }
