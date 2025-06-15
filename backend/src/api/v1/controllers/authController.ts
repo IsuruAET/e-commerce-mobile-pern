@@ -85,13 +85,11 @@ export class AuthController {
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
-      if (refreshToken) {
-        await this.authService.logoutUser(refreshToken);
-      }
+
+      const response = await this.authService.logoutUser(req, refreshToken);
+      res.status(200).json(response);
 
       clearAuthCookies(res);
-
-      res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
       next(error);
     }

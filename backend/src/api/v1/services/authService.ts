@@ -243,13 +243,15 @@ export class AuthService extends BaseService {
     });
   }
 
-  async logoutUser(refreshToken: string) {
+  async logoutUser(
+    req: Request,
+    refreshToken?: string
+  ): Promise<ApiResponse<null>> {
     return await this.handleDatabaseError(async () => {
-      if (!refreshToken) {
-        throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
+      if (refreshToken) {
+        await redisTokenService.deleteToken("REFRESH", refreshToken);
       }
-
-      await redisTokenService.deleteToken("REFRESH", refreshToken);
+      return createSuccessResponse(req, null, "Logged out successfully");
     });
   }
 
