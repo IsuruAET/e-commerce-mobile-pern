@@ -239,6 +239,7 @@ export class AuthController {
     try {
       const { email } = req.body;
       const result = await this.authService.requestNewPasswordCreationToken(
+        req,
         email
       );
       res.status(200).json(result);

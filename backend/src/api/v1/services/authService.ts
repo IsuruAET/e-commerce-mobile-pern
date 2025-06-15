@@ -597,15 +597,19 @@ export class AuthService extends BaseService {
     });
   }
 
-  async requestNewPasswordCreationToken(email: string) {
-    return await this.handleDatabaseError(async () => {
+  async requestNewPasswordCreationToken(
+    req: Request,
+    email: string
+  ): Promise<ApiResponse<null>> {
+    return await this.handleTransaction(async (tx) => {
       const user = await this.authRepository.findUserByEmail(email);
 
       if (!user) {
-        return {
-          message:
-            "If an account exists with this email, you will receive a password creation link",
-        };
+        return createSuccessResponse(
+          req,
+          null,
+          "Password create email sent if account exists"
+        );
       }
 
       if (user.isDeactivated) {
@@ -621,10 +625,11 @@ export class AuthService extends BaseService {
         email
       );
 
-      return {
-        message:
-          "If an account exists with this email, you will receive a password creation link",
-      };
+      return createSuccessResponse(
+        req,
+        null,
+        "Password create email sent if account exists"
+      );
     });
   }
 
