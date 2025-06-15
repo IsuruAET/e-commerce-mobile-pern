@@ -10,40 +10,37 @@ import {
 } from "utils/queryBuilder";
 import { UserRepository } from "../repositories/userRepository";
 import { redisTokenService } from "./shared/redisTokenService";
+import { prismaClient } from "config/prisma";
 
 export class UserService extends BaseService {
   private userRepository: UserRepository;
 
   constructor() {
-    super();
+    super(prismaClient);
     this.userRepository = new UserRepository(this.prisma);
   }
 
   async createUser(data: CreateUserInput) {
-    return await this.handleDatabaseError(async () => {
-      const existingUser = await this.userRepository.findUserByEmail(
-        data.email
-      );
+    const existingUser = await this.userRepository.findUserByEmail(data.email);
 
-      if (existingUser) {
-        throw new AppError(ErrorCode.ADMIN_ADDING_EXISTING_USER);
-      }
+    if (existingUser) {
+      throw new AppError(ErrorCode.ADMIN_ADDING_EXISTING_USER);
+    }
 
-      const user = await this.userRepository.createUser({
-        email: data.email,
-        name: data.name,
-        phone: data.phone,
-        roleId: data.roleId,
-      });
-
-      // Generate and send password creation token
-      await passwordEmailService.generateAndSendPasswordCreationToken(
-        user.id,
-        user.email
-      );
-
-      return user;
+    const user = await this.userRepository.createUser({
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      roleId: data.roleId,
     });
+
+    // Generate and send password creation token
+    await passwordEmailService.generateAndSendPasswordCreationToken(
+      user.id,
+      user.email
+    );
+
+    return user;
   }
 
   async getUserById(id: string) {
@@ -55,33 +52,31 @@ export class UserService extends BaseService {
   async listUsers(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
-    return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(
-        queryParams,
-        {
-          roleIds: { type: "array", field: "roleId" },
-          isDeactivated: { type: "boolean" },
-        },
-        ["email", "name"]
-      );
+    const { page, count, filters, orderBy } = buildQueryOptions(
+      queryParams,
+      {
+        roleIds: { type: "array", field: "roleId" },
+        isDeactivated: { type: "boolean" },
+      },
+      ["email", "name"]
+    );
 
-      // Get the total count with the filters
-      const total = await this.userRepository.countUsers(filters);
+    // Get the total count with the filters
+    const total = await this.userRepository.countUsers(filters);
 
-      const pagination = buildPagination(total, page, count);
+    const pagination = buildPagination(total, page, count);
 
-      // Apply pagination and sorting
-      const users = await this.userRepository.findUsers(
-        filters,
-        { skip: (page - 1) * count, take: count },
-        orderBy
-      );
+    // Apply pagination and sorting
+    const users = await this.userRepository.findUsers(
+      filters,
+      { skip: (page - 1) * count, take: count },
+      orderBy
+    );
 
-      return {
-        list: users,
-        pagination,
-      };
-    });
+    return {
+      list: users,
+      pagination,
+    };
   }
 
   async updateUser(id: string, data: UpdateUserInput) {
@@ -157,8 +152,6 @@ export class UserService extends BaseService {
   }
 
   async reactivateUser(id: string) {
-    return await this.handleDatabaseError(async () => {
-      return await this.userRepository.reactivateUser(id);
-    });
+    return await this.userRepository.reactivateUser(id);
   }
 }

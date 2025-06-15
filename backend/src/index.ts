@@ -8,6 +8,7 @@ import { connectRedis } from "./config/redis";
 import { requestLogger, logger } from "./middleware/logger";
 import v1Routes from "./api/v1/index";
 import { errorHandler } from "middleware/errorHandler";
+import { databaseErrorHandler } from "middleware/databaseErrorHandler";
 import { requireAuth } from "middleware/authHandler";
 import { requestIdMiddleware } from "middleware/requestId";
 import { csrfProtection, setCsrfToken } from "middleware/csrfHandler";
@@ -46,6 +47,7 @@ app.use(
 );
 
 // Error handling middleware (always last)
+app.use(databaseErrorHandler); // Add database error handler before general error handler
 app.use(errorHandler);
 
 // Root route

@@ -17,20 +17,19 @@ import {
   GoogleTokens,
   ProfileUpdateResponse,
 } from "types/auth";
+import { prismaClient } from "config/prisma";
 
 export class AuthService extends BaseService {
   private authRepository: AuthRepository;
 
   constructor() {
-    super();
+    super(prismaClient);
     this.authRepository = new AuthRepository(this.prisma);
   }
 
   async storeRefreshToken(token: string, userId: string) {
-    return await this.handleDatabaseError(async () => {
-      const expiresIn = JwtUtils.getRefreshTokenExpirationInSeconds();
-      await redisTokenService.setToken("REFRESH", token, userId, expiresIn);
-    });
+    const expiresIn = JwtUtils.getRefreshTokenExpirationInSeconds();
+    await redisTokenService.setToken("REFRESH", token, userId, expiresIn);
   }
 
   async registerUser(
@@ -40,7 +39,7 @@ export class AuthService extends BaseService {
     name: string
   ): Promise<ApiResponse<AuthResponse>> {
     return await this.handleTransaction(async (tx) => {
-      const existingUser = await this.authRepository.findUserByEmail(email);
+      const existingUser = await this.authRepository.findUserByEmail(email, tx);
 
       if (existingUser) {
         if (!existingUser.password && !existingUser.googleId) {
@@ -49,10 +48,14 @@ export class AuthService extends BaseService {
 
         if (!existingUser.password && existingUser.googleId) {
           const hashedPassword = await PasswordUtils.hashPassword(password);
-          await this.authRepository.updateUser(existingUser.id, {
-            password: hashedPassword,
-            ...(name && { name }), // Update name if provided
-          });
+          await this.authRepository.updateUser(
+            existingUser.id,
+            {
+              password: hashedPassword,
+              ...(name && { name }), // Update name if provided
+            },
+            tx
+          );
 
           if (existingUser.isDeactivated) {
             throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
@@ -98,12 +101,15 @@ export class AuthService extends BaseService {
         );
       }
 
-      const user = await this.authRepository.createUser({
-        email,
-        password: hashedPassword,
-        name,
-        roleId: userRole.id,
-      });
+      const user = await this.authRepository.createUser(
+        {
+          email,
+          password: hashedPassword,
+          name,
+          roleId: userRole.id,
+        },
+        tx
+      );
 
       const { accessToken, refreshToken } = JwtUtils.generateTokens({
         userId: user.id,
@@ -135,56 +141,54 @@ export class AuthService extends BaseService {
     email: string,
     password: string
   ): Promise<ApiResponse<AuthResponse>> {
-    return await this.handleTransaction(async (tx) => {
-      const user = await this.authRepository.findUserByEmail(email);
+    const user = await this.authRepository.findUserByEmail(email);
 
-      if (!user) {
-        throw new AppError(ErrorCode.INVALID_CREDENTIALS);
-      }
+    if (!user) {
+      throw new AppError(ErrorCode.INVALID_CREDENTIALS);
+    }
 
-      if (user.isDeactivated) {
-        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
-      }
+    if (user.isDeactivated) {
+      throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
+    }
 
-      if (!user.password && !user.googleId) {
-        throw new AppError(ErrorCode.PASSWORD_NOT_SET);
-      }
+    if (!user.password && !user.googleId) {
+      throw new AppError(ErrorCode.PASSWORD_NOT_SET);
+    }
 
-      if (!user.password && user.googleId) {
-        throw new AppError(ErrorCode.SOCIAL_AUTH_REQUIRED);
-      }
+    if (!user.password && user.googleId) {
+      throw new AppError(ErrorCode.SOCIAL_AUTH_REQUIRED);
+    }
 
-      const isPasswordValid = await PasswordUtils.comparePassword(
-        password,
-        user.password as string
-      );
-      if (!isPasswordValid) {
-        throw new AppError(ErrorCode.INVALID_CREDENTIALS);
-      }
+    const isPasswordValid = await PasswordUtils.comparePassword(
+      password,
+      user.password as string
+    );
+    if (!isPasswordValid) {
+      throw new AppError(ErrorCode.INVALID_CREDENTIALS);
+    }
 
-      const { accessToken, refreshToken } = JwtUtils.generateTokens({
-        userId: user.id,
-        email: user.email || "",
-        role: user.role.name,
-        isDeactivated: user.isDeactivated || false,
-      });
-
-      await this.storeRefreshToken(refreshToken, user.id);
-
-      return createSuccessResponse(
-        req,
-        {
-          accessToken,
-          refreshToken,
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-          },
-        },
-        "User logged in successfully"
-      );
+    const { accessToken, refreshToken } = JwtUtils.generateTokens({
+      userId: user.id,
+      email: user.email || "",
+      role: user.role.name,
+      isDeactivated: user.isDeactivated || false,
     });
+
+    await this.storeRefreshToken(refreshToken, user.id);
+
+    return createSuccessResponse(
+      req,
+      {
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      },
+      "User logged in successfully"
+    );
   }
 
   async refreshUserToken(
@@ -283,12 +287,10 @@ export class AuthService extends BaseService {
     req: Request,
     refreshToken?: string
   ): Promise<ApiResponse<null>> {
-    return await this.handleDatabaseError(async () => {
-      if (refreshToken) {
-        await redisTokenService.deleteToken("REFRESH", refreshToken);
-      }
-      return createSuccessResponse(req, null, "Logged out successfully");
-    });
+    if (refreshToken) {
+      await redisTokenService.deleteToken("REFRESH", refreshToken);
+    }
+    return createSuccessResponse(req, null, "Logged out successfully");
   }
 
   async handleGoogleCallback(
@@ -311,9 +313,10 @@ export class AuthService extends BaseService {
         throw new AppError(ErrorCode.INVALID_USER_DATA);
       }
 
-      // Check if user exists
+      // Check if user exists - using tx
       const existingUser = await this.authRepository.findUserByEmail(
-        user.email
+        user.email,
+        tx
       );
       if (existingUser) {
         if (existingUser.isDeactivated) {
@@ -323,14 +326,18 @@ export class AuthService extends BaseService {
         // Link Google account to existing account
         user.id = existingUser.id;
 
-        // Update Google ID if not set
+        // Update Google ID if not set - using tx
         if (!existingUser.googleId) {
-          await this.authRepository.updateUser(existingUser.id, {
-            googleId: user.id,
-          });
+          await this.authRepository.updateUser(
+            existingUser.id,
+            {
+              googleId: user.id,
+            },
+            tx
+          );
         }
       } else {
-        // Create new user with Google ID
+        // Create new user with Google ID - using tx
         const userRole = await tx.role.findFirst({
           where: { name: DEFAULT_USER_ROLE },
         });
@@ -342,12 +349,15 @@ export class AuthService extends BaseService {
           );
         }
 
-        const newUser = await this.authRepository.createUser({
-          email: user.email,
-          name: user.name,
-          googleId: user.id,
-          roleId: userRole.id,
-        });
+        const newUser = await this.authRepository.createUser(
+          {
+            email: user.email,
+            name: user.name,
+            googleId: user.id,
+            roleId: userRole.id,
+          },
+          tx
+        );
 
         // Replace Google ID with our database ID for token generation and user operations
         user.id = newUser.id;
@@ -386,7 +396,7 @@ export class AuthService extends BaseService {
     newPassword: string
   ): Promise<ApiResponse<null>> {
     return await this.handleTransaction(async (tx) => {
-      const user = await this.authRepository.findUserById(userId);
+      const user = await this.authRepository.findUserById(userId, tx);
 
       if (!user) {
         throw new AppError(ErrorCode.USER_NOT_FOUND);
@@ -411,9 +421,13 @@ export class AuthService extends BaseService {
 
       const hashedPassword = await PasswordUtils.hashPassword(newPassword);
 
-      await this.authRepository.updateUser(userId, {
-        password: hashedPassword,
-      });
+      await this.authRepository.updateUser(
+        userId,
+        {
+          password: hashedPassword,
+        },
+        tx
+      );
 
       // Invalidate all refresh tokens for security
       await redisTokenService.deleteAllUserTokens("REFRESH", userId);
@@ -430,32 +444,30 @@ export class AuthService extends BaseService {
     req: Request,
     email: string
   ): Promise<ApiResponse<null>> {
-    return await this.handleTransaction(async (tx) => {
-      const user = await this.authRepository.findUserByEmail(email);
+    const user = await this.authRepository.findUserByEmail(email);
 
-      if (!user) {
-        return createSuccessResponse(
-          req,
-          null,
-          "Password reset email sent if account exists"
-        );
-      }
-
-      if (user.isDeactivated) {
-        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
-      }
-
-      await passwordEmailService.generateAndSendPasswordResetToken(
-        user.id,
-        email
-      );
-
+    if (!user) {
       return createSuccessResponse(
         req,
         null,
         "Password reset email sent if account exists"
       );
-    });
+    }
+
+    if (user.isDeactivated) {
+      throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
+    }
+
+    await passwordEmailService.generateAndSendPasswordResetToken(
+      user.id,
+      email
+    );
+
+    return createSuccessResponse(
+      req,
+      null,
+      "Password reset email sent if account exists"
+    );
   }
 
   async resetUserPassword(
@@ -463,62 +475,60 @@ export class AuthService extends BaseService {
     token: string,
     newPassword: string
   ): Promise<ApiResponse<AuthResponse>> {
-    return await this.handleTransaction(async (tx) => {
-      if (!token) {
-        throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
-      }
+    if (!token) {
+      throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
+    }
 
-      const { userId } = JwtUtils.verifyPasswordToken(token);
+    const { userId } = JwtUtils.verifyPasswordToken(token);
 
-      const user = await this.authRepository.findUserById(userId);
+    const user = await this.authRepository.findUserById(userId);
 
-      if (!user) {
-        throw new AppError(ErrorCode.USER_NOT_FOUND);
-      }
+    if (!user) {
+      throw new AppError(ErrorCode.USER_NOT_FOUND);
+    }
 
-      if (user.isDeactivated) {
-        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
-      }
+    if (user.isDeactivated) {
+      throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
+    }
 
-      const storedUserId = await redisTokenService.getToken(
-        "PASSWORD_RESET",
-        token
-      );
-      if (!storedUserId || storedUserId !== userId) {
-        throw new AppError(ErrorCode.INVALID_RESET_TOKEN);
-      }
+    const storedUserId = await redisTokenService.getToken(
+      "PASSWORD_RESET",
+      token
+    );
+    if (!storedUserId || storedUserId !== userId) {
+      throw new AppError(ErrorCode.INVALID_RESET_TOKEN);
+    }
 
-      const hashedPassword = await PasswordUtils.hashPassword(newPassword);
+    const hashedPassword = await PasswordUtils.hashPassword(newPassword);
 
-      await Promise.all([
-        this.authRepository.updateUser(userId, { password: hashedPassword }),
-        redisTokenService.deleteToken("PASSWORD_RESET", token),
-        redisTokenService.deleteAllUserTokens("REFRESH", userId), // Invalidate all refresh tokens
-      ]);
+    await Promise.all([
+      this.authRepository.updateUser(userId, { password: hashedPassword }),
+      redisTokenService.deleteToken("PASSWORD_RESET", token),
+      redisTokenService.deleteAllUserTokens("REFRESH", userId), // Invalidate all refresh tokens
+    ]);
 
-      const { accessToken, refreshToken } = JwtUtils.generateTokens({
-        userId: user.id,
-        email: user.email || "",
-        role: user.role.name,
-        isDeactivated: user.isDeactivated || false,
-      });
-
-      await this.storeRefreshToken(refreshToken, user.id);
-
-      return createSuccessResponse(
-        req,
-        {
-          accessToken,
-          refreshToken,
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-          },
-        },
-        "Password reset successful"
-      );
+    const { accessToken, refreshToken } = JwtUtils.generateTokens({
+      userId: user.id,
+      email: user.email || "",
+      role: user.role.name,
+      isDeactivated: user.isDeactivated || false,
     });
+
+    await this.storeRefreshToken(refreshToken, user.id);
+
+    return createSuccessResponse(
+      req,
+      {
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      },
+      "Password reset successful"
+    );
   }
 
   async deactivateUserAccount(
@@ -526,27 +536,20 @@ export class AuthService extends BaseService {
     userId: string
   ): Promise<ApiResponse<null>> {
     return await this.handleTransaction(async (tx) => {
-      const activeAppointments = await tx.appointment.findMany({
-        where: {
-          OR: [{ userId }, { stylistId: userId }],
-          status: { in: ["PENDING", "CONFIRMED"] },
-        },
-      });
+      // Get and cancel active appointments
+      const activeAppointments =
+        await this.authRepository.findActiveAppointments(userId, tx);
+      const activeAppointmentCount = activeAppointments.length;
 
-      if (activeAppointments.length > 0) {
-        await tx.appointment.updateMany({
-          where: {
-            id: {
-              in: activeAppointments.map((appointment) => appointment.id),
-            },
-          },
-          data: {
-            status: "CANCELLED",
-            notes: "Appointment cancelled due to account deactivation",
-          },
-        });
+      if (activeAppointmentCount > 0) {
+        await this.authRepository.cancelAppointments(
+          activeAppointments.map((a) => a.id),
+          "Appointment cancelled due to account deactivation",
+          tx
+        );
       }
 
+      // Perform cleanup operations
       await Promise.all([
         redisTokenService.deleteAllUserTokens("REFRESH", userId),
         redisTokenService.deleteAllUserTokens("PASSWORD_RESET", userId),
@@ -566,71 +569,57 @@ export class AuthService extends BaseService {
     userId: string,
     data: { name: string; phone?: string }
   ): Promise<ApiResponse<ProfileUpdateResponse>> {
-    return await this.handleTransaction(async (tx) => {
-      const user = await this.authRepository.findUserById(userId);
-
-      if (!user) {
-        throw new AppError(ErrorCode.USER_NOT_FOUND);
-      }
-
-      if (user.isDeactivated) {
-        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
-      }
-
-      const updatedUser = await this.authRepository.updateUser(userId, {
-        name: data.name,
-        phone: data.phone,
-      });
-
-      return createSuccessResponse(
-        req,
-        {
-          user: {
-            id: updatedUser.id,
-            email: updatedUser.email,
-            name: updatedUser.name,
-            phone: updatedUser.phone,
-          },
-        },
-        "Profile updated successfully"
-      );
+    const updatedUser = await this.authRepository.updateUser(userId, {
+      name: data.name,
+      phone: data.phone,
     });
+
+    return createSuccessResponse(
+      req,
+      {
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          name: updatedUser.name,
+          phone: updatedUser.phone,
+        },
+      },
+      "Profile updated successfully"
+    );
   }
 
   async requestNewPasswordCreationToken(
     req: Request,
     email: string
   ): Promise<ApiResponse<null>> {
-    return await this.handleTransaction(async (tx) => {
-      const user = await this.authRepository.findUserByEmail(email);
+    const user = await this.authRepository.findUserByEmail(email);
 
-      if (!user) {
-        return createSuccessResponse(
-          req,
-          null,
-          "Password create email sent if account exists"
-        );
-      }
-
-      if (user.isDeactivated) {
-        throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
-      }
-
-      if (user.password) {
-        throw new AppError(ErrorCode.PASSWORD_ALREADY_SET);
-      }
-
-      await passwordEmailService.generateAndSendPasswordCreationToken(
-        user.id,
-        email
-      );
-
+    if (!user) {
       return createSuccessResponse(
         req,
         null,
         "Password create email sent if account exists"
       );
-    });
+    }
+
+    if (user.isDeactivated) {
+      throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
+    }
+
+    if (user.password) {
+      throw new AppError(ErrorCode.PASSWORD_ALREADY_SET);
+    }
+
+    await passwordEmailService.generateAndSendPasswordCreationToken(
+      user.id,
+      email
+    );
+
+    return createSuccessResponse(
+      req,
+      null,
+      "Password create email sent if account exists"
+    );
   }
 
   async createPassword(
@@ -645,7 +634,7 @@ export class AuthService extends BaseService {
 
       const { userId } = JwtUtils.verifyPasswordToken(token);
 
-      const user = await this.authRepository.findUserById(userId);
+      const user = await this.authRepository.findUserById(userId, tx);
 
       if (!user) {
         throw new AppError(ErrorCode.USER_NOT_FOUND);
@@ -670,9 +659,13 @@ export class AuthService extends BaseService {
       const hashedPassword = await PasswordUtils.hashPassword(password);
 
       await Promise.all([
-        this.authRepository.updateUser(userId, {
-          password: hashedPassword,
-        }),
+        this.authRepository.updateUser(
+          userId,
+          {
+            password: hashedPassword,
+          },
+          tx
+        ),
         redisTokenService.deleteToken("PASSWORD_CREATION", token),
       ]);
 

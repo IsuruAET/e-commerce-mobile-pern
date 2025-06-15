@@ -1,11 +1,8 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient, User, Prisma, Appointment } from "@prisma/client";
 import { DateTime } from "luxon";
 
 // Define a type for the Prisma transaction
-export type PrismaTransaction = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use"
->;
+export type PrismaTransaction = Prisma.TransactionClient;
 
 export interface IAuthRepository {
   // User operations
@@ -36,6 +33,17 @@ export interface IAuthRepository {
     id: string,
     tx?: PrismaTransaction
   ): Promise<User & { role: { name: string } }>;
+
+  findActiveAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]>;
+
+  cancelAppointments(
+    appointmentIds: string[],
+    reason: string,
+    tx?: PrismaTransaction
+  ): Promise<void>;
 }
 
 export class AuthRepository implements IAuthRepository {
@@ -109,6 +117,38 @@ export class AuthRepository implements IAuthRepository {
         deactivatedAt: DateTime.now().toJSDate(),
       },
       include: { role: true },
+    });
+  }
+
+  async findActiveAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]> {
+    const client = this.getClient(tx);
+    return client.appointment.findMany({
+      where: {
+        OR: [{ userId }, { stylistId: userId }],
+        status: { in: ["PENDING", "CONFIRMED"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async cancelAppointments(
+    appointmentIds: string[],
+    reason: string,
+    tx?: PrismaTransaction
+  ): Promise<void> {
+    const client = this.getClient(tx);
+    await client.appointment.updateMany({
+      where: {
+        id: { in: appointmentIds },
+        status: { in: ["PENDING", "CONFIRMED"] }, // Extra safety check
+      },
+      data: {
+        status: "CANCELLED",
+        notes: reason,
+      },
     });
   }
 }
