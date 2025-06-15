@@ -207,7 +207,7 @@ export class AuthController {
     try {
       const userId = req.auth?.userId as string;
       const { name, phone } = req.body;
-      const result = await this.authService.updateUserProfile(userId, {
+      const result = await this.authService.updateUserProfile(req, userId, {
         name,
         phone,
       });

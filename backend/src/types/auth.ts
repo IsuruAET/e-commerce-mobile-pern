@@ -19,6 +19,10 @@ export type AuthUser = {
   name: string;
 };
 
+export type UserProfile = AuthUser & {
+  phone: string | null;
+};
+
 export type PasswordResetResponse = {
   message: string;
 };
@@ -28,10 +32,7 @@ export type PasswordChangeResponse = {
 };
 
 export type ProfileUpdateResponse = {
-  message: string;
-  user: AuthUser & {
-    phone: string | null;
-  };
+  user: UserProfile;
 };
 
 // Google Auth Types
