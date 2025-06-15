@@ -35,8 +35,8 @@ app.use(requestIdMiddleware);
 app.use(requestLogger);
 
 // CSRF Protection
-app.use(setCsrfToken); // Set CSRF token for all routes
-app.use("/api/v1", csrfProtection, requireAuth, v1Routes); // Protect API routes with CSRF
+app.use(setCsrfToken);
+app.use("/api/v1", csrfProtection, requireAuth, v1Routes);
 
 // Error handling middleware
 app.use(errorHandler);

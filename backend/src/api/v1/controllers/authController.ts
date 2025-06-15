@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import passport from "passport";
+import { CustomRequest } from "utils/responseUtils";
 
 import { AuthService } from "../services/authService";
 
@@ -17,11 +18,14 @@ export class AuthController {
   ): Promise<void> {
     try {
       const { email, password, name } = req.body;
-      const { refreshToken, ...rest } = await this.authService.registerUser(
+      const response = await this.authService.registerUser(
+        req as CustomRequest,
         email,
         password,
         name
       );
+
+      const { refreshToken, ...rest } = response.data;
 
       // Set refresh token in HTTP-only cookie
       res.cookie("refreshToken", refreshToken, {
@@ -31,7 +35,10 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
-      res.status(201).json(rest);
+      res.status(201).json({
+        ...response,
+        data: rest,
+      });
     } catch (error) {
       next(error);
     }
