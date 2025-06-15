@@ -224,8 +224,13 @@ export class AuthController {
   ): Promise<void> {
     try {
       const { token, password } = req.body;
-      const result = await this.authService.createPassword(token, password);
-      res.status(200).json(result);
+      const response = (await this.authService.createPassword(
+        req,
+        token,
+        password
+      )) as SuccessResponse<AuthResponse>;
+
+      this.handleAuthResponse(res, response);
     } catch (error) {
       next(error);
     }

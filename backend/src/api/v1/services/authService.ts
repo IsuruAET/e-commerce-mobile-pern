@@ -633,7 +633,11 @@ export class AuthService extends BaseService {
     });
   }
 
-  async createPassword(token: string, password: string) {
+  async createPassword(
+    req: Request,
+    token: string,
+    password: string
+  ): Promise<ApiResponse<AuthResponse>> {
     return await this.handleTransaction(async (tx) => {
       if (!token) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
@@ -649,6 +653,10 @@ export class AuthService extends BaseService {
 
       if (user.isDeactivated) {
         throw new AppError(ErrorCode.ACCOUNT_DEACTIVATED);
+      }
+
+      if (user.password) {
+        throw new AppError(ErrorCode.PASSWORD_ALREADY_SET);
       }
 
       const storedUserId = await redisTokenService.getToken(
@@ -668,7 +676,28 @@ export class AuthService extends BaseService {
         redisTokenService.deleteToken("PASSWORD_CREATION", token),
       ]);
 
-      return { message: "Password created successfully" };
+      const { accessToken, refreshToken } = JwtUtils.generateTokens({
+        userId: user.id,
+        email: user.email || "",
+        role: user.role.name,
+        isDeactivated: user.isDeactivated || false,
+      });
+
+      await this.storeRefreshToken(refreshToken, user.id);
+
+      return createSuccessResponse(
+        req,
+        {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
+        },
+        "Password created successfully"
+      );
     });
   }
 }
