@@ -37,16 +37,6 @@ export const errorHandler = (
 ) => {
   res.setHeader("Content-Type", "application/json");
 
-  // Check if route exists
-  if (req.path.startsWith("/api/v1/") && !req.route) {
-    const response = createErrorResponse(
-      req,
-      ErrorCode.RESOURCE_NOT_FOUND,
-      "API endpoint not found"
-    );
-    return res.status(404).json(response);
-  }
-
   // Handle AppError
   if (err instanceof AppError) {
     // Handle validation errors
