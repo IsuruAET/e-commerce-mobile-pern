@@ -20,9 +20,10 @@ export interface IAuthRepository {
   createUser(
     data: {
       email: string;
-      password: string;
+      password?: string;
       name: string;
       roleId: string;
+      googleId?: string;
     },
     tx?: PrismaTransaction
   ): Promise<User & { role: { name: string } }>;
@@ -69,9 +70,10 @@ export class AuthRepository implements IAuthRepository {
   async createUser(
     data: {
       email: string;
-      password: string;
+      password?: string;
       name: string;
       roleId: string;
+      googleId?: string;
     },
     tx?: PrismaTransaction
   ): Promise<User & { role: { name: string } }> {

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { validateGoogleCallback } from "config/passport";
 
 import {
   loginSchema,
@@ -38,7 +39,8 @@ router.post("/logout", (req, res, next) =>
 router.get("/google", (req, res, next) =>
   authController.googleAuth(req, res, next)
 );
-router.get("/google/callback", (req, res, next) =>
+
+router.get("/google/callback", validateGoogleCallback, (req, res, next) =>
   authController.googleCallback(req, res, next)
 );
 

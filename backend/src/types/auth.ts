@@ -33,3 +33,16 @@ export type ProfileUpdateResponse = {
     phone: string | null;
   };
 };
+
+// Google Auth Types
+export type GoogleUser = {
+  id: string;
+  email: string;
+  name: string;
+  isDeactivated: boolean;
+};
+
+export type GoogleTokens = {
+  accessToken: string;
+  refreshToken: string;
+};
