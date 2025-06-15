@@ -70,12 +70,13 @@ export class AuthController {
       const refreshToken = req.cookies.refreshToken as string;
       const accessToken = req.headers.authorization?.split(" ")[1] as string;
 
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-        await this.authService.refreshUserToken(refreshToken, accessToken);
+      const response = (await this.authService.refreshUserToken(
+        req,
+        refreshToken,
+        accessToken
+      )) as SuccessResponse<AuthResponse>;
 
-      setRefreshTokenCookie(res, newRefreshToken);
-
-      res.status(200).json({ accessToken: newAccessToken });
+      this.handleAuthResponse(res, response);
     } catch (error) {
       next(error);
     }

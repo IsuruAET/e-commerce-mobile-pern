@@ -151,7 +151,11 @@ export class AuthService extends BaseService {
     });
   }
 
-  async refreshUserToken(refreshToken: string, accessToken: string) {
+  async refreshUserToken(
+    req: Request,
+    refreshToken: string,
+    accessToken: string
+  ): Promise<ApiResponse<AuthResponse>> {
     if (!refreshToken || !accessToken) {
       throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
     }
@@ -191,12 +195,26 @@ export class AuthService extends BaseService {
         refreshToken
       );
       if (!storedUserId || storedUserId !== user.id) {
+        // Delete invalid token from Redis
+        await redisTokenService.deleteToken("REFRESH", refreshToken);
         throw new AppError(ErrorCode.INVALID_REFRESH_TOKEN);
       }
 
       const currentTime = DateTime.now().toSeconds();
       if (decodedAccess.exp && decodedAccess.exp > currentTime) {
-        return { accessToken, refreshToken };
+        return createSuccessResponse(
+          req,
+          {
+            accessToken,
+            refreshToken,
+            user: {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+            },
+          },
+          "Token refresh not needed"
+        );
       }
 
       const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
@@ -209,10 +227,19 @@ export class AuthService extends BaseService {
 
       await this.storeRefreshToken(newRefreshToken, user.id);
 
-      return {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      };
+      return createSuccessResponse(
+        req,
+        {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
+        },
+        "Tokens refreshed successfully"
+      );
     });
   }
 
