@@ -13,6 +13,19 @@ export class AuthController {
     this.authService = new AuthService();
   }
 
+  private handleAuthResponse(
+    res: Response,
+    response: SuccessResponse<AuthResponse>,
+    statusCode: number = 200
+  ): void {
+    const { refreshToken, ...rest } = response.data;
+    setRefreshTokenCookie(res, refreshToken);
+    res.status(statusCode).json({
+      ...response,
+      data: rest,
+    });
+  }
+
   async register(
     req: Request,
     res: Response,
@@ -27,13 +40,7 @@ export class AuthController {
         name
       )) as SuccessResponse<AuthResponse>;
 
-      const { refreshToken, ...rest } = response.data;
-      setRefreshTokenCookie(res, refreshToken);
-
-      res.status(201).json({
-        ...response,
-        data: rest,
-      });
+      this.handleAuthResponse(res, response, 201);
     } catch (error) {
       next(error);
     }
@@ -48,13 +55,7 @@ export class AuthController {
         password
       )) as SuccessResponse<AuthResponse>;
 
-      const { refreshToken, ...rest } = response.data;
-      setRefreshTokenCookie(res, refreshToken);
-
-      res.status(200).json({
-        ...response,
-        data: rest,
-      });
+      this.handleAuthResponse(res, response);
     } catch (error) {
       next(error);
     }
