@@ -453,7 +453,11 @@ export class AuthService extends BaseService {
     });
   }
 
-  async resetUserPassword(token: string, newPassword: string) {
+  async resetUserPassword(
+    req: Request,
+    token: string,
+    newPassword: string
+  ): Promise<ApiResponse<AuthResponse>> {
     return await this.handleTransaction(async (tx) => {
       if (!token) {
         throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
@@ -484,9 +488,31 @@ export class AuthService extends BaseService {
       await Promise.all([
         this.authRepository.updateUser(userId, { password: hashedPassword }),
         redisTokenService.deleteToken("PASSWORD_RESET", token),
+        redisTokenService.deleteAllUserTokens("REFRESH", userId), // Invalidate all refresh tokens
       ]);
 
-      return { message: "Password reset successful" };
+      const { accessToken, refreshToken } = JwtUtils.generateTokens({
+        userId: user.id,
+        email: user.email || "",
+        role: user.role.name,
+        isDeactivated: user.isDeactivated || false,
+      });
+
+      await this.storeRefreshToken(refreshToken, user.id);
+
+      return createSuccessResponse(
+        req,
+        {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
+        },
+        "Password reset successful"
+      );
     });
   }
 
