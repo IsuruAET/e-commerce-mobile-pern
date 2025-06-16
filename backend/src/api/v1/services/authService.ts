@@ -396,7 +396,8 @@ export class AuthService extends BaseService {
     req: Request,
     userId: string,
     currentPassword: string,
-    newPassword: string
+    newPassword: string,
+    refreshToken?: string
   ): Promise<ApiResponse<null>> {
     return await this.handleTransaction(async (tx) => {
       const user = await this.authRepository.findUserById(userId, tx);
@@ -432,8 +433,10 @@ export class AuthService extends BaseService {
         tx
       );
 
-      // Invalidate all refresh tokens for security
-      await redisTokenService.deleteAllUserTokens("REFRESH", userId);
+      // Delete current refresh token if provided
+      if (refreshToken) {
+        await redisTokenService.deleteToken("REFRESH", refreshToken);
+      }
 
       return createSuccessResponse(
         req,

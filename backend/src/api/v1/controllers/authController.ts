@@ -134,14 +134,18 @@ export class AuthController {
     try {
       const { currentPassword, newPassword } = req.body;
       const userId = req.auth?.userId as string;
+      const refreshToken = req.cookies.refreshToken;
 
       const result = await this.authService.changePassword(
         req,
         userId,
         currentPassword,
-        newPassword
+        newPassword,
+        refreshToken
       );
+
       res.status(200).json(result);
+      clearAuthCookies(res);
     } catch (error) {
       next(error);
     }
