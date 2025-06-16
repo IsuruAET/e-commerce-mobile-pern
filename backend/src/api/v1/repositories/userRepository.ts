@@ -86,6 +86,8 @@ export interface IUserRepository {
     userId: string,
     tx?: PrismaTransaction
   ): Promise<Appointment[]>;
+
+  countUsersWithRole(roleId: string, tx?: PrismaTransaction): Promise<number>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -291,6 +293,16 @@ export class UserRepository implements IUserRepository {
         name: true,
         description: true,
       },
+    });
+  }
+
+  async countUsersWithRole(
+    roleId: string,
+    tx?: PrismaTransaction
+  ): Promise<number> {
+    const client = this.getClient(tx);
+    return client.user.count({
+      where: { roleId },
     });
   }
 }

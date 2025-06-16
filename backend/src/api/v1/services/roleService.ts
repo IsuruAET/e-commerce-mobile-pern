@@ -2,14 +2,17 @@ import { BaseService } from "./shared/baseService";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import { RoleRepository } from "../repositories/roleRepository";
+import { UserRepository } from "../repositories/userRepository";
 import { prismaClient } from "config/prisma";
 
 export class RoleService extends BaseService {
   private readonly roleRepository: RoleRepository;
+  private readonly userRepository: UserRepository;
 
   constructor() {
     super(prismaClient);
     this.roleRepository = new RoleRepository(this.prisma);
+    this.userRepository = new UserRepository(this.prisma);
   }
 
   async createRole(input: {
@@ -78,7 +81,7 @@ export class RoleService extends BaseService {
       }
 
       // Check if role is in use
-      const usersWithRole = await this.roleRepository.countUsersWithRole(
+      const usersWithRole = await this.userRepository.countUsersWithRole(
         id,
         tx
       );
