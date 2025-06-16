@@ -33,7 +33,7 @@ export const errorHandler = (
   err: Error | AppError,
   req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction // underscore to indicate it's intentionally unused
 ) => {
   // Handle AppError
   if (err instanceof AppError) {

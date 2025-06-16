@@ -290,9 +290,11 @@ export class AuthService extends BaseService {
     req: Request,
     refreshToken?: string
   ): Promise<ApiResponse<null>> {
-    if (refreshToken) {
-      await redisTokenService.deleteToken("REFRESH", refreshToken);
+    if (!refreshToken) {
+      throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
     }
+
+    await redisTokenService.deleteToken("REFRESH", refreshToken);
     return createSuccessResponse(req, null, "Logged out successfully");
   }
 
@@ -400,6 +402,10 @@ export class AuthService extends BaseService {
     refreshToken?: string
   ): Promise<ApiResponse<null>> {
     return await this.handleTransaction(async (tx) => {
+      if (!refreshToken) {
+        throw new AppError(ErrorCode.TOKEN_NOT_FOUND);
+      }
+
       const user = await this.authRepository.findUserById(userId, tx);
 
       if (!user) {
@@ -433,10 +439,7 @@ export class AuthService extends BaseService {
         tx
       );
 
-      // Delete current refresh token if provided
-      if (refreshToken) {
-        await redisTokenService.deleteToken("REFRESH", refreshToken);
-      }
+      await redisTokenService.deleteToken("REFRESH", refreshToken);
 
       return createSuccessResponse(
         req,
