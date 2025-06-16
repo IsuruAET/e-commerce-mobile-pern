@@ -35,8 +35,6 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  res.setHeader("Content-Type", "application/json");
-
   // Handle AppError
   if (err instanceof AppError) {
     // Handle validation errors

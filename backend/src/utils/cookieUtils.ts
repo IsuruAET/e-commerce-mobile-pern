@@ -6,10 +6,7 @@ export const setRefreshTokenCookie = (res: Response, token: string): void => {
 };
 
 export const clearAuthCookies = (res: Response): void => {
-  res.clearCookie(
-    COOKIE_CONFIG.REFRESH_TOKEN.name,
-    COOKIE_CONFIG.REFRESH_TOKEN.options
-  );
-  res.clearCookie(COOKIE_CONFIG.CSRF.name, COOKIE_CONFIG.CSRF.options);
-  res.clearCookie(COOKIE_CONFIG.CSRF_JS.name, COOKIE_CONFIG.CSRF_JS.options);
+  res.clearCookie(COOKIE_CONFIG.REFRESH_TOKEN.name);
+  res.clearCookie(COOKIE_CONFIG.CSRF.name);
+  res.clearCookie(COOKIE_CONFIG.CSRF_JS.name);
 };

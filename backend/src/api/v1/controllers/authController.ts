@@ -85,11 +85,10 @@ export class AuthController {
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
-
       const response = await this.authService.logoutUser(req, refreshToken);
-      res.status(200).json(response);
 
       clearAuthCookies(res);
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
@@ -144,8 +143,8 @@ export class AuthController {
         refreshToken
       );
 
-      res.status(200).json(result);
       clearAuthCookies(res);
+      res.status(200).json(result);
     } catch (error) {
       next(error);
     }
