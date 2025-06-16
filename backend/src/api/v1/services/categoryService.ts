@@ -83,7 +83,7 @@ export class CategoryService extends BaseService {
   async deleteCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if category has any services
-      const services = await this.categoryRepository.findServicesByCategoryId(
+      const services = await this.serviceRepository.findServicesByCategoryId(
         id
       );
 
@@ -98,7 +98,7 @@ export class CategoryService extends BaseService {
   async deactivateCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Get all services in this category
-      const services = await this.categoryRepository.findServicesByCategoryId(
+      const services = await this.serviceRepository.findServicesByCategoryId(
         id,
         tx
       );
@@ -140,7 +140,7 @@ export class CategoryService extends BaseService {
       }
 
       // Deactivate all services in this category
-      await this.categoryRepository.updateCategoryServices(id, false, tx);
+      await this.serviceRepository.updateCategoryServices(id, false, tx);
 
       // Deactivate the category
       await this.categoryRepository.updateCategory(
@@ -156,7 +156,7 @@ export class CategoryService extends BaseService {
   async reactivateCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Reactivate all services in this category
-      await this.categoryRepository.updateCategoryServices(id, true);
+      await this.serviceRepository.updateCategoryServices(id, true);
 
       // Reactivate the category
       await this.categoryRepository.updateCategory(id, {

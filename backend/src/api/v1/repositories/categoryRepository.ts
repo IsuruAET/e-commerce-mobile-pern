@@ -45,17 +45,6 @@ export interface ICategoryRepository {
   ): Promise<Category>;
 
   deleteCategory(id: string, tx?: PrismaTransaction): Promise<Category>;
-
-  findServicesByCategoryId(
-    categoryId: string,
-    tx?: PrismaTransaction
-  ): Promise<any[]>;
-
-  updateCategoryServices(
-    categoryId: string,
-    isActive: boolean,
-    tx?: PrismaTransaction
-  ): Promise<void>;
 }
 
 export class CategoryRepository implements ICategoryRepository {
@@ -137,36 +126,6 @@ export class CategoryRepository implements ICategoryRepository {
     const client = this.getClient(tx);
     return client.category.delete({
       where: { id },
-    });
-  }
-
-  async findServicesByCategoryId(
-    categoryId: string,
-    tx?: PrismaTransaction
-  ): Promise<any[]> {
-    const client = this.getClient(tx);
-    return client.service.findMany({
-      where: {
-        categoryId,
-        isActive: true,
-      },
-    });
-  }
-
-  async updateCategoryServices(
-    categoryId: string,
-    isActive: boolean,
-    tx?: PrismaTransaction
-  ): Promise<void> {
-    const client = this.getClient(tx);
-    await client.service.updateMany({
-      where: {
-        categoryId,
-        isActive: !isActive, // Update services with opposite status
-      },
-      data: {
-        isActive,
-      },
     });
   }
 }
