@@ -181,7 +181,7 @@ export class AppointmentService extends BaseService {
       const pagination = buildPagination(total, page, count);
 
       const appointments =
-        await this.appointmentRepository.findUserAppointments(
+        await this.appointmentRepository.findUserAppointmentsWithFilters(
           userId,
           (page - 1) * count,
           count,

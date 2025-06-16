@@ -90,7 +90,7 @@ export interface IAppointmentRepository {
     }
   >;
 
-  findUserAppointments(
+  findUserAppointmentsWithFilters(
     userId: string,
     skip: number,
     take: number,
@@ -234,6 +234,12 @@ export interface IAppointmentRepository {
     reason: string,
     tx?: PrismaTransaction
   ): Promise<void>;
+
+  // Related operations
+  findUserAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]>;
 }
 
 export class AppointmentRepository implements IAppointmentRepository {
@@ -352,7 +358,7 @@ export class AppointmentRepository implements IAppointmentRepository {
     });
   }
 
-  async findUserAppointments(
+  async findUserAppointmentsWithFilters(
     userId: string,
     skip: number,
     take: number,
@@ -570,6 +576,18 @@ export class AppointmentRepository implements IAppointmentRepository {
       data: {
         status: "CANCELLED",
         notes: reason,
+      },
+    });
+  }
+
+  async findUserAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]> {
+    const client = this.getClient(tx);
+    return client.appointment.findMany({
+      where: {
+        OR: [{ userId }, { stylistId: userId }],
       },
     });
   }

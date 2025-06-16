@@ -9,15 +9,18 @@ import {
   PaginatedResponse,
 } from "utils/queryBuilder";
 import { UserRepository } from "../repositories/userRepository";
+import { AppointmentRepository } from "../repositories/appointmentRepository";
 import { redisTokenService } from "./shared/redisTokenService";
 import { prismaClient } from "config/prisma";
 
 export class UserService extends BaseService {
   private userRepository: UserRepository;
+  private appointmentRepository: AppointmentRepository;
 
   constructor() {
     super(prismaClient);
     this.userRepository = new UserRepository(this.prisma);
+    this.appointmentRepository = new AppointmentRepository(this.prisma);
   }
 
   async createUser(data: CreateUserInput) {
@@ -95,10 +98,8 @@ export class UserService extends BaseService {
   async deleteUser(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if user has any appointments as client or stylist
-      const appointments = await this.userRepository.findUserAppointments(
-        id,
-        tx
-      );
+      const appointments =
+        await this.appointmentRepository.findUserAppointments(id, tx);
 
       if (appointments.length > 0) {
         throw new AppError(ErrorCode.USER_HAS_APPOINTMENTS);
@@ -119,10 +120,8 @@ export class UserService extends BaseService {
   async deactivateUser(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Find all active appointments
-      const activeAppointments = await this.userRepository.findUserAppointments(
-        id,
-        tx
-      );
+      const activeAppointments =
+        await this.appointmentRepository.findUserAppointments(id, tx);
 
       // Update all active appointments to CANCELLED with a note
       if (activeAppointments.length > 0) {

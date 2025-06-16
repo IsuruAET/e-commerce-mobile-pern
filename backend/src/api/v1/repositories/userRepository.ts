@@ -44,11 +44,6 @@ export interface IUserRepository {
     tx?: PrismaTransaction
   ): Promise<UserResponse | null>;
 
-  findRoleById(
-    id: string,
-    tx?: PrismaTransaction
-  ): Promise<{ id: string; name: string; description: string | null } | null>;
-
   findUsers(
     filters: any,
     pagination: { skip: number; take: number },
@@ -80,12 +75,6 @@ export interface IUserRepository {
     id: string,
     tx?: PrismaTransaction
   ): Promise<User & { role: { name: string } }>;
-
-  // Related operations
-  findUserAppointments(
-    userId: string,
-    tx?: PrismaTransaction
-  ): Promise<Appointment[]>;
 
   countUsersWithRole(roleId: string, tx?: PrismaTransaction): Promise<number>;
 }
@@ -266,33 +255,6 @@ export class UserRepository implements IUserRepository {
         deactivatedAt: null,
       },
       include: { role: true },
-    });
-  }
-
-  async findUserAppointments(
-    userId: string,
-    tx?: PrismaTransaction
-  ): Promise<Appointment[]> {
-    const client = this.getClient(tx);
-    return client.appointment.findMany({
-      where: {
-        OR: [{ userId }, { stylistId: userId }],
-      },
-    });
-  }
-
-  async findRoleById(
-    id: string,
-    tx?: PrismaTransaction
-  ): Promise<{ id: string; name: string; description: string | null } | null> {
-    const client = this.getClient(tx);
-    return client.role.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-      },
     });
   }
 
