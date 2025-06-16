@@ -1,94 +1,78 @@
-import { PrismaClient, Role, Permission } from "@prisma/client";
+import { PrismaClient, Role, Permission, Prisma } from "@prisma/client";
 
 // Define a type for the Prisma transaction
-export type PrismaTransaction = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
+export type PrismaTransaction = Prisma.TransactionClient;
 
-export interface IRoleRepository {
-  // Role operations
+// Base types
+export type RoleWithPermissions = Role & {
+  permissions: { permission: Permission }[];
+};
+
+export type RoleCreateData = {
+  name: string;
+  description: string;
+  permissions: string[];
+};
+
+// Core CRUD operations
+export interface IRoleCRUD {
+  createRole(
+    data: RoleCreateData,
+    tx?: PrismaTransaction
+  ): Promise<RoleWithPermissions>;
   findRoleById(
     id: string,
     tx?: PrismaTransaction
-  ): Promise<(Role & { permissions: { permission: Permission }[] }) | null>;
+  ): Promise<RoleWithPermissions | null>;
   findRoleByName(
     name: string,
     tx?: PrismaTransaction
-  ): Promise<(Role & { permissions: { permission: Permission }[] }) | null>;
-  createRole(
-    data: {
-      name: string;
-      description: string;
-      permissions: string[];
-    },
-    tx?: PrismaTransaction
-  ): Promise<Role & { permissions: { permission: Permission }[] }>;
+  ): Promise<RoleWithPermissions | null>;
   updateRole(
     id: string,
-    data: {
-      name: string;
-      description: string;
-      permissions: string[];
-    },
+    data: RoleCreateData,
     tx?: PrismaTransaction
-  ): Promise<Role & { permissions: { permission: Permission }[] }>;
+  ): Promise<RoleWithPermissions>;
   deleteRole(id: string, tx?: PrismaTransaction): Promise<void>;
-  getAllRoles(
-    tx?: PrismaTransaction
-  ): Promise<(Role & { permissions: { permission: Permission }[] })[]>;
+}
+
+// Query operations
+export interface IRoleQuery {
+  getAllRoles(tx?: PrismaTransaction): Promise<RoleWithPermissions[]>;
   getAllPermissions(tx?: PrismaTransaction): Promise<Permission[]>;
 }
 
-export class RoleRepository implements IRoleRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+// Combined interface for the main repository
+export interface IRoleRepository extends IRoleCRUD, IRoleQuery {}
 
-  private getClient(tx?: PrismaTransaction): PrismaTransaction {
+// Base repository with common functionality
+export abstract class BaseRoleRepository {
+  constructor(protected readonly prisma: PrismaClient) {}
+
+  protected getClient(tx?: PrismaTransaction): PrismaTransaction {
     return tx || this.prisma;
   }
 
-  async findRoleById(
-    id: string,
-    tx?: PrismaTransaction
-  ): Promise<(Role & { permissions: { permission: Permission }[] }) | null> {
-    const client = this.getClient(tx);
-    return client.role.findUnique({
-      where: { id },
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
+  protected getDefaultInclude() {
+    return {
+      permissions: {
+        include: {
+          permission: true,
         },
       },
-    });
+    };
   }
+}
 
-  async findRoleByName(
-    name: string,
-    tx?: PrismaTransaction
-  ): Promise<(Role & { permissions: { permission: Permission }[] }) | null> {
-    const client = this.getClient(tx);
-    return client.role.findUnique({
-      where: { name },
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-      },
-    });
-  }
-
+// CRUD operations repository
+export class RoleCRUDRepository
+  extends BaseRoleRepository
+  implements IRoleCRUD
+{
   async createRole(
-    data: {
-      name: string;
-      description: string;
-      permissions: string[];
-    },
+    data: RoleCreateData,
     tx?: PrismaTransaction
-  ): Promise<Role & { permissions: { permission: Permission }[] }> {
+  ): Promise<RoleWithPermissions> {
     const client = this.getClient(tx);
     return client.role.create({
       data: {
@@ -102,25 +86,37 @@ export class RoleRepository implements IRoleRepository {
           })),
         },
       },
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-      },
+      include: this.getDefaultInclude(),
+    });
+  }
+
+  async findRoleById(
+    id: string,
+    tx?: PrismaTransaction
+  ): Promise<RoleWithPermissions | null> {
+    const client = this.getClient(tx);
+    return client.role.findUnique({
+      where: { id },
+      include: this.getDefaultInclude(),
+    });
+  }
+
+  async findRoleByName(
+    name: string,
+    tx?: PrismaTransaction
+  ): Promise<RoleWithPermissions | null> {
+    const client = this.getClient(tx);
+    return client.role.findUnique({
+      where: { name },
+      include: this.getDefaultInclude(),
     });
   }
 
   async updateRole(
     id: string,
-    data: {
-      name: string;
-      description: string;
-      permissions: string[];
-    },
+    data: RoleCreateData,
     tx?: PrismaTransaction
-  ): Promise<Role & { permissions: { permission: Permission }[] }> {
+  ): Promise<RoleWithPermissions> {
     const client = this.getClient(tx);
     return client.role.update({
       where: { id },
@@ -136,13 +132,7 @@ export class RoleRepository implements IRoleRepository {
           })),
         },
       },
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-      },
+      include: this.getDefaultInclude(),
     });
   }
 
@@ -152,19 +142,17 @@ export class RoleRepository implements IRoleRepository {
       where: { id },
     });
   }
+}
 
-  async getAllRoles(
-    tx?: PrismaTransaction
-  ): Promise<(Role & { permissions: { permission: Permission }[] })[]> {
+// Query operations repository
+export class RoleQueryRepository
+  extends BaseRoleRepository
+  implements IRoleQuery
+{
+  async getAllRoles(tx?: PrismaTransaction): Promise<RoleWithPermissions[]> {
     const client = this.getClient(tx);
     return client.role.findMany({
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-      },
+      include: this.getDefaultInclude(),
     });
   }
 
@@ -172,4 +160,36 @@ export class RoleRepository implements IRoleRepository {
     const client = this.getClient(tx);
     return client.permission.findMany();
   }
+}
+
+// Main repository that combines all functionality
+export class RoleRepository implements IRoleRepository {
+  private crud: RoleCRUDRepository;
+  private query: RoleQueryRepository;
+
+  constructor(prisma: PrismaClient) {
+    this.crud = new RoleCRUDRepository(prisma);
+    this.query = new RoleQueryRepository(prisma);
+  }
+
+  // Delegate all methods to appropriate repositories
+  createRole = (data: RoleCreateData, tx?: PrismaTransaction) =>
+    this.crud.createRole(data, tx);
+
+  findRoleById = (id: string, tx?: PrismaTransaction) =>
+    this.crud.findRoleById(id, tx);
+
+  findRoleByName = (name: string, tx?: PrismaTransaction) =>
+    this.crud.findRoleByName(name, tx);
+
+  updateRole = (id: string, data: RoleCreateData, tx?: PrismaTransaction) =>
+    this.crud.updateRole(id, data, tx);
+
+  deleteRole = (id: string, tx?: PrismaTransaction) =>
+    this.crud.deleteRole(id, tx);
+
+  getAllRoles = (tx?: PrismaTransaction) => this.query.getAllRoles(tx);
+
+  getAllPermissions = (tx?: PrismaTransaction) =>
+    this.query.getAllPermissions(tx);
 }
