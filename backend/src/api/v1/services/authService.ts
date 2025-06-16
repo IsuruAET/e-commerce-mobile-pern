@@ -8,6 +8,7 @@ import { JwtUtils, TokenPayload } from "utils/jwtUtils";
 import { ERROR_MESSAGES, ErrorCode } from "constants/errorCodes";
 import { passwordEmailService } from "./shared/passwordEmailService";
 import { AuthRepository } from "../repositories/authRepository";
+import { AppointmentRepository } from "../repositories/appointmentRepository";
 import { redisTokenService } from "./shared/redisTokenService";
 import { createSuccessResponse, ApiResponse } from "utils/responseUtils";
 import { DEFAULT_USER_ROLE } from "constants/userRoles";
@@ -21,10 +22,12 @@ import { prismaClient } from "config/prisma";
 
 export class AuthService extends BaseService {
   private authRepository: AuthRepository;
+  private appointmentRepository: AppointmentRepository;
 
   constructor() {
     super(prismaClient);
     this.authRepository = new AuthRepository(this.prisma);
+    this.appointmentRepository = new AppointmentRepository(this.prisma);
   }
 
   async storeRefreshToken(token: string, userId: string) {
@@ -538,11 +541,11 @@ export class AuthService extends BaseService {
     return await this.handleTransaction(async (tx) => {
       // Get and cancel active appointments
       const activeAppointments =
-        await this.authRepository.findActiveAppointments(userId, tx);
+        await this.appointmentRepository.findActiveAppointments(userId, tx);
       const activeAppointmentCount = activeAppointments.length;
 
       if (activeAppointmentCount > 0) {
-        await this.authRepository.cancelAppointments(
+        await this.appointmentRepository.cancelAppointments(
           activeAppointments.map((a) => a.id),
           "Appointment cancelled due to account deactivation",
           tx
