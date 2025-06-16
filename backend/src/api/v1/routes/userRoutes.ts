@@ -11,13 +11,14 @@ import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 
 const router = Router();
+const userController = new UserController();
 
 // Create user
 router.post(
   "/",
   requirePermission(["create_user"]),
   validateRequest(createUserSchema),
-  UserController.createUser
+  (req, res, next) => userController.createUser(req, res, next)
 );
 
 // Get user by id
@@ -25,7 +26,7 @@ router.get(
   "/:id",
   requirePermission(["read_user"]),
   validateRequest(userIdSchema),
-  UserController.getUserById
+  (req, res, next) => userController.getUserById(req, res, next)
 );
 
 // List all users with pagination
@@ -33,7 +34,7 @@ router.get(
   "/",
   requirePermission(["read_users"]),
   validateRequest(listUsersSchema),
-  UserController.listUsers
+  (req, res, next) => userController.listUsers(req, res, next)
 );
 
 // Update user
@@ -42,7 +43,7 @@ router.put(
   requirePermission(["update_user"]),
   validateRequest(updateUserSchema),
   validateRequest(userIdSchema),
-  UserController.updateUser
+  (req, res, next) => userController.updateUser(req, res, next)
 );
 
 // Delete user
@@ -50,7 +51,7 @@ router.delete(
   "/:id",
   requirePermission(["delete_user"]),
   validateRequest(userIdSchema),
-  UserController.deleteUser
+  (req, res, next) => userController.deleteUser(req, res, next)
 );
 
 // Deactivate user
@@ -58,7 +59,7 @@ router.patch(
   "/:id/deactivate",
   requirePermission(["manage_user"]),
   validateRequest(userIdSchema),
-  UserController.deactivateUser
+  (req, res, next) => userController.deactivateUser(req, res, next)
 );
 
 // Reactivate user
@@ -66,7 +67,7 @@ router.patch(
   "/:id/reactivate",
   requirePermission(["manage_user"]),
   validateRequest(userIdSchema),
-  UserController.reactivateUser
+  (req, res, next) => userController.reactivateUser(req, res, next)
 );
 
 export default router;

@@ -38,7 +38,6 @@ export interface IRoleRepository {
     tx?: PrismaTransaction
   ): Promise<(Role & { permissions: { permission: Permission }[] })[]>;
   getAllPermissions(tx?: PrismaTransaction): Promise<Permission[]>;
-  countUsersWithRole(roleId: string, tx?: PrismaTransaction): Promise<number>;
 }
 
 export class RoleRepository implements IRoleRepository {
@@ -166,16 +165,6 @@ export class RoleRepository implements IRoleRepository {
           },
         },
       },
-    });
-  }
-
-  async countUsersWithRole(
-    roleId: string,
-    tx?: PrismaTransaction
-  ): Promise<number> {
-    const client = this.getClient(tx);
-    return client.user.count({
-      where: { roleId },
     });
   }
 

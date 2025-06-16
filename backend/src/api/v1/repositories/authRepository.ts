@@ -1,11 +1,8 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient, User, Prisma, Appointment } from "@prisma/client";
 import { DateTime } from "luxon";
 
 // Define a type for the Prisma transaction
-export type PrismaTransaction = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use"
->;
+export type PrismaTransaction = Prisma.TransactionClient;
 
 export interface IAuthRepository {
   // User operations
@@ -20,9 +17,10 @@ export interface IAuthRepository {
   createUser(
     data: {
       email: string;
-      password: string;
+      password?: string;
       name: string;
       roleId: string;
+      googleId?: string;
     },
     tx?: PrismaTransaction
   ): Promise<User & { role: { name: string } }>;
@@ -69,9 +67,10 @@ export class AuthRepository implements IAuthRepository {
   async createUser(
     data: {
       email: string;
-      password: string;
+      password?: string;
       name: string;
       roleId: string;
+      googleId?: string;
     },
     tx?: PrismaTransaction
   ): Promise<User & { role: { name: string } }> {

@@ -1,71 +1,63 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { PrismaClient } from "@prisma/client";
-
-import { JwtUtils } from "../utils/jwtUtils";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
+import { Request, Response, NextFunction } from "express";
 
-const prisma = new PrismaClient();
+// Middleware to validate Google OAuth flow
+export const validateGoogleCallback = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.query.code) {
+    return res.redirect("/api/v1/auth/google");
+  }
+  next();
+};
 
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: "/api/v1/auth/google/callback",
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL ||
+        "http://localhost:5000/api/v1/auth/google/callback",
     },
     async (_accessToken, _refreshToken, profile, done) => {
       try {
-        // Check if user exists
-        let user = await prisma.user.findUnique({
-          where: { email: profile.emails?.[0].value },
-          include: { role: true },
-        });
-
-        if (!user) {
-          // Get the default USER role
-          const userRole = await prisma.role.findUnique({
-            where: { name: "user" },
-          });
-
-          if (!userRole) {
-            throw new AppError(
-              ErrorCode.INTERNAL_SERVER_ERROR,
-              "Default role not found"
-            );
-          }
-
-          // Create new user if doesn't exist
-          user = await prisma.user.create({
-            data: {
-              email: profile.emails?.[0].value!,
-              name: profile.displayName,
-              googleId: profile.id,
-              roleId: userRole.id,
-            },
-            include: { role: true },
-          });
-        } else if (!user.googleId) {
-          // Update existing user with Google ID if not set
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: { googleId: profile.id },
-            include: { role: true },
-          });
+        if (!profile.emails?.[0]?.value) {
+          return done(
+            new AppError(
+              ErrorCode.INVALID_USER_DATA,
+              "No email provided by Google"
+            )
+          );
         }
 
-        // Generate tokens
-        const tokens = JwtUtils.generateTokens({
-          userId: user.id,
-          email: user.email || "",
-          role: user.role.name,
-          isDeactivated: user.isDeactivated || false,
+        // Just pass the profile data to service layer
+        return done(null, {
+          user: {
+            id: profile.id,
+            email: profile.emails[0].value,
+            name: profile.displayName,
+            isDeactivated: false, // Default value, service layer will check actual status
+          },
+          tokens: {
+            accessToken: _accessToken,
+            refreshToken: _refreshToken,
+          },
         });
-
-        return done(null, { user, tokens });
       } catch (error) {
-        return done(error as Error);
+        return done(
+          new AppError(
+            ErrorCode.AUTHENTICATION_FAILED,
+            error instanceof Error
+              ? error.message
+              : "Google authentication failed"
+          )
+        );
       }
     }
   )

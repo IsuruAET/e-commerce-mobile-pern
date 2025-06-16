@@ -4,9 +4,15 @@ import { CategoryService } from "../services/categoryService";
 import { PaginatedResponse } from "utils/queryBuilder";
 
 export class CategoryController {
-  static async createCategory(req: Request, res: Response, next: NextFunction) {
+  private readonly categoryService: CategoryService;
+
+  constructor() {
+    this.categoryService = new CategoryService();
+  }
+
+  async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await CategoryService.createCategory(req.body);
+      const category = await this.categoryService.createCategory(req.body);
       res.status(201).json({
         success: true,
         message: "Category added successfully",
@@ -17,14 +23,10 @@ export class CategoryController {
     }
   }
 
-  static async getCategoryById(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  async getCategoryById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const category = await CategoryService.getCategoryById(id);
+      const category = await this.categoryService.getCategoryById(id);
       res.status(200).json({
         success: true,
         data: category,
@@ -34,13 +36,13 @@ export class CategoryController {
     }
   }
 
-  static async listCategories(
+  async listCategories(
     req: Request,
     res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
-      const result = await CategoryService.listCategories(req.query);
+      const result = await this.categoryService.listCategories(req.query);
       res.status(200).json({
         success: true,
         data: result,
@@ -50,10 +52,10 @@ export class CategoryController {
     }
   }
 
-  static async updateCategory(req: Request, res: Response, next: NextFunction) {
+  async updateCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const category = await CategoryService.updateCategory(id, req.body);
+      const category = await this.categoryService.updateCategory(id, req.body);
       res.status(200).json({
         success: true,
         message: "Category updated successfully",
@@ -64,10 +66,10 @@ export class CategoryController {
     }
   }
 
-  static async deleteCategory(req: Request, res: Response, next: NextFunction) {
+  async deleteCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await CategoryService.deleteCategory(id);
+      await this.categoryService.deleteCategory(id);
       res.status(200).json({
         success: true,
         message: "Category deleted successfully",
@@ -77,14 +79,10 @@ export class CategoryController {
     }
   }
 
-  static async deactivateCategory(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  async deactivateCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await CategoryService.deactivateCategory(id);
+      await this.categoryService.deactivateCategory(id);
       res.status(200).json({
         success: true,
         message: "Category deactivated successfully",
@@ -94,14 +92,10 @@ export class CategoryController {
     }
   }
 
-  static async reactivateCategory(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
+  async reactivateCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await CategoryService.reactivateCategory(id);
+      await this.categoryService.reactivateCategory(id);
       res.status(200).json({
         success: true,
         message: "Category reactivated successfully",
@@ -111,13 +105,13 @@ export class CategoryController {
     }
   }
 
-  static async getCategoriesForDropdown(
+  async getCategoriesForDropdown(
     req: Request,
     res: Response,
     next: NextFunction
   ) {
     try {
-      const categories = await CategoryService.getCategoriesForDropdown();
+      const categories = await this.categoryService.getCategoriesForDropdown();
       res.status(200).json({
         success: true,
         data: categories,

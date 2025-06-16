@@ -5,35 +5,7 @@ import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import { PUBLIC_ROUTES } from "constants/publicRoutes";
 import { logger } from "middleware/logger";
-
-// CSRF Configuration
-const CSRF_SECURITY = {
-  // Cookie names
-  COOKIE_NAME: "csrf_token",
-  JS_COOKIE_NAME: "csrf_token_js",
-
-  // Header name
-  HEADER_NAME: "X-CSRF-Token",
-
-  // Cookie options
-  COOKIE_OPTIONS: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict" as const,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
-
-  // JS Cookie options (non-HttpOnly)
-  JS_COOKIE_OPTIONS: {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict" as const,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  },
-
-  // Methods that don't require CSRF protection
-  SAFE_METHODS: ["GET", "HEAD", "OPTIONS"] as const,
-} as const;
+import { COOKIE_CONFIG, CSRF_SECURITY } from "config/cookies";
 
 // Generate a random token
 const generateToken = (): string => {
@@ -61,7 +33,7 @@ export const csrfProtection = (
   }
 
   // Get tokens from cookies and header
-  const cookieToken = req.cookies[CSRF_SECURITY.COOKIE_NAME];
+  const cookieToken = req.cookies[COOKIE_CONFIG.CSRF.name];
   const headerToken = req.headers[CSRF_SECURITY.HEADER_NAME.toLowerCase()];
 
   // Validate tokens
@@ -92,22 +64,18 @@ export const setCsrfToken = (
 ) => {
   try {
     // Only set new token if one doesn't exist
-    if (!req.cookies[CSRF_SECURITY.COOKIE_NAME]) {
+    if (!req.cookies[COOKIE_CONFIG.CSRF.name]) {
       // Generate new token
       const token = generateToken();
 
       // Set HttpOnly cookie (secure token)
-      res.cookie(
-        CSRF_SECURITY.COOKIE_NAME,
-        token,
-        CSRF_SECURITY.COOKIE_OPTIONS
-      );
+      res.cookie(COOKIE_CONFIG.CSRF.name, token, COOKIE_CONFIG.CSRF.options);
 
       // Set non-HttpOnly cookie (for JavaScript access)
       res.cookie(
-        CSRF_SECURITY.JS_COOKIE_NAME,
+        COOKIE_CONFIG.CSRF_JS.name,
         token,
-        CSRF_SECURITY.JS_COOKIE_OPTIONS
+        COOKIE_CONFIG.CSRF_JS.options
       );
     }
 

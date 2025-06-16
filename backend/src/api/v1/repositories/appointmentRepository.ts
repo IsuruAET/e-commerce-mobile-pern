@@ -90,7 +90,7 @@ export interface IAppointmentRepository {
     }
   >;
 
-  findUserAppointments(
+  findUserAppointmentsWithFilters(
     userId: string,
     skip: number,
     take: number,
@@ -223,6 +223,23 @@ export interface IAppointmentRepository {
       })
     | null
   >;
+
+  findActiveAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]>;
+
+  cancelAppointments(
+    appointmentIds: string[],
+    reason: string,
+    tx?: PrismaTransaction
+  ): Promise<void>;
+
+  // Related operations
+  findUserAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]>;
 }
 
 export class AppointmentRepository implements IAppointmentRepository {
@@ -341,7 +358,7 @@ export class AppointmentRepository implements IAppointmentRepository {
     });
   }
 
-  async findUserAppointments(
+  async findUserAppointmentsWithFilters(
     userId: string,
     skip: number,
     take: number,
@@ -527,6 +544,50 @@ export class AppointmentRepository implements IAppointmentRepository {
         services: { include: { service: true } },
         user: { select: { id: true, name: true, email: true } },
         stylist: { select: { id: true, name: true, email: true } },
+      },
+    });
+  }
+
+  async findActiveAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]> {
+    const client = this.getClient(tx);
+    return client.appointment.findMany({
+      where: {
+        OR: [{ userId }, { stylistId: userId }],
+        status: { in: ["PENDING", "CONFIRMED"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async cancelAppointments(
+    appointmentIds: string[],
+    reason: string,
+    tx?: PrismaTransaction
+  ): Promise<void> {
+    const client = this.getClient(tx);
+    await client.appointment.updateMany({
+      where: {
+        id: { in: appointmentIds },
+        status: { in: ["PENDING", "CONFIRMED"] }, // Extra safety check
+      },
+      data: {
+        status: "CANCELLED",
+        notes: reason,
+      },
+    });
+  }
+
+  async findUserAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]> {
+    const client = this.getClient(tx);
+    return client.appointment.findMany({
+      where: {
+        OR: [{ userId }, { stylistId: userId }],
       },
     });
   }

@@ -2,6 +2,7 @@ export const PUBLIC_ROUTES = [
   "/health",
   "/auth/register",
   "/auth/login",
+  "/auth/logout",
   "/auth/google",
   "/auth/google/callback",
   "/auth/refresh-token",

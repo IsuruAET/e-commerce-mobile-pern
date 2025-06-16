@@ -5,14 +5,20 @@ import { AppointmentService } from "../services/appointmentService";
 import { PaginatedResponse } from "utils/queryBuilder";
 
 export class AppointmentController {
-  static async createAppointment(
+  private appointmentService: AppointmentService;
+
+  constructor() {
+    this.appointmentService = new AppointmentService();
+  }
+
+  async createAppointment(
     req: Request,
     res: Response<{ success: boolean; message: string; data: any }>,
     next: NextFunction
   ) {
     try {
       const userId = req.auth?.userId as string;
-      const appointment = await AppointmentService.createAppointment(
+      const appointment = await this.appointmentService.createAppointment(
         req.body,
         userId
       );
@@ -26,9 +32,9 @@ export class AppointmentController {
     }
   }
 
-  static async getAppointment(req: Request, res: Response, next: NextFunction) {
+  async getAppointment(req: Request, res: Response, next: NextFunction) {
     try {
-      const appointment = await AppointmentService.getAppointment(
+      const appointment = await this.appointmentService.getAppointment(
         req.params.id
       );
       res.status(200).json({
@@ -40,13 +46,13 @@ export class AppointmentController {
     }
   }
 
-  static async updateAppointment(
+  async updateAppointment(
     req: Request,
     res: Response<{ success: boolean; message: string; data: any }>,
     next: NextFunction
   ) {
     try {
-      const appointment = await AppointmentService.updateAppointment(
+      const appointment = await this.appointmentService.updateAppointment(
         req.params.id,
         req.body
       );
@@ -60,14 +66,14 @@ export class AppointmentController {
     }
   }
 
-  static async getUserAppointments(
+  async getUserAppointments(
     req: Request,
     res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
       const userId = req.auth?.userId as string;
-      const result = await AppointmentService.getUserAppointments(
+      const result = await this.appointmentService.getUserAppointments(
         userId,
         req.query
       );
@@ -80,15 +86,14 @@ export class AppointmentController {
     }
   }
 
-  static async getStylistAppointments(
+  async getStylistAppointments(
     req: Request,
     res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
-      const userId = req.auth?.userId as string;
       const stylistId = req.auth?.userId as string;
-      const result = await AppointmentService.getStylistAppointments(
+      const result = await this.appointmentService.getStylistAppointments(
         stylistId,
         req.query
       );
@@ -101,14 +106,14 @@ export class AppointmentController {
     }
   }
 
-  static async getTotalIncome(
+  async getTotalIncome(
     req: Request<{}, {}, {}, GetAppointmentStatsInput["query"]>,
     res: Response<{ success: boolean; data: { totalIncome: number } }>,
     next: NextFunction
   ) {
     try {
       const { stylistIds, startDate, endDate } = req.query;
-      const totalIncome = await AppointmentService.getTotalIncome(
+      const totalIncome = await this.appointmentService.getTotalIncome(
         stylistIds,
         startDate,
         endDate
@@ -122,14 +127,14 @@ export class AppointmentController {
     }
   }
 
-  static async getTotalServices(
+  async getTotalServices(
     req: Request<{}, {}, {}, GetAppointmentStatsInput["query"]>,
     res: Response<{ success: boolean; data: { totalServices: number } }>,
     next: NextFunction
   ) {
     try {
       const { stylistIds, startDate, endDate } = req.query;
-      const totalServices = await AppointmentService.getTotalServices(
+      const totalServices = await this.appointmentService.getTotalServices(
         stylistIds,
         startDate,
         endDate
@@ -143,13 +148,13 @@ export class AppointmentController {
     }
   }
 
-  static async listAppointments(
+  async listAppointments(
     req: Request,
     res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
-      const result = await AppointmentService.listAppointments(req.query);
+      const result = await this.appointmentService.listAppointments(req.query);
       res.status(200).json({
         success: true,
         data: result,
@@ -159,14 +164,14 @@ export class AppointmentController {
     }
   }
 
-  static async getUserAppointmentById(
+  async getUserAppointmentById(
     req: Request,
     res: Response,
     next: NextFunction
   ) {
     try {
       const userId = req.auth?.userId as string;
-      const appointment = await AppointmentService.getUserAppointmentById(
+      const appointment = await this.appointmentService.getUserAppointmentById(
         req.params.id,
         userId
       );
@@ -179,17 +184,18 @@ export class AppointmentController {
     }
   }
 
-  static async getStylistAppointmentById(
+  async getStylistAppointmentById(
     req: Request,
     res: Response,
     next: NextFunction
   ) {
     try {
       const stylistId = req.auth?.userId as string;
-      const appointment = await AppointmentService.getStylistAppointmentById(
-        req.params.id,
-        stylistId
-      );
+      const appointment =
+        await this.appointmentService.getStylistAppointmentById(
+          req.params.id,
+          stylistId
+        );
       res.status(200).json({
         success: true,
         data: appointment,
@@ -199,13 +205,13 @@ export class AppointmentController {
     }
   }
 
-  static async updateAppointmentStatus(
+  async updateAppointmentStatus(
     req: Request,
     res: Response<{ success: boolean; message: string; data: any }>,
     next: NextFunction
   ) {
     try {
-      const appointment = await AppointmentService.updateAppointmentStatus(
+      const appointment = await this.appointmentService.updateAppointmentStatus(
         req.params.id,
         req.body.status
       );

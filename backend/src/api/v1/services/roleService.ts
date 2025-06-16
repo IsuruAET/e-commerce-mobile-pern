@@ -2,11 +2,20 @@ import { BaseService } from "./shared/baseService";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import { RoleRepository } from "../repositories/roleRepository";
+import { UserRepository } from "../repositories/userRepository";
+import { prismaClient } from "config/prisma";
 
 export class RoleService extends BaseService {
-  private static roleRepository = new RoleRepository(BaseService.prisma);
+  private readonly roleRepository: RoleRepository;
+  private readonly userRepository: UserRepository;
 
-  static async createRole(input: {
+  constructor() {
+    super(prismaClient);
+    this.roleRepository = new RoleRepository(this.prisma);
+    this.userRepository = new UserRepository(this.prisma);
+  }
+
+  async createRole(input: {
     name: string;
     description: string;
     permissions: string[];
@@ -27,13 +36,13 @@ export class RoleService extends BaseService {
     });
   }
 
-  static async getRole(id: string) {
+  async getRole(id: string) {
     return await this.handleNotFound(async () => {
       return this.roleRepository.findRoleById(id);
     });
   }
 
-  static async updateRole(
+  async updateRole(
     id: string,
     input: { name: string; description: string; permissions: string[] }
   ) {
@@ -62,7 +71,7 @@ export class RoleService extends BaseService {
     });
   }
 
-  static async deleteRole(id: string) {
+  async deleteRole(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if role exists
       const role = await this.roleRepository.findRoleById(id, tx);
@@ -72,7 +81,7 @@ export class RoleService extends BaseService {
       }
 
       // Check if role is in use
-      const usersWithRole = await this.roleRepository.countUsersWithRole(
+      const usersWithRole = await this.userRepository.countUsersWithRole(
         id,
         tx
       );
@@ -86,25 +95,19 @@ export class RoleService extends BaseService {
     });
   }
 
-  static async getAllRoles() {
-    return await this.handleDatabaseError(async () => {
-      return this.roleRepository.getAllRoles();
-    });
+  async getAllRoles() {
+    return this.roleRepository.getAllRoles();
   }
 
-  static async getAllPermissions() {
-    return await this.handleDatabaseError(async () => {
-      return this.roleRepository.getAllPermissions();
-    });
+  async getAllPermissions() {
+    return this.roleRepository.getAllPermissions();
   }
 
-  static async getRolesForDropdown() {
-    return await this.handleDatabaseError(async () => {
-      const roles = await this.roleRepository.getAllRoles();
-      return roles.map((role) => ({
-        id: role.id,
-        name: role.name,
-      }));
-    });
+  async getRolesForDropdown() {
+    const roles = await this.roleRepository.getAllRoles();
+    return roles.map((role) => ({
+      id: role.id,
+      name: role.name,
+    }));
   }
 }
