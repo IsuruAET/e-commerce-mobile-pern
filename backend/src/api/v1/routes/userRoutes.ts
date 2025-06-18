@@ -7,7 +7,7 @@ import {
   listUsersSchema,
 } from "../schemas/userSchema";
 import { UserController } from "../controllers/userController";
-import { requirePermission } from "middleware/authHandler";
+import { requirePermission, requireAuth } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 import { csrfProtection } from "middleware/csrfHandler";
 
@@ -18,6 +18,7 @@ const userController = new UserController();
 router.post(
   "/",
   csrfProtection,
+  requireAuth,
   requirePermission(["create_user"]),
   validateRequest(createUserSchema),
   (req, res, next) => userController.createUser(req, res, next)
@@ -26,6 +27,7 @@ router.post(
 // Get user by id
 router.get(
   "/:id",
+  requireAuth,
   requirePermission(["read_user"]),
   validateRequest(userIdSchema),
   (req, res, next) => userController.getUserById(req, res, next)
@@ -34,6 +36,7 @@ router.get(
 // List all users with pagination
 router.get(
   "/",
+  requireAuth,
   requirePermission(["read_users"]),
   validateRequest(listUsersSchema),
   (req, res, next) => userController.listUsers(req, res, next)
@@ -43,6 +46,7 @@ router.get(
 router.put(
   "/:id",
   csrfProtection,
+  requireAuth,
   requirePermission(["update_user"]),
   validateRequest(updateUserSchema),
   validateRequest(userIdSchema),
@@ -53,6 +57,7 @@ router.put(
 router.delete(
   "/:id",
   csrfProtection,
+  requireAuth,
   requirePermission(["delete_user"]),
   validateRequest(userIdSchema),
   (req, res, next) => userController.deleteUser(req, res, next)
@@ -62,6 +67,7 @@ router.delete(
 router.patch(
   "/:id/deactivate",
   csrfProtection,
+  requireAuth,
   requirePermission(["manage_user"]),
   validateRequest(userIdSchema),
   (req, res, next) => userController.deactivateUser(req, res, next)
@@ -71,6 +77,7 @@ router.patch(
 router.patch(
   "/:id/reactivate",
   csrfProtection,
+  requireAuth,
   requirePermission(["manage_user"]),
   validateRequest(userIdSchema),
   (req, res, next) => userController.reactivateUser(req, res, next)

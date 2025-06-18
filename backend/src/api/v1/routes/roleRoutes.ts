@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { RoleController } from "../controllers/roleController";
-import { requirePermission } from "middleware/authHandler";
+import { requirePermission, requireAuth } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
 import { csrfProtection } from "middleware/csrfHandler";
 import {
@@ -16,31 +16,40 @@ const roleController = new RoleController();
 router.post(
   "/",
   csrfProtection,
+  requireAuth,
   requirePermission(["manage_roles"]),
   validateRequest(createRoleSchema),
   (req, res, next) => roleController.createRole(req, res, next)
 );
 
 // List all roles
-router.get("/", requirePermission(["manage_roles"]), (req, res, next) =>
-  roleController.listRoles(req, res, next)
+router.get(
+  "/",
+  requireAuth,
+  requirePermission(["manage_roles"]),
+  (req, res, next) => roleController.listRoles(req, res, next)
 );
 
 // List all permissions
 router.get(
   "/permissions",
+  requireAuth,
   requirePermission(["manage_roles"]),
   (req, res, next) => roleController.listPermissions(req, res, next)
 );
 
 // Get roles for dropdown
-router.get("/options", requirePermission(["manage_roles"]), (req, res, next) =>
-  roleController.getRolesForDropdown(req, res, next)
+router.get(
+  "/options",
+  requireAuth,
+  requirePermission(["manage_roles"]),
+  (req, res, next) => roleController.getRolesForDropdown(req, res, next)
 );
 
 // Get role by id
 router.get(
   "/:id",
+  requireAuth,
   requirePermission(["manage_roles"]),
   validateRequest(roleIdSchema),
   (req, res, next) => roleController.getRoleById(req, res, next)
@@ -50,6 +59,7 @@ router.get(
 router.put(
   "/:id",
   csrfProtection,
+  requireAuth,
   requirePermission(["manage_roles"]),
   validateRequest(updateRoleSchema),
   validateRequest(roleIdSchema),
@@ -60,6 +70,7 @@ router.put(
 router.delete(
   "/:id",
   csrfProtection,
+  requireAuth,
   requirePermission(["manage_roles"]),
   validateRequest(roleIdSchema),
   (req, res, next) => roleController.deleteRole(req, res, next)

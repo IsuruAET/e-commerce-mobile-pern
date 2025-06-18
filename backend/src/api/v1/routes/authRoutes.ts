@@ -13,7 +13,7 @@ import {
 } from "../schemas/authSchema";
 import { AuthController } from "../controllers/authController";
 import { validateRequest } from "middleware/validateRequest";
-import { requirePermission } from "middleware/authHandler";
+import { requirePermission, requireAuth } from "middleware/authHandler";
 import { csrfProtection } from "middleware/csrfHandler";
 
 const router = Router();
@@ -38,7 +38,7 @@ router.post("/refresh-token", csrfProtection, (req, res, next) =>
   authController.refreshToken(req, res, next)
 );
 
-router.post("/logout", csrfProtection, (req, res, next) =>
+router.post("/logout", csrfProtection, requireAuth, (req, res, next) =>
   authController.logout(req, res, next)
 );
 
@@ -74,6 +74,7 @@ router.post(
 router.post(
   "/change-password",
   csrfProtection,
+  requireAuth,
   requirePermission(["manage_auth"]),
   validateRequest(changePasswordSchema),
   (req, res, next) => authController.changePassword(req, res, next)
@@ -83,6 +84,7 @@ router.post(
 router.patch(
   "/profile",
   csrfProtection,
+  requireAuth,
   requirePermission(["manage_auth"]),
   validateRequest(updateProfileSchema),
   (req, res, next) => authController.updateProfile(req, res, next)
@@ -92,6 +94,7 @@ router.patch(
 router.patch(
   "/deactivate",
   csrfProtection,
+  requireAuth,
   requirePermission(["manage_auth"]),
   (req, res, next) => authController.deactivateAccount(req, res, next)
 );
