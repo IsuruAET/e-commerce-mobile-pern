@@ -707,12 +707,12 @@ export class AuthService extends BaseService {
   async getCsrfToken(
     req: Request,
     res: Response
-  ): Promise<ApiResponse<{ token: string }>> {
-    const token = generateCsrfToken(req, res);
+  ): Promise<ApiResponse<{ csrfToken: string }>> {
+    const csrfToken = generateCsrfToken(req, res);
 
     return createSuccessResponse(
       req,
-      { token },
+      { csrfToken },
       "CSRF token generated successfully"
     );
   }
