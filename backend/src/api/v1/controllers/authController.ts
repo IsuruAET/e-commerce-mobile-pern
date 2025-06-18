@@ -255,4 +255,17 @@ export class AuthController {
       next(error);
     }
   }
+
+  async getCsrfToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const result = await this.authService.getCsrfToken(req, res);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

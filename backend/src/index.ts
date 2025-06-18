@@ -9,10 +9,9 @@ import { requestLogger, logger } from "./middleware/logger";
 import v1Routes from "./api/v1/index";
 import { errorHandler } from "middleware/errorHandler";
 import { databaseErrorHandler } from "middleware/databaseErrorHandler";
-import { requireAuth } from "middleware/authHandler";
 import { requestIdMiddleware } from "middleware/requestId";
-import { csrfProtection, setCsrfToken } from "middleware/csrfHandler";
-import { checkRouteExists } from "middleware/routeHandler";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
 import "./config/passport";
 
 // Load environment variables
@@ -35,16 +34,14 @@ app.use(requestLogger); // Log all requests
 app.use(cors(corsOptions)); // Security boundary
 app.use(express.json()); // Parse request bodies
 app.use(cookieParser()); // Parse cookies
-app.use(setCsrfToken); // Set CSRF token for all requests
 
-// API routes with middleware in correct order
-app.use(
-  "/api/v1",
-  checkRouteExists, // Check route exists before auth
-  requireAuth, // Authenticate user
-  csrfProtection, // Verify CSRF after auth
-  v1Routes // Route handlers
-);
+// API routes - handle auth per route instead of globally
+app.use("/api/v1", v1Routes);
+
+// Let Express handle 404s naturally
+app.use("*", (req, res, next) => {
+  next(new AppError(ErrorCode.RESOURCE_NOT_FOUND));
+});
 
 // Error handling middleware (always last)
 app.use(databaseErrorHandler); // Add database error handler before general error handler
@@ -56,6 +53,18 @@ app.get("/", (req: Request, res: Response) => {
     message: "Welcome to the E-commerce API!",
     documentation: "Please refer to /api/v1 for API endpoints",
   });
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error("Unhandled Rejection at:", promise, "reason:", reason);
+  // Don't exit the process, just log the error
+});
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+  logger.error("Uncaught Exception:", error);
+  process.exit(1);
 });
 
 // Connect to PostgreSQL and Redis, then start server

@@ -10,6 +10,7 @@ import {
 import { ServiceController } from "../controllers/serviceController";
 import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
+import { csrfProtection } from "middleware/csrfHandler";
 
 const router = Router();
 const serviceController = new ServiceController();
@@ -17,6 +18,7 @@ const serviceController = new ServiceController();
 // Private routes
 router.post(
   "/",
+  csrfProtection,
   requirePermission(["create_service"]),
   validateRequest(createServiceSchema),
   (req, res, next) => serviceController.createService(req, res, next)
@@ -50,6 +52,7 @@ router.get(
 
 router.put(
   "/:id",
+  csrfProtection,
   requirePermission(["update_service"]),
   validateRequest(updateServiceSchema),
   validateRequest(serviceIdSchema),
@@ -58,6 +61,7 @@ router.put(
 
 router.delete(
   "/:id",
+  csrfProtection,
   requirePermission(["delete_service"]),
   validateRequest(serviceIdSchema),
   (req, res, next) => serviceController.deleteService(req, res, next)
@@ -65,6 +69,7 @@ router.delete(
 
 router.patch(
   "/:id/deactivate",
+  csrfProtection,
   requirePermission(["manage_service"]),
   validateRequest(serviceIdSchema),
   (req, res, next) => serviceController.deactivateService(req, res, next)
@@ -72,6 +77,7 @@ router.patch(
 
 router.patch(
   "/:id/reactivate",
+  csrfProtection,
   requirePermission(["manage_service"]),
   validateRequest(serviceIdSchema),
   (req, res, next) => serviceController.reactivateService(req, res, next)

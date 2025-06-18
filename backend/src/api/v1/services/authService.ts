@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import { Request } from "express";
+import { Request, Response } from "express";
 
 import { BaseService } from "./shared/baseService";
 import { AppError } from "middleware/errorHandler";
@@ -19,6 +19,7 @@ import {
   ProfileUpdateResponse,
 } from "types/auth";
 import { prismaClient } from "config/prisma";
+import { generateCsrfToken } from "middleware/csrfHandler";
 
 export class AuthService extends BaseService {
   private authRepository: AuthRepository;
@@ -701,5 +702,18 @@ export class AuthService extends BaseService {
         "Password created successfully"
       );
     });
+  }
+
+  async getCsrfToken(
+    req: Request,
+    res: Response
+  ): Promise<ApiResponse<{ token: string }>> {
+    const token = generateCsrfToken(req, res);
+
+    return createSuccessResponse(
+      req,
+      { token },
+      "CSRF token generated successfully"
+    );
   }
 }

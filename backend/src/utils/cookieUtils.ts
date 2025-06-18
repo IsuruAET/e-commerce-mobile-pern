@@ -8,5 +8,4 @@ export const setRefreshTokenCookie = (res: Response, token: string): void => {
 export const clearAuthCookies = (res: Response): void => {
   res.clearCookie(COOKIE_CONFIG.REFRESH_TOKEN.name);
   res.clearCookie(COOKIE_CONFIG.CSRF.name);
-  res.clearCookie(COOKIE_CONFIG.CSRF_JS.name);
 };

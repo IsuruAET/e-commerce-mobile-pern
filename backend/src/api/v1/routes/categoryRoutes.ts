@@ -9,6 +9,7 @@ import {
 import { CategoryController } from "../controllers/categoryController";
 import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
+import { csrfProtection } from "middleware/csrfHandler";
 
 const router = Router();
 const categoryController = new CategoryController();
@@ -16,6 +17,7 @@ const categoryController = new CategoryController();
 // Private routes
 router.post(
   "/",
+  csrfProtection,
   requirePermission(["create_category"]),
   validateRequest(createCategorySchema),
   (req, res, next) => categoryController.createCategory(req, res, next)
@@ -45,6 +47,7 @@ router.get(
 
 router.put(
   "/:id",
+  csrfProtection,
   requirePermission(["update_category"]),
   validateRequest(updateCategorySchema),
   validateRequest(categoryIdSchema),
@@ -53,6 +56,7 @@ router.put(
 
 router.delete(
   "/:id",
+  csrfProtection,
   requirePermission(["delete_category"]),
   validateRequest(categoryIdSchema),
   (req, res, next) => categoryController.deleteCategory(req, res, next)
@@ -61,6 +65,7 @@ router.delete(
 // Deactivate category
 router.patch(
   "/:id/deactivate",
+  csrfProtection,
   requirePermission(["manage_category"]),
   validateRequest(categoryIdSchema),
   (req, res, next) => categoryController.deactivateCategory(req, res, next)
@@ -69,6 +74,7 @@ router.patch(
 // Reactivate category
 router.patch(
   "/:id/reactivate",
+  csrfProtection,
   requirePermission(["manage_category"]),
   validateRequest(categoryIdSchema),
   (req, res, next) => categoryController.reactivateCategory(req, res, next)

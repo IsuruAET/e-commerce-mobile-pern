@@ -2,6 +2,7 @@ import { Router } from "express";
 import { RoleController } from "../controllers/roleController";
 import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
+import { csrfProtection } from "middleware/csrfHandler";
 import {
   createRoleSchema,
   updateRoleSchema,
@@ -14,6 +15,7 @@ const roleController = new RoleController();
 // Create role
 router.post(
   "/",
+  csrfProtection,
   requirePermission(["manage_roles"]),
   validateRequest(createRoleSchema),
   (req, res, next) => roleController.createRole(req, res, next)
@@ -47,6 +49,7 @@ router.get(
 // Update role
 router.put(
   "/:id",
+  csrfProtection,
   requirePermission(["manage_roles"]),
   validateRequest(updateRoleSchema),
   validateRequest(roleIdSchema),
@@ -56,6 +59,7 @@ router.put(
 // Delete role
 router.delete(
   "/:id",
+  csrfProtection,
   requirePermission(["manage_roles"]),
   validateRequest(roleIdSchema),
   (req, res, next) => roleController.deleteRole(req, res, next)

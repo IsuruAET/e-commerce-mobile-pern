@@ -4,7 +4,6 @@ import { prismaClient } from "config/prisma";
 
 import { AppError } from "./errorHandler";
 import { ErrorCode } from "constants/errorCodes";
-import { PUBLIC_ROUTES } from "constants/publicRoutes";
 
 // Extend Express Request type to include auth property
 declare global {
@@ -26,11 +25,6 @@ export const requireAuth = (
   res: Response,
   next: NextFunction
 ) => {
-  // Skip authentication for specific auth routes
-  if (PUBLIC_ROUTES.includes(req.path)) {
-    return next();
-  }
-
   expressjwt({
     secret: process.env.JWT_ACCESS_SECRET!,
     algorithms: ["HS256"],

@@ -1,88 +1,69 @@
+import { doubleCsrf } from "csrf-csrf";
 import { Request, Response, NextFunction } from "express";
-import crypto from "crypto";
-
-import { AppError } from "middleware/errorHandler";
+import { COOKIE_CONFIG } from "config/cookies";
+import { CSRF_SECURITY } from "config/cookies";
+import { AppError } from "./errorHandler";
 import { ErrorCode } from "constants/errorCodes";
-import { PUBLIC_ROUTES } from "constants/publicRoutes";
-import { logger } from "middleware/logger";
-import { COOKIE_CONFIG, CSRF_SECURITY } from "config/cookies";
 
-// Generate a random token
-const generateToken = (): string => {
-  return crypto.randomBytes(32).toString("hex");
-};
+const csrfInstance = doubleCsrf({
+  getSecret: () =>
+    process.env.CSRF_SECRET || "fallback-secret-change-in-production",
+  getSessionIdentifier: (req: Request) => {
+    // Use user ID if authenticated, otherwise use IP
+    return (req.user as any)?.id || req.ip || "anonymous";
+  },
+  cookieName: COOKIE_CONFIG.CSRF.name,
+  cookieOptions: {
+    ...COOKIE_CONFIG.CSRF.options,
+  },
+  getCsrfTokenFromRequest: (req: Request) => {
+    const header = req.headers[CSRF_SECURITY.HEADER_NAME.toLowerCase()];
+    if (Array.isArray(header)) return header[0];
+    return header;
+  },
+});
 
-// CSRF middleware
+const rawCsrfProtection = csrfInstance.doubleCsrfProtection;
+export const generateCsrfToken = csrfInstance.generateCsrfToken;
+
+// Wrapper to handle CSRF errors properly
 export const csrfProtection = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  // Skip CSRF check for safe methods
-  if (
-    CSRF_SECURITY.SAFE_METHODS.includes(
-      req.method as "GET" | "HEAD" | "OPTIONS"
-    )
-  ) {
-    return next();
-  }
-
-  // Skip CSRF check for public auth routes
-  if (PUBLIC_ROUTES.some((route) => req.path.endsWith(route))) {
-    return next();
-  }
-
-  // Get tokens from cookies and header
-  const cookieToken = req.cookies[COOKIE_CONFIG.CSRF.name];
-  const headerToken = req.headers[CSRF_SECURITY.HEADER_NAME.toLowerCase()];
-
-  // Validate tokens
-  if (!cookieToken && !headerToken) {
-    throw new AppError(ErrorCode.CSRF_TOKEN_MISSING);
-  }
-
-  if (!cookieToken) {
-    throw new AppError(ErrorCode.CSRF_TOKEN_INVALID);
-  }
-
-  if (!headerToken) {
-    throw new AppError(ErrorCode.CSRF_TOKEN_MISSING);
-  }
-
-  if (cookieToken !== headerToken) {
-    throw new AppError(ErrorCode.CSRF_TOKEN_MISMATCH);
-  }
-
-  next();
+  rawCsrfProtection(req, res, (err) => {
+    if (err) {
+      // Convert CSRF errors to proper AppError with 403 status
+      if (err.name === "ForbiddenError" && err.message.includes("csrf")) {
+        return next(new AppError(ErrorCode.CSRF_TOKEN_INVALID));
+      }
+      // Handle other CSRF-related errors
+      if (err.message.includes("csrf")) {
+        return next(new AppError(ErrorCode.CSRF_TOKEN_MISSING));
+      }
+      // For any other unexpected CSRF errors
+      return next(new AppError(ErrorCode.CSRF_TOKEN_INVALID));
+    }
+    next();
+  });
 };
 
-// Middleware to set CSRF token cookie
-export const setCsrfToken = (
+// Conditional CSRF protection - skip for mobile API or specific routes
+export const conditionalCsrfProtection = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  try {
-    // Only set new token if one doesn't exist
-    if (!req.cookies[COOKIE_CONFIG.CSRF.name]) {
-      // Generate new token
-      const token = generateToken();
+  // Skip CSRF for mobile API requests (you can customize this logic)
+  const isMobileRequest =
+    req.headers["user-agent"]?.includes("mobile") ||
+    req.headers["x-client-type"] === "mobile" ||
+    req.path.startsWith("/api/v1/mobile");
 
-      // Set HttpOnly cookie (secure token)
-      res.cookie(COOKIE_CONFIG.CSRF.name, token, COOKIE_CONFIG.CSRF.options);
-
-      // Set non-HttpOnly cookie (for JavaScript access)
-      res.cookie(
-        COOKIE_CONFIG.CSRF_JS.name,
-        token,
-        COOKIE_CONFIG.CSRF_JS.options
-      );
-    }
-
-    next();
-  } catch (error) {
-    // Log the error for debugging
-    logger.error("Error setting CSRF token:", error);
-    throw new AppError(ErrorCode.INTERNAL_SERVER_ERROR);
+  if (isMobileRequest) {
+    return next();
   }
+
+  return csrfProtection(req, res, next);
 };

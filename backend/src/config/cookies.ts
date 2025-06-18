@@ -17,15 +17,6 @@ export const COOKIE_CONFIG = {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   },
-  CSRF_JS: {
-    name: "csrf_token_js",
-    options: {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict" as const,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    },
-  },
 } as const;
 
 // CSRF Security Configuration

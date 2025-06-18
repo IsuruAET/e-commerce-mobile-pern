@@ -13,6 +13,7 @@ import {
 import { AppointmentController } from "../controllers/appointmentController";
 import { requirePermission } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
+import { csrfProtection } from "middleware/csrfHandler";
 
 const router = Router();
 const appointmentController = new AppointmentController();
@@ -20,6 +21,7 @@ const appointmentController = new AppointmentController();
 // Private routes
 router.post(
   "/",
+  csrfProtection,
   requirePermission(["create_appointment"]),
   validateRequest(createAppointmentSchema),
   (req, res, next) => appointmentController.createAppointment(req, res, next)
@@ -34,6 +36,7 @@ router.get(
 
 router.put(
   "/:id",
+  csrfProtection,
   requirePermission(["update_appointment"]),
   validateRequest(updateAppointmentSchema),
   (req, res, next) => appointmentController.updateAppointment(req, res, next)
@@ -93,6 +96,7 @@ router.get(
 
 router.patch(
   "/:id/status",
+  csrfProtection,
   requirePermission(["manage_appointment"]),
   validateRequest(updateAppointmentStatusSchema),
   (req, res, next) =>
