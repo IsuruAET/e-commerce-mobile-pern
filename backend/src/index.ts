@@ -8,9 +8,10 @@ import { connectRedis } from "./config/redis";
 import { requestLogger, logger } from "./middleware/logger";
 import v1Routes from "./api/v1/index";
 import { errorHandler } from "middleware/errorHandler";
-import { requireAuth } from "middleware/authHandler";
+import { databaseErrorHandler } from "middleware/databaseErrorHandler";
 import { requestIdMiddleware } from "middleware/requestId";
-import { csrfProtection, setCsrfToken } from "middleware/csrfHandler";
+import { AppError } from "middleware/errorHandler";
+import { ErrorCode } from "constants/errorCodes";
 import "./config/passport";
 
 // Load environment variables
@@ -21,24 +22,29 @@ const port = process.env.PORT || 5000;
 
 // Configure CORS
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: process.env.APP_URL || "http://localhost:3000",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
 };
 
 // Middleware
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(cookieParser());
-app.use(requestIdMiddleware);
-app.use(requestLogger);
+app.use(requestIdMiddleware); // First for request tracking
+app.use(requestLogger); // Log all requests
+app.use(cors(corsOptions)); // Security boundary
+app.use(express.json()); // Parse request bodies
+app.use(cookieParser()); // Parse cookies
 
-// CSRF Protection
-app.use(setCsrfToken); // Set CSRF token for all routes
-app.use("/api/v1", csrfProtection, requireAuth, v1Routes); // Protect API routes with CSRF
+// API routes - handle auth per route instead of globally
+app.use("/api/v1", v1Routes);
 
-// Error handling middleware
+// Let Express handle 404s naturally
+app.use("*", (req, res, next) => {
+  next(new AppError(ErrorCode.RESOURCE_NOT_FOUND));
+});
+
+// Error handling middleware (always last)
+app.use(databaseErrorHandler); // Add database error handler before general error handler
 app.use(errorHandler);
 
 // Root route
@@ -47,6 +53,18 @@ app.get("/", (req: Request, res: Response) => {
     message: "Welcome to the E-commerce API!",
     documentation: "Please refer to /api/v1 for API endpoints",
   });
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error("Unhandled Rejection at:", promise, "reason:", reason);
+  // Don't exit the process, just log the error
+});
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+  logger.error("Uncaught Exception:", error);
+  process.exit(1);
 });
 
 // Connect to PostgreSQL and Redis, then start server

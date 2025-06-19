@@ -4,9 +4,15 @@ import { UserService } from "../services/userService";
 import { PaginatedResponse } from "utils/queryBuilder";
 
 export class UserController {
-  static async createUser(req: Request, res: Response, next: NextFunction) {
+  private userService: UserService;
+
+  constructor() {
+    this.userService = new UserService();
+  }
+
+  async createUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await UserService.createUser(req.body);
+      const user = await this.userService.createUser(req.body);
       res.status(201).json({
         success: true,
         message: "User created successfully",
@@ -17,10 +23,10 @@ export class UserController {
     }
   }
 
-  static async getUserById(req: Request, res: Response, next: NextFunction) {
+  async getUserById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const user = await UserService.getUserById(id);
+      const user = await this.userService.getUserById(id);
       res.status(200).json({
         success: true,
         data: user,
@@ -30,13 +36,13 @@ export class UserController {
     }
   }
 
-  static async listUsers(
+  async listUsers(
     req: Request,
     res: Response<{ success: boolean; data: PaginatedResponse<any> }>,
     next: NextFunction
   ) {
     try {
-      const result = await UserService.listUsers(req.query);
+      const result = await this.userService.listUsers(req.query);
       res.status(200).json({
         success: true,
         data: result,
@@ -46,10 +52,10 @@ export class UserController {
     }
   }
 
-  static async updateUser(req: Request, res: Response, next: NextFunction) {
+  async updateUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const user = await UserService.updateUser(id, req.body);
+      const user = await this.userService.updateUser(id, req.body);
       res.status(200).json({
         success: true,
         message: "User updated successfully",
@@ -60,10 +66,10 @@ export class UserController {
     }
   }
 
-  static async deleteUser(req: Request, res: Response, next: NextFunction) {
+  async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await UserService.deleteUser(id);
+      await this.userService.deleteUser(id);
       res.status(200).json({
         success: true,
         message: "User deleted successfully",
@@ -73,10 +79,10 @@ export class UserController {
     }
   }
 
-  static async deactivateUser(req: Request, res: Response, next: NextFunction) {
+  async deactivateUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await UserService.deactivateUser(id);
+      await this.userService.deactivateUser(id);
       res.status(200).json({
         success: true,
         message: "User deactivated successfully",
@@ -86,10 +92,10 @@ export class UserController {
     }
   }
 
-  static async reactivateUser(req: Request, res: Response, next: NextFunction) {
+  async reactivateUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await UserService.reactivateUser(id);
+      await this.userService.reactivateUser(id);
       res.status(200).json({
         success: true,
         message: "User reactivated successfully",

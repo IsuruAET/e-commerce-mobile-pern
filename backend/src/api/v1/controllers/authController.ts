@@ -1,63 +1,67 @@
 import { Request, Response, NextFunction } from "express";
 import passport from "passport";
+import { SuccessResponse } from "utils/responseUtils";
+import { AuthResponse } from "types/auth";
+import { setRefreshTokenCookie, clearAuthCookies } from "utils/cookieUtils";
 
 import { AuthService } from "../services/authService";
 
 export class AuthController {
-  static async register(
+  private authService: AuthService;
+
+  constructor() {
+    this.authService = new AuthService();
+  }
+
+  private handleAuthResponse(
+    res: Response,
+    response: SuccessResponse<AuthResponse>,
+    statusCode: number = 200
+  ): void {
+    const { refreshToken, ...rest } = response.data;
+    setRefreshTokenCookie(res, refreshToken);
+    res.status(statusCode).json({
+      ...response,
+      data: rest,
+    });
+  }
+
+  async register(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { email, password, name } = req.body;
-      const { refreshToken, ...rest } = await AuthService.registerUser(
+      const response = (await this.authService.registerUser(
+        req,
         email,
         password,
         name
-      );
+      )) as SuccessResponse<AuthResponse>;
 
-      // Set refresh token in HTTP-only cookie
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      res.status(201).json(rest);
+      this.handleAuthResponse(res, response, 201);
     } catch (error) {
       next(error);
     }
   }
 
-  static async login(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password } = req.body;
-      const { refreshToken, ...rest } = await AuthService.loginUser(
+      const response = (await this.authService.loginUser(
+        req,
         email,
         password
-      );
+      )) as SuccessResponse<AuthResponse>;
 
-      // Set refresh token in HTTP-only cookie
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      res.status(200).json(rest);
+      this.handleAuthResponse(res, response);
     } catch (error) {
       next(error);
     }
   }
 
-  static async refreshToken(
+  async refreshToken(
     req: Request,
     res: Response,
     next: NextFunction
@@ -66,66 +70,37 @@ export class AuthController {
       const refreshToken = req.cookies.refreshToken as string;
       const accessToken = req.headers.authorization?.split(" ")[1] as string;
 
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-        await AuthService.refreshUserToken(refreshToken, accessToken);
+      const response = (await this.authService.refreshUserToken(
+        req,
+        refreshToken,
+        accessToken
+      )) as SuccessResponse<AuthResponse>;
 
-      // Set new refresh token in HTTP-only cookie
-      res.cookie("refreshToken", newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      res.status(200).json({ accessToken: newAccessToken });
+      this.handleAuthResponse(res, response);
     } catch (error) {
       next(error);
     }
   }
 
-  static async logout(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
-      if (refreshToken) {
-        await AuthService.logoutUser(refreshToken);
-      }
+      const response = await this.authService.logoutUser(req, refreshToken);
 
-      // Clear refresh token cookie
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
-      // Clear CSRF token cookies
-      res.clearCookie("csrf_token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-      res.clearCookie("csrf_token_js", {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
-      res.status(200).json({ message: "Logged out successfully" });
+      clearAuthCookies(res);
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
   }
 
-  static googleAuth(req: Request, res: Response, next: NextFunction): void {
+  googleAuth(req: Request, res: Response, next: NextFunction): void {
     passport.authenticate("google", {
       scope: ["profile", "email"],
     })(req, res, next);
   }
 
-  static async googleCallback(
+  async googleCallback(
     req: Request,
     res: Response,
     next: NextFunction
@@ -135,22 +110,14 @@ export class AuthController {
       { session: false },
       async (err: any, data: any) => {
         try {
-          const { refreshToken, ...rest } =
-            await AuthService.handleGoogleCallback(
-              data?.user,
-              data?.tokens,
-              err
-            );
+          const response = (await this.authService.handleGoogleCallback(
+            req,
+            data?.user,
+            data?.tokens,
+            err
+          )) as SuccessResponse<AuthResponse>;
 
-          // Set refresh token in HTTP-only cookie
-          res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-          });
-
-          res.status(200).json(rest);
+          this.handleAuthResponse(res, response);
         } catch (error) {
           next(error);
         }
@@ -158,7 +125,7 @@ export class AuthController {
     )(req, res, next);
   }
 
-  static async changePassword(
+  async changePassword(
     req: Request,
     res: Response,
     next: NextFunction
@@ -166,81 +133,76 @@ export class AuthController {
     try {
       const { currentPassword, newPassword } = req.body;
       const userId = req.auth?.userId as string;
+      const refreshToken = req.cookies.refreshToken;
 
-      const result = await AuthService.changePassword(
+      const result = await this.authService.changePassword(
+        req,
         userId,
         currentPassword,
-        newPassword
+        newPassword,
+        refreshToken
       );
+
+      clearAuthCookies(res);
       res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
 
-  static async forgotPassword(
+  async forgotPassword(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { email } = req.body;
-      const result = await AuthService.requestPasswordReset(email);
+      const result = await this.authService.requestPasswordReset(req, email);
       res.status(200).json(result);
     } catch (error) {
       next(error);
     }
   }
 
-  static async resetPassword(
+  async resetPassword(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { token, password } = req.body;
-      const result = await AuthService.resetUserPassword(token, password);
-      res.status(200).json(result);
+      const response = (await this.authService.resetUserPassword(
+        req,
+        token,
+        password
+      )) as SuccessResponse<AuthResponse>;
+
+      this.handleAuthResponse(res, response);
     } catch (error) {
       next(error);
     }
   }
 
-  static async deactivateAccount(
+  async deactivateAccount(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const userId = req.auth?.userId as string;
-      await AuthService.deactivateUserAccount(userId);
+      const response = await this.authService.deactivateUserAccount(
+        req,
+        userId
+      );
 
-      // Clear the refresh token cookie
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
-      // Clear CSRF token cookies
-      res.clearCookie("csrf_token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-      res.clearCookie("csrf_token_js", {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
-      res.status(200).json({ message: "Account deactivated successfully" });
+      clearAuthCookies(res);
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
   }
 
-  static async updateProfile(
+  async updateProfile(
     req: Request,
     res: Response,
     next: NextFunction
@@ -248,7 +210,7 @@ export class AuthController {
     try {
       const userId = req.auth?.userId as string;
       const { name, phone } = req.body;
-      const result = await AuthService.updateUserProfile(userId, {
+      const result = await this.authService.updateUserProfile(req, userId, {
         name,
         phone,
       });
@@ -258,28 +220,49 @@ export class AuthController {
     }
   }
 
-  static async createPassword(
+  async createPassword(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { token, password } = req.body;
-      const result = await AuthService.createPassword(token, password);
-      res.status(200).json(result);
+      const response = (await this.authService.createPassword(
+        req,
+        token,
+        password
+      )) as SuccessResponse<AuthResponse>;
+
+      this.handleAuthResponse(res, response);
     } catch (error) {
       next(error);
     }
   }
 
-  static async requestNewPasswordCreationToken(
+  async requestNewPasswordCreationToken(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       const { email } = req.body;
-      const result = await AuthService.requestNewPasswordCreationToken(email);
+      const result = await this.authService.requestNewPasswordCreationToken(
+        req,
+        email
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getCsrfToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const result = await this.authService.getCsrfToken(req, res);
       res.status(200).json(result);
     } catch (error) {
       next(error);

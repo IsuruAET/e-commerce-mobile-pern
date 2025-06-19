@@ -1,6 +1,6 @@
 import { CreateUserInput, UpdateUserInput } from "../schemas/userSchema";
 import { BaseService } from "./shared/baseService";
-import { PasswordEmailService } from "./shared/passwordEmailService";
+import { passwordEmailService } from "./shared/passwordEmailService";
 import { AppError } from "middleware/errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 import {
@@ -9,77 +9,80 @@ import {
   PaginatedResponse,
 } from "utils/queryBuilder";
 import { UserRepository } from "../repositories/userRepository";
+import { AppointmentRepository } from "../repositories/appointmentRepository";
 import { redisTokenService } from "./shared/redisTokenService";
+import { prismaClient } from "config/prisma";
 
 export class UserService extends BaseService {
-  private static userRepository = new UserRepository(BaseService.prisma);
+  private userRepository: UserRepository;
+  private appointmentRepository: AppointmentRepository;
 
-  static async createUser(data: CreateUserInput) {
-    return await this.handleDatabaseError(async () => {
-      const existingUser = await this.userRepository.findUserByEmail(
-        data.email
-      );
-
-      if (existingUser) {
-        throw new AppError(ErrorCode.ADMIN_ADDING_EXISTING_USER);
-      }
-
-      const user = await this.userRepository.createUser({
-        email: data.email,
-        name: data.name,
-        phone: data.phone,
-        roleId: data.roleId,
-      });
-
-      // Generate and send password creation token
-      await PasswordEmailService.generateAndSendPasswordCreationToken(
-        user.id,
-        user.email
-      );
-
-      return user;
-    });
+  constructor() {
+    super(prismaClient);
+    this.userRepository = new UserRepository(this.prisma);
+    this.appointmentRepository = new AppointmentRepository(this.prisma);
   }
 
-  static async getUserById(id: string) {
+  async createUser(data: CreateUserInput) {
+    const existingUser = await this.userRepository.findUserByEmail(data.email);
+
+    if (existingUser) {
+      throw new AppError(ErrorCode.ADMIN_ADDING_EXISTING_USER);
+    }
+
+    const user = await this.userRepository.createUser({
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      roleId: data.roleId,
+    });
+
+    // Generate and send password creation token
+    await passwordEmailService.generateAndSendPasswordCreationToken(
+      user.id,
+      user.email
+    );
+
+    return user;
+  }
+
+  async getUserById(id: string) {
     return await this.handleNotFound(async () => {
       return await this.userRepository.findUserById(id);
     });
   }
 
-  static async listUsers(
+  async listUsers(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
-    return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(
-        queryParams,
-        {
-          roleIds: { type: "array", field: "roleId" },
-          isDeactivated: { type: "boolean" },
-        },
-        ["email", "name"]
-      );
+    const { page, count, filters, orderBy } = buildQueryOptions(
+      queryParams,
+      {
+        roleIds: { type: "array", field: "roleId" },
+        isDeactivated: { type: "boolean" },
+      },
+      ["email", "name"]
+    );
 
-      // Get the total count with the filters
-      const total = await this.userRepository.countUsers(filters);
+    // Get the total count with the filters
+    const total = await this.userRepository.countUsers(filters);
 
-      const pagination = buildPagination(total, page, count);
+    const pagination = buildPagination(total, page, count);
 
-      // Apply pagination and sorting
-      const users = await this.userRepository.findUsers(
-        filters,
-        { skip: (page - 1) * count, take: count },
-        orderBy
-      );
+    // Apply pagination and sorting
+    const users = await this.userRepository.findUsers(
+      filters,
+      { skip: (page - 1) * count, take: count },
+      orderBy
+    );
 
-      return {
-        list: users,
-        pagination,
-      };
-    });
+    return {
+      list: users,
+      pagination,
+    };
   }
 
-  static async updateUser(id: string, data: UpdateUserInput) {
+  async updateUser(id: string, data: UpdateUserInput) {
     return await this.handleNotFound(async () => {
       const updateData: any = { ...data };
 
@@ -92,13 +95,11 @@ export class UserService extends BaseService {
     });
   }
 
-  static async deleteUser(id: string) {
+  async deleteUser(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if user has any appointments as client or stylist
-      const appointments = await this.userRepository.findUserAppointments(
-        id,
-        tx
-      );
+      const appointments =
+        await this.appointmentRepository.findUserAppointments(id, tx);
 
       if (appointments.length > 0) {
         throw new AppError(ErrorCode.USER_HAS_APPOINTMENTS);
@@ -116,13 +117,11 @@ export class UserService extends BaseService {
     });
   }
 
-  static async deactivateUser(id: string) {
+  async deactivateUser(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Find all active appointments
-      const activeAppointments = await this.userRepository.findUserAppointments(
-        id,
-        tx
-      );
+      const activeAppointments =
+        await this.appointmentRepository.findUserAppointments(id, tx);
 
       // Update all active appointments to CANCELLED with a note
       if (activeAppointments.length > 0) {
@@ -151,9 +150,7 @@ export class UserService extends BaseService {
     });
   }
 
-  static async reactivateUser(id: string) {
-    return await this.handleDatabaseError(async () => {
-      return await this.userRepository.reactivateUser(id);
-    });
+  async reactivateUser(id: string) {
+    return await this.userRepository.reactivateUser(id);
   }
 }

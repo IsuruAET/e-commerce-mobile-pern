@@ -11,87 +11,107 @@ import {
   updateAppointmentStatusSchema,
 } from "../schemas/appointmentSchema";
 import { AppointmentController } from "../controllers/appointmentController";
-import { requirePermission } from "middleware/authHandler";
+import { requirePermission, requireAuth } from "middleware/authHandler";
 import { validateRequest } from "middleware/validateRequest";
+import { csrfProtection } from "middleware/csrfHandler";
 
 const router = Router();
+const appointmentController = new AppointmentController();
 
 // Private routes
 router.post(
   "/",
+  csrfProtection,
+  requireAuth,
   requirePermission(["create_appointment"]),
   validateRequest(createAppointmentSchema),
-  AppointmentController.createAppointment
+  (req, res, next) => appointmentController.createAppointment(req, res, next)
 );
 
 router.get(
   "/:id",
+  requireAuth,
   requirePermission(["read_appointment"]),
   validateRequest(getAppointmentSchema),
-  AppointmentController.getAppointment
+  (req, res, next) => appointmentController.getAppointment(req, res, next)
 );
 
 router.put(
   "/:id",
+  csrfProtection,
+  requireAuth,
   requirePermission(["update_appointment"]),
   validateRequest(updateAppointmentSchema),
-  AppointmentController.updateAppointment
+  (req, res, next) => appointmentController.updateAppointment(req, res, next)
 );
 
 router.get(
   "/user/appointments",
+  requireAuth,
   requirePermission(["read_user_appointments"]),
   validateRequest(listUserAppointmentsSchema),
-  AppointmentController.getUserAppointments
+  (req, res, next) => appointmentController.getUserAppointments(req, res, next)
 );
 
 router.get(
   "/stylist/appointments",
+  requireAuth,
   requirePermission(["read_stylist_appointments"]),
   validateRequest(listStylistAppointmentsSchema),
-  AppointmentController.getStylistAppointments
+  (req, res, next) =>
+    appointmentController.getStylistAppointments(req, res, next)
 );
 
 router.get(
   "/stats/income",
+  requireAuth,
   requirePermission(["read_appointment_stats"]),
   validateRequest(getAppointmentStatsSchema),
-  AppointmentController.getTotalIncome
+  (req, res, next) => appointmentController.getTotalIncome(req, res, next)
 );
 
 router.get(
   "/stats/services",
+  requireAuth,
   requirePermission(["read_appointment_stats"]),
   validateRequest(getAppointmentStatsSchema),
-  AppointmentController.getTotalServices
+  (req, res, next) => appointmentController.getTotalServices(req, res, next)
 );
 
 router.get(
   "/",
+  requireAuth,
   requirePermission(["read_appointments"]),
   validateRequest(listAppointmentsSchema),
-  AppointmentController.listAppointments
+  (req, res, next) => appointmentController.listAppointments(req, res, next)
 );
 
 router.get(
   "/user/appointments/:id",
+  requireAuth,
   requirePermission(["read_user_appointment"]),
   validateRequest(getAppointmentSchema),
-  AppointmentController.getUserAppointmentById
+  (req, res, next) =>
+    appointmentController.getUserAppointmentById(req, res, next)
 );
 
 router.get(
   "/stylist/appointments/:id",
+  requireAuth,
   requirePermission(["read_stylist_appointment"]),
   validateRequest(getAppointmentSchema),
-  AppointmentController.getStylistAppointmentById
+  (req, res, next) =>
+    appointmentController.getStylistAppointmentById(req, res, next)
 );
 
 router.patch(
   "/:id/status",
+  csrfProtection,
+  requireAuth,
   requirePermission(["manage_appointment"]),
   validateRequest(updateAppointmentStatusSchema),
-  AppointmentController.updateAppointmentStatus
+  (req, res, next) =>
+    appointmentController.updateAppointmentStatus(req, res, next)
 );
 
 export default router;

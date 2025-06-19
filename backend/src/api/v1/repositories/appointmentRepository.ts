@@ -4,93 +4,72 @@ import {
   AppointmentService,
   Prisma,
 } from "@prisma/client";
-import { DateTime } from "luxon";
 
 // Define a type for the Prisma transaction
-export type PrismaTransaction = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
+export type PrismaTransaction = Prisma.TransactionClient;
 
-export interface IAppointmentRepository {
-  // Appointment operations
+// Base types for appointment data
+export type AppointmentWithRelations = Appointment & {
+  services: (AppointmentService & { service: any })[];
+  user: { id: string; name: string; email: string };
+  stylist: { id: string; name: string; email: string };
+};
+
+export type AppointmentCreateData = {
+  userId: string;
+  stylistId: string;
+  dateTime: Date;
+  notes?: string;
+  estimatedDuration: number;
+  totalPrice: number;
+  services: { serviceId: string; numberOfPeople: number }[];
+};
+
+// Core CRUD operations
+export interface IAppointmentCRUD {
   createAppointment(
-    data: {
-      userId: string;
-      stylistId: string;
-      dateTime: Date;
-      notes?: string;
-      estimatedDuration: number;
-      totalPrice: number;
-      services: {
-        serviceId: string;
-        numberOfPeople: number;
-      }[];
-    },
+    data: AppointmentCreateData,
     tx?: PrismaTransaction
-  ): Promise<
-    Appointment & {
-      services: (AppointmentService & {
-        service: any;
-      })[];
-      user: {
-        id: string;
-        name: string;
-        email: string;
-      };
-      stylist: {
-        id: string;
-        name: string;
-        email: string;
-      };
-    }
-  >;
-
+  ): Promise<AppointmentWithRelations>;
   findAppointmentById(
     id: string,
     tx?: PrismaTransaction
-  ): Promise<
-    | (Appointment & {
-        services: (AppointmentService & {
-          service: any;
-        })[];
-        user: {
-          id: string;
-          name: string;
-          email: string;
-        };
-        stylist: {
-          id: string;
-          name: string;
-          email: string;
-        };
-      })
-    | null
-  >;
-
+  ): Promise<AppointmentWithRelations | null>;
   updateAppointment(
     id: string,
     data: any,
     tx?: PrismaTransaction
-  ): Promise<
-    Appointment & {
-      services: (AppointmentService & {
-        service: any;
-      })[];
-      user: {
-        id: string;
-        name: string;
-        email: string;
-      };
-      stylist: {
-        id: string;
-        name: string;
-        email: string;
-      };
-    }
-  >;
+  ): Promise<AppointmentWithRelations>;
+}
 
-  findUserAppointments(
+// Query operations
+export interface IAppointmentQuery {
+  listAppointments(
+    where: any,
+    skip: number,
+    take: number,
+    orderBy: any,
+    tx?: PrismaTransaction
+  ): Promise<AppointmentWithRelations[]>;
+
+  countAppointments(where: any, tx?: PrismaTransaction): Promise<number>;
+}
+
+// Analytics operations
+export interface IAppointmentAnalytics {
+  getTotalIncome(
+    where: any,
+    tx?: PrismaTransaction
+  ): Promise<{ _sum: { totalPrice: Prisma.Decimal | null } }>;
+  getTotalServices(
+    where: any,
+    tx?: PrismaTransaction
+  ): Promise<{ _sum: { numberOfPeople: number | null } }>;
+}
+
+// User-specific operations
+export interface IAppointmentUserOperations {
+  findUserAppointmentsWithFilters(
     userId: string,
     skip: number,
     take: number,
@@ -99,17 +78,33 @@ export interface IAppointmentRepository {
     tx?: PrismaTransaction
   ): Promise<
     (Appointment & {
-      services: (AppointmentService & {
-        service: any;
-      })[];
-      stylist: {
-        id: string;
-        name: string;
-        email: string;
-      };
+      services: (AppointmentService & { service: any })[];
+      stylist: { id: string; name: string; email: string };
     })[]
   >;
 
+  countUserAppointments(
+    userId: string,
+    filters: any,
+    tx?: PrismaTransaction
+  ): Promise<number>;
+  findUserAppointmentById(
+    id: string,
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<AppointmentWithRelations | null>;
+  findUserAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]>;
+  findActiveAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]>;
+}
+
+// Stylist-specific operations
+export interface IAppointmentStylistOperations {
   findStylistAppointments(
     stylistId: string,
     skip: number,
@@ -119,134 +114,83 @@ export interface IAppointmentRepository {
     tx?: PrismaTransaction
   ): Promise<
     (Appointment & {
-      services: (AppointmentService & {
-        service: any;
-      })[];
-      user: {
-        id: string;
-        name: string;
-        email: string;
-      };
+      services: (AppointmentService & { service: any })[];
+      user: { id: string; name: string; email: string };
     })[]
   >;
-
-  getTotalIncome(
-    where: any,
-    tx?: PrismaTransaction
-  ): Promise<{ _sum: { totalPrice: Prisma.Decimal | null } }>;
-
-  getTotalServices(
-    where: any,
-    tx?: PrismaTransaction
-  ): Promise<{ _sum: { numberOfPeople: number | null } }>;
-
-  listAppointments(
-    where: any,
-    skip: number,
-    take: number,
-    orderBy: any,
-    tx?: PrismaTransaction
-  ): Promise<
-    (Appointment & {
-      services: (AppointmentService & {
-        service: any;
-      })[];
-      user: {
-        id: string;
-        name: string;
-        email: string;
-      };
-      stylist: {
-        id: string;
-        name: string;
-        email: string;
-      };
-    })[]
-  >;
-
-  countAppointments(where: any, tx?: PrismaTransaction): Promise<number>;
-
-  countUserAppointments(
-    userId: string,
-    filters: any,
-    tx?: PrismaTransaction
-  ): Promise<number>;
 
   countStylistAppointments(
     stylistId: string,
     filters: any,
     tx?: PrismaTransaction
   ): Promise<number>;
-
-  findUserAppointmentById(
-    id: string,
-    userId: string,
-    tx?: PrismaTransaction
-  ): Promise<
-    | (Appointment & {
-        services: (AppointmentService & {
-          service: any;
-        })[];
-        user: {
-          id: string;
-          name: string;
-          email: string;
-        };
-        stylist: {
-          id: string;
-          name: string;
-          email: string;
-        };
-      })
-    | null
-  >;
-
   findStylistAppointmentById(
     id: string,
     stylistId: string,
     tx?: PrismaTransaction
-  ): Promise<
-    | (Appointment & {
-        services: (AppointmentService & {
-          service: any;
-        })[];
-        user: {
-          id: string;
-          name: string;
-          email: string;
-        };
-        stylist: {
-          id: string;
-          name: string;
-          email: string;
-        };
-      })
-    | null
-  >;
+  ): Promise<AppointmentWithRelations | null>;
 }
 
-export class AppointmentRepository implements IAppointmentRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+// Management operations
+export interface IAppointmentManagement {
+  cancelAppointments(
+    appointmentIds: string[],
+    reason: string,
+    tx?: PrismaTransaction
+  ): Promise<void>;
+}
 
-  private getClient(tx?: PrismaTransaction): PrismaTransaction {
+// Combined interface for the main repository
+export interface IAppointmentRepository
+  extends IAppointmentCRUD,
+    IAppointmentQuery,
+    IAppointmentAnalytics,
+    IAppointmentUserOperations,
+    IAppointmentStylistOperations,
+    IAppointmentManagement {}
+
+// Base repository with common functionality
+export abstract class BaseAppointmentRepository {
+  constructor(protected readonly prisma: PrismaClient) {}
+
+  protected getClient(tx?: PrismaTransaction): PrismaTransaction {
     return tx || this.prisma;
   }
 
-  async createAppointment(
-    data: {
-      userId: string;
-      stylistId: string;
-      dateTime: Date;
-      notes?: string;
-      estimatedDuration: number;
-      totalPrice: number;
+  protected getDefaultInclude() {
+    return {
       services: {
-        serviceId: string;
-        numberOfPeople: number;
-      }[];
-    },
+        include: {
+          service: true,
+        },
+      },
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      stylist: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    };
+  }
+}
+
+// CRUD operations repository
+export class AppointmentCRUDRepository
+  extends BaseAppointmentRepository
+  implements IAppointmentCRUD
+{
+  async createAppointment(
+    data: AppointmentCreateData,
     tx?: PrismaTransaction
-  ) {
+  ): Promise<AppointmentWithRelations> {
     const client = this.getClient(tx);
     return client.appointment.create({
       data: {
@@ -260,88 +204,95 @@ export class AppointmentRepository implements IAppointmentRepository {
           create: data.services,
         },
       },
-      include: {
-        services: {
-          include: {
-            service: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        stylist: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+      include: this.getDefaultInclude(),
     });
   }
 
-  async findAppointmentById(id: string, tx?: PrismaTransaction) {
+  async findAppointmentById(
+    id: string,
+    tx?: PrismaTransaction
+  ): Promise<AppointmentWithRelations | null> {
     const client = this.getClient(tx);
     return client.appointment.findUnique({
       where: { id },
-      include: {
-        services: {
-          include: {
-            service: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        stylist: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+      include: this.getDefaultInclude(),
     });
   }
 
-  async updateAppointment(id: string, data: any, tx?: PrismaTransaction) {
+  async updateAppointment(
+    id: string,
+    data: any,
+    tx?: PrismaTransaction
+  ): Promise<AppointmentWithRelations> {
     const client = this.getClient(tx);
     return client.appointment.update({
       where: { id },
       data,
-      include: {
-        services: {
-          include: {
-            service: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        stylist: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+      include: this.getDefaultInclude(),
+    });
+  }
+}
+
+// Query operations repository
+export class AppointmentQueryRepository
+  extends BaseAppointmentRepository
+  implements IAppointmentQuery
+{
+  async listAppointments(
+    where: any,
+    skip: number,
+    take: number,
+    orderBy: any,
+    tx?: PrismaTransaction
+  ): Promise<AppointmentWithRelations[]> {
+    const client = this.getClient(tx);
+    return client.appointment.findMany({
+      where,
+      include: this.getDefaultInclude(),
+      skip,
+      take,
+      orderBy,
+    });
+  }
+
+  async countAppointments(where: any, tx?: PrismaTransaction): Promise<number> {
+    const client = this.getClient(tx);
+    return client.appointment.count({ where });
+  }
+}
+
+// Analytics repository
+export class AppointmentAnalyticsRepository
+  extends BaseAppointmentRepository
+  implements IAppointmentAnalytics
+{
+  async getTotalIncome(where: any, tx?: PrismaTransaction) {
+    const client = this.getClient(tx);
+    return client.appointment.aggregate({
+      where,
+      _sum: {
+        totalPrice: true,
       },
     });
   }
 
-  async findUserAppointments(
+  async getTotalServices(where: any, tx?: PrismaTransaction) {
+    const client = this.getClient(tx);
+    return client.appointmentService.aggregate({
+      where,
+      _sum: {
+        numberOfPeople: true,
+      },
+    });
+  }
+}
+
+// User operations repository
+export class AppointmentUserRepository
+  extends BaseAppointmentRepository
+  implements IAppointmentUserOperations
+{
+  async findUserAppointmentsWithFilters(
     userId: string,
     skip: number,
     take: number,
@@ -389,6 +340,50 @@ export class AppointmentRepository implements IAppointmentRepository {
     });
   }
 
+  async findUserAppointmentById(
+    id: string,
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<AppointmentWithRelations | null> {
+    const client = this.getClient(tx);
+    return client.appointment.findFirst({
+      where: { id, userId },
+      include: this.getDefaultInclude(),
+    });
+  }
+
+  async findUserAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]> {
+    const client = this.getClient(tx);
+    return client.appointment.findMany({
+      where: {
+        OR: [{ userId }, { stylistId: userId }],
+      },
+    });
+  }
+
+  async findActiveAppointments(
+    userId: string,
+    tx?: PrismaTransaction
+  ): Promise<Appointment[]> {
+    const client = this.getClient(tx);
+    return client.appointment.findMany({
+      where: {
+        OR: [{ userId }, { stylistId: userId }],
+        status: { in: ["PENDING", "CONFIRMED"] },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+}
+
+// Stylist operations repository
+export class AppointmentStylistRepository
+  extends BaseAppointmentRepository
+  implements IAppointmentStylistOperations
+{
   async findStylistAppointments(
     stylistId: string,
     skip: number,
@@ -437,97 +432,155 @@ export class AppointmentRepository implements IAppointmentRepository {
     });
   }
 
-  async getTotalIncome(where: any, tx?: PrismaTransaction) {
+  async findStylistAppointmentById(
+    id: string,
+    stylistId: string,
+    tx?: PrismaTransaction
+  ): Promise<AppointmentWithRelations | null> {
     const client = this.getClient(tx);
-    return client.appointment.aggregate({
-      where,
-      _sum: {
-        totalPrice: true,
+    return client.appointment.findFirst({
+      where: { id, stylistId },
+      include: this.getDefaultInclude(),
+    });
+  }
+}
+
+// Management repository
+export class AppointmentManagementRepository
+  extends BaseAppointmentRepository
+  implements IAppointmentManagement
+{
+  async cancelAppointments(
+    appointmentIds: string[],
+    reason: string,
+    tx?: PrismaTransaction
+  ): Promise<void> {
+    const client = this.getClient(tx);
+    await client.appointment.updateMany({
+      where: {
+        id: { in: appointmentIds },
+        status: { in: ["PENDING", "CONFIRMED"] },
+      },
+      data: {
+        status: "CANCELLED",
+        notes: reason,
       },
     });
   }
+}
 
-  async getTotalServices(where: any, tx?: PrismaTransaction) {
-    const client = this.getClient(tx);
-    return client.appointmentService.aggregate({
-      where,
-      _sum: {
-        numberOfPeople: true,
-      },
-    });
+// Main repository that combines all functionality
+export class AppointmentRepository implements IAppointmentRepository {
+  private crud: AppointmentCRUDRepository;
+  private query: AppointmentQueryRepository;
+  private analytics: AppointmentAnalyticsRepository;
+  private user: AppointmentUserRepository;
+  private stylist: AppointmentStylistRepository;
+  private management: AppointmentManagementRepository;
+
+  constructor(prisma: PrismaClient) {
+    this.crud = new AppointmentCRUDRepository(prisma);
+    this.query = new AppointmentQueryRepository(prisma);
+    this.analytics = new AppointmentAnalyticsRepository(prisma);
+    this.user = new AppointmentUserRepository(prisma);
+    this.stylist = new AppointmentStylistRepository(prisma);
+    this.management = new AppointmentManagementRepository(prisma);
   }
 
-  async listAppointments(
+  // Delegate all methods to appropriate repositories
+  createAppointment = (data: AppointmentCreateData, tx?: PrismaTransaction) =>
+    this.crud.createAppointment(data, tx);
+
+  findAppointmentById = (id: string, tx?: PrismaTransaction) =>
+    this.crud.findAppointmentById(id, tx);
+
+  updateAppointment = (id: string, data: any, tx?: PrismaTransaction) =>
+    this.crud.updateAppointment(id, data, tx);
+
+  listAppointments = (
     where: any,
     skip: number,
     take: number,
     orderBy: any,
     tx?: PrismaTransaction
-  ) {
-    const client = this.getClient(tx);
-    return client.appointment.findMany({
-      where,
-      include: {
-        services: {
-          include: {
-            service: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        stylist: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+  ) => this.query.listAppointments(where, skip, take, orderBy, tx);
+
+  countAppointments = (where: any, tx?: PrismaTransaction) =>
+    this.query.countAppointments(where, tx);
+
+  getTotalIncome = (where: any, tx?: PrismaTransaction) =>
+    this.analytics.getTotalIncome(where, tx);
+
+  getTotalServices = (where: any, tx?: PrismaTransaction) =>
+    this.analytics.getTotalServices(where, tx);
+
+  findUserAppointmentsWithFilters = (
+    userId: string,
+    skip: number,
+    take: number,
+    orderBy: any,
+    filters: any,
+    tx?: PrismaTransaction
+  ) =>
+    this.user.findUserAppointmentsWithFilters(
+      userId,
       skip,
       take,
       orderBy,
-    });
-  }
+      filters,
+      tx
+    );
 
-  async countAppointments(where: any, tx?: PrismaTransaction) {
-    const client = this.getClient(tx);
-    return client.appointment.count({ where });
-  }
+  countUserAppointments = (
+    userId: string,
+    filters: any,
+    tx?: PrismaTransaction
+  ) => this.user.countUserAppointments(userId, filters, tx);
 
-  async findUserAppointmentById(
+  findUserAppointmentById = (
     id: string,
     userId: string,
     tx?: PrismaTransaction
-  ) {
-    const client = this.getClient(tx);
-    return client.appointment.findFirst({
-      where: { id, userId },
-      include: {
-        services: { include: { service: true } },
-        user: { select: { id: true, name: true, email: true } },
-        stylist: { select: { id: true, name: true, email: true } },
-      },
-    });
-  }
+  ) => this.user.findUserAppointmentById(id, userId, tx);
 
-  async findStylistAppointmentById(
+  findUserAppointments = (userId: string, tx?: PrismaTransaction) =>
+    this.user.findUserAppointments(userId, tx);
+
+  findActiveAppointments = (userId: string, tx?: PrismaTransaction) =>
+    this.user.findActiveAppointments(userId, tx);
+
+  findStylistAppointments = (
+    stylistId: string,
+    skip: number,
+    take: number,
+    orderBy: any,
+    filters: any,
+    tx?: PrismaTransaction
+  ) =>
+    this.stylist.findStylistAppointments(
+      stylistId,
+      skip,
+      take,
+      orderBy,
+      filters,
+      tx
+    );
+
+  countStylistAppointments = (
+    stylistId: string,
+    filters: any,
+    tx?: PrismaTransaction
+  ) => this.stylist.countStylistAppointments(stylistId, filters, tx);
+
+  findStylistAppointmentById = (
     id: string,
     stylistId: string,
     tx?: PrismaTransaction
-  ) {
-    const client = this.getClient(tx);
-    return client.appointment.findFirst({
-      where: { id, stylistId },
-      include: {
-        services: { include: { service: true } },
-        user: { select: { id: true, name: true, email: true } },
-        stylist: { select: { id: true, name: true, email: true } },
-      },
-    });
-  }
+  ) => this.stylist.findStylistAppointmentById(id, stylistId, tx);
+
+  cancelAppointments = (
+    appointmentIds: string[],
+    reason: string,
+    tx?: PrismaTransaction
+  ) => this.management.cancelAppointments(appointmentIds, reason, tx);
 }

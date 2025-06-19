@@ -12,61 +12,62 @@ import {
 } from "utils/queryBuilder";
 import { CategoryRepository } from "../repositories/categoryRepository";
 import { ServiceRepository } from "../repositories/serviceRepository";
+import { prismaClient } from "config/prisma";
 
 export class CategoryService extends BaseService {
-  private static categoryRepository = new CategoryRepository(
-    BaseService.prisma
-  );
-  private static serviceRepository = new ServiceRepository(BaseService.prisma);
+  private readonly categoryRepository: CategoryRepository;
+  private readonly serviceRepository: ServiceRepository;
 
-  static async createCategory(data: CreateCategoryInput) {
-    return await this.handleDatabaseError(async () => {
-      const category = await this.categoryRepository.createCategory({
-        name: data.name,
-        description: data.description || "",
-        image: data.image || "",
-        isActive: data.isActive,
-      });
-
-      return category;
-    });
+  constructor() {
+    super(prismaClient);
+    this.categoryRepository = new CategoryRepository(this.prisma);
+    this.serviceRepository = new ServiceRepository(this.prisma);
   }
 
-  static async getCategoryById(id: string) {
+  async createCategory(data: CreateCategoryInput) {
+    const category = await this.categoryRepository.createCategory({
+      name: data.name,
+      description: data.description || "",
+      image: data.image || "",
+      isActive: data.isActive,
+    });
+
+    return category;
+  }
+
+  async getCategoryById(id: string) {
     return await this.handleNotFound(async () => {
       return await this.categoryRepository.findCategoryById(id);
     });
   }
 
-  static async listCategories(
+  async listCategories(
     queryParams: Record<string, any>
   ): Promise<PaginatedResponse<any>> {
-    return await this.handleDatabaseError(async () => {
-      const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
-        isActive: { type: "boolean" },
-      });
-
-      // Get the total count with the filters
-      const total = await this.categoryRepository.countCategories(filters);
-
-      const pagination = buildPagination(total, page, count);
-
-      // Apply pagination and sorting
-      const categories = await this.categoryRepository.findCategories(
-        filters,
-        (page - 1) * count,
-        count,
-        orderBy || {}
-      );
-
-      return {
-        list: categories,
-        pagination,
-      };
+    const { page, count, filters, orderBy } = buildQueryOptions(queryParams, {
+      isActive: { type: "boolean" },
     });
+
+    // Get the total count with the filters
+    const total = await this.categoryRepository.countCategories(filters);
+
+    const pagination = buildPagination(total, page, count);
+
+    // Apply pagination and sorting
+    const categories = await this.categoryRepository.findCategories(
+      filters,
+      (page - 1) * count,
+      count,
+      orderBy || {}
+    );
+
+    return {
+      list: categories,
+      pagination,
+    };
   }
 
-  static async updateCategory(id: string, data: UpdateCategoryInput) {
+  async updateCategory(id: string, data: UpdateCategoryInput) {
     return await this.handleNotFound(async () => {
       const category = await this.categoryRepository.updateCategory(id, {
         name: data.name,
@@ -79,10 +80,10 @@ export class CategoryService extends BaseService {
     });
   }
 
-  static async deleteCategory(id: string) {
+  async deleteCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Check if category has any services
-      const services = await this.categoryRepository.findServicesByCategoryId(
+      const services = await this.serviceRepository.findServicesByCategoryId(
         id
       );
 
@@ -94,10 +95,10 @@ export class CategoryService extends BaseService {
     });
   }
 
-  static async deactivateCategory(id: string) {
+  async deactivateCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Get all services in this category
-      const services = await this.categoryRepository.findServicesByCategoryId(
+      const services = await this.serviceRepository.findServicesByCategoryId(
         id,
         tx
       );
@@ -139,7 +140,7 @@ export class CategoryService extends BaseService {
       }
 
       // Deactivate all services in this category
-      await this.categoryRepository.updateCategoryServices(id, false, tx);
+      await this.serviceRepository.updateCategoryServices(id, false, tx);
 
       // Deactivate the category
       await this.categoryRepository.updateCategory(
@@ -152,10 +153,10 @@ export class CategoryService extends BaseService {
     });
   }
 
-  static async reactivateCategory(id: string) {
+  async reactivateCategory(id: string) {
     return await this.handleTransaction(async (tx) => {
       // Reactivate all services in this category
-      await this.categoryRepository.updateCategoryServices(id, true);
+      await this.serviceRepository.updateCategoryServices(id, true);
 
       // Reactivate the category
       await this.categoryRepository.updateCategory(id, {
@@ -164,19 +165,17 @@ export class CategoryService extends BaseService {
     });
   }
 
-  static async getCategoriesForDropdown() {
-    return await this.handleDatabaseError(async () => {
-      const categories = await this.categoryRepository.findCategories(
-        { isActive: true },
-        0,
-        1000,
-        { name: "asc" }
-      );
+  async getCategoriesForDropdown() {
+    const categories = await this.categoryRepository.findCategories(
+      { isActive: true },
+      0,
+      1000,
+      { name: "asc" }
+    );
 
-      return categories.map((category) => ({
-        id: category.id,
-        name: category.name,
-      }));
-    });
+    return categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+    }));
   }
 }

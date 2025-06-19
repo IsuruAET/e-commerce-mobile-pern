@@ -1,5 +1,5 @@
 import pino from "pino";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { DateTime } from "luxon";
 
 // Create base logger
@@ -21,7 +21,11 @@ const baseLogger = pino({
 });
 
 // Create request logger middleware
-export const requestLogger = (req: Request, res: Response, next: Function) => {
+export const requestLogger = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const start = Date.now();
 
   res.on("finish", () => {
