@@ -2,6 +2,21 @@ import { DateTime } from "luxon";
 import { Request } from "express";
 import { SuccessResponse, ErrorResponse, ApiResponse } from "types/api";
 
+// Extend Express Request type to include id and auth property
+declare global {
+  namespace Express {
+    interface Request {
+      id: string;
+      auth?: {
+        userId: string;
+        email: string;
+        role: string;
+        isDeactivated: boolean;
+      };
+    }
+  }
+}
+
 export { SuccessResponse, ErrorResponse, ApiResponse };
 
 export const isSuccessResponse = <T>(

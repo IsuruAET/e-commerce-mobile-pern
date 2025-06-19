@@ -5,20 +5,6 @@ import { prismaClient } from "config/prisma";
 import { AppError } from "./errorHandler";
 import { ErrorCode } from "constants/errorCodes";
 
-// Extend Express Request type to include auth property
-declare global {
-  namespace Express {
-    interface Request {
-      auth?: {
-        userId: string;
-        email: string;
-        role: string;
-        isDeactivated: boolean;
-      };
-    }
-  }
-}
-
 // JWT middleware for protecting routes
 export const requireAuth = (
   req: Request,
